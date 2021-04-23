@@ -1,0 +1,683 @@
+---
+output: 
+  bookdown::word_document2: 
+    fig_caption: yes
+  bookdown::html_document2: default
+  bookdown::pdf_document2: default
+bibliography: Y:/Zotero/MAR_SABHU.bib
+title: Identifying environmental drivers of variability in the condition of sea scallop (*Placopecten magellanicus*)
+author: David M. Keith^a,b^, Jessica A. Sameoto^a^, Xiaohan Liu^a^, Emmanuel Devred^a^, Catherine Johnson^a^
+date:  ^a^ Bedford Institute of Oceanography 
+       ^b^ Dalhousie University  
+csl: Y:/Zotero/styles/canadian-journal-of-fisheries-and-aquatic-sciences.csl
+
+abstract: Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate if environmental information from remotely sensed sea surface temperature (SST), Chlorophyll-a (CHL), and model-derived mixed layer depth (MLD) could improve the prediction of SC. Model formulations that incorporated SST and MLD, as well as SST alone, significantly improved predictions over the currently implemented biological-only model.  Additionally, these results indicate that scallop condition in August is dependent on the environmental conditions experienced in the winter and spring periods up to 20 months prior. Although MLD was included in the best *predictive* model, these data are not readily *available* in time for the stock assessment, alternatively, SST improves the SC *prediction* and the data are *available* in near real time; therefore this relationship can be operationalized within the quantitative assessment model to directly improve fisheries management advice. These results highlight how the operationalization of environmental relationships in fisheries assessment and management requires that the environmental relationship improves the estimation or prediction of an aspect of productivity over the current methodology (*predictive criterion*) and that the required environmental data is available for use in the stock assessment process (*availability criterion*). 
+---
+
+
+<!-- Bring in the data   -->
+```{r, echo=F, include=F}
+# Data loading and analysis
+set.seed(594)
+#setwd("Y:/Projects/Condition_Environment/Data/")
+setwd("Y:/Projects/Condition_Environment/")
+# directory you have the survey results stored in...
+direct <- "Y:/Offshore scallop/Assessment/Data/Survey_data/2018/Survey_summary_output/"
+#direct <- "E:/R/Data/Survey_data/2018/Survey_summary_output/"
+
+# Looking a relationship between Condition and SST and phytoplankton
+library(MASS)
+library(readxl)
+library(bbmle)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(mgcv)
+library(lubridate)
+library(pander)
+library(scales)
+library(R.matlab)
+library(cowplot)
+library(visreg)
+
+source("Scripts/correlation_table_function_revised.r")
+# Here we load in the raw data and get everything ready for further analyses.
+#----------------------------------------------------------------------------------
+# RAW Data Section
+# Bring in the raw data.
+chl.raw.dat <- as.data.frame(readMat("Data/chl_gb.mat")$chl.gb)
+mic.raw.dat <- as.data.frame(readMat("Data/mic_gb.mat")$mic.gb)
+mld.raw.dat <- as.data.frame(readMat("Data/mld_gb.mat")$mld.gb)
+sst.raw.dat <- as.data.frame(readMat("Data/sst_gb_adj.mat")$gb)
+
+names(chl.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(mic.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(mld.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(sst.raw.dat) <- c("Year","Month","covar")
+
+dat.aug <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "Aug",col_types = "numeric")
+dat.may <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "May",col_types = "numeric")
+
+# We want a month-Year combo field for these
+sst.raw.dat$date <- dmy(paste(01,sst.raw.dat$Month,sst.raw.dat$Year, sep="/"))
+sst.raw.dat$Year <- year(sst.raw.dat$date)
+sst.raw.dat$Month <- month(sst.raw.dat$date)
+chl.raw.dat$date <- dmy(paste(01,chl.raw.dat$Month,chl.raw.dat$Year, sep="/"))
+chl.raw.dat$Year <- year(chl.raw.dat$date)
+chl.raw.dat$Month <- month(chl.raw.dat$date)
+mic.raw.dat$date <- dmy(paste(01,mic.raw.dat$Month,mic.raw.dat$Year, sep="/"))
+mic.raw.dat$Year <- year(mic.raw.dat$date)
+mic.raw.dat$Month <- month(mic.raw.dat$date)
+mld.raw.dat$date <- dmy(paste(01,mld.raw.dat$Month,mld.raw.dat$Year, sep="/"))
+mld.raw.dat$Year <- year(mld.raw.dat$date)
+mld.raw.dat$Month <- month(mld.raw.dat$date)
+# now bring in the condition data of the whole time series.
+# This is used to get the acf for condition from the whole time series of condition we have
+base.cond.ts <- read.csv("Data/Full_may_aug_condition_ts.csv")
+
+
+# Now we want these as anomolies from average, so starting with SST...
+sst.raw.dat$anom <- sst.raw.dat$covar - mean(sst.raw.dat$covar,na.rm=T)
+chl.raw.dat$anom <- chl.raw.dat$covar - mean(chl.raw.dat$covar,na.rm=T)
+chl.raw.dat$myst.anom <- chl.raw.dat$mystery.covar - mean(chl.raw.dat$mystery.covar,na.rm=T)
+mic.raw.dat$anom <- mic.raw.dat$covar - mean(mic.raw.dat$covar,na.rm=T)
+mic.raw.dat$myst.anom <- mic.raw.dat$mystery.covar - mean(mic.raw.dat$mystery.covar,na.rm=T)
+mld.raw.dat$anom <- mld.raw.dat$covar - mean(mld.raw.dat$covar,na.rm=T)
+mld.raw.dat$myst.anom <- mld.raw.dat$mystery.covar - mean(mld.raw.dat$mystery.covar,na.rm=T)
+
+# Now we want to remove the "seasonal" signal, one way to do this would be to remove the 
+# mean temperature anomoly found for each month, so for January, subtract off the mean Jan temp anomoly...
+for(i in 1:12) 
+{  
+  sst.raw.dat$anom.seasonal[sst.raw.dat$Month == i] <- sst.raw.dat$anom[sst.raw.dat$Month == i] - 
+                                                        mean(sst.raw.dat$anom[sst.raw.dat$Month == i],na.rm=T)
+  # Chlorophyll
+  chl.raw.dat$anom.seasonal[chl.raw.dat$Month == i] <- chl.raw.dat$anom[chl.raw.dat$Month == i] - 
+                                                        mean(chl.raw.dat$anom[chl.raw.dat$Month == i],na.rm=T)
+  chl.raw.dat$anom.sea.myst[chl.raw.dat$Month == i] <- chl.raw.dat$myst.anom[chl.raw.dat$Month == i] - 
+                                                        mean(chl.raw.dat$myst.anom[chl.raw.dat$Month == i],na.rm=T)
+  # Micro phyto
+  mic.raw.dat$anom.seasonal[mic.raw.dat$Month == i] <- mic.raw.dat$anom[mic.raw.dat$Month == i] - 
+                                                        mean(mic.raw.dat$anom[mic.raw.dat$Month == i],na.rm=T)
+  mic.raw.dat$anom.sea.myst[mic.raw.dat$Month == i] <- mic.raw.dat$myst.anom[mic.raw.dat$Month == i] - 
+                                                         mean(mic.raw.dat$myst.anom[mic.raw.dat$Month == i],na.rm=T)
+  # MLD 
+  mld.raw.dat$anom.seasonal[mld.raw.dat$Month == i] <- mld.raw.dat$anom[mld.raw.dat$Month == i] - 
+                                                        mean(mld.raw.dat$anom[mld.raw.dat$Month == i],na.rm=T)
+  
+  mld.raw.dat$anom.sea.myst[mld.raw.dat$Month == i] <- mld.raw.dat$myst.anom[mld.raw.dat$Month == i] - 
+                                                        mean(mld.raw.dat$myst.anom[mld.raw.dat$Month == i],na.rm=T)
+}
+
+#Now we can get the monthly SST, CHla, and MLD estimates, this is used for the first figure in the paper.
+chl.mon <- aggregate(covar~ Month,data = chl.raw.dat,FUN=mean)
+chl.mon$sd <- aggregate(covar~ Month,data = chl.raw.dat,FUN=sd)[,2]
+chl.mon$variable <- "chl"
+sst.mon <- aggregate(covar~ Month,data = sst.raw.dat,FUN=mean)
+sst.mon$sd <- aggregate(covar~ Month,data = sst.raw.dat,FUN=sd)[,2]
+sst.mon$variable <- "sst"
+mld.mon <- aggregate(covar~ Month,data = mld.raw.dat,FUN=mean)
+mld.mon$sd <- aggregate(covar~ Month,data = mld.raw.dat,FUN=sd)[,2]
+mld.mon$variable <- "mld"
+
+month.dat <- rbind(chl.mon,sst.mon,mld.mon)
+
+# Here we get the data we want for the correlation figures, making one for August SST, Chl, MLD, and MIC
+# not sure which ones we'll use yet...
+
+dat.list <- list(chl = chl.raw.dat,mic = mic.raw.dat,mld = mld.raw.dat,sst = sst.raw.dat)
+cond.list <- list(aug = dat.aug,may = dat.may)
+res <- NULL
+for(i in 1:length(dat.list))
+{
+  for(j in 1:length(cond.list))
+  {
+    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- cor_dat(dat = dat.list[[i]], response = cond.list[[j]])
+  }  # end for(j in 1:length(cond.list))
+} # end for(i in 1:length(dat.list))
+
+
+
+
+#----------------------------------------------------------------------------------
+# Sub-Section where we create the aggregated time series.
+#Putting the indices together...
+# SO based on the above analyses, it is pretty clear that mld and chl 'a' really aren't doing anything on their own.  What
+# stands out is SST in the previous spring and the current spring.  
+# The previous spring SST is best represented by Jan-April (even May?), while this years is Jan-Mar.
+# So this decision is still somewhat arbitrary and I think we should all chat abou it at some point...
+# the most stats logical move is to use SST from Jan-April last year, and Jan-March this year
+# But from a consistency point of view, Jan-March of both years is very useful
+# And from an applied point of view, given the timing of the advice, seemingly
+# using Jan/Feb of the current year, but Jan-Mar is the better choice
+#  So after much consternation we go for...
+
+# For SST use Jan-April last year and Jan-March this year as the model of choice (makes sense and gives excellent model fit..)
+SST.last <- aggregate(covar ~ Year, data=sst.raw.dat[sst.raw.dat$Month %in% 1:4,], FUN = sum)
+names(SST.last) <- c("Year","SST.last")
+chl.dat <- aggregate(covar ~ Year, data=chl.raw.dat[chl.raw.dat$Month %in% 1:3,], FUN = sum)
+mld.dat <- aggregate(covar ~ Year, data=mld.raw.dat[mld.raw.dat$Month %in% 1:3,], FUN = mean)
+
+dat <- aggregate(covar ~ Year, data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
+names(dat) <- c("Year","SST.cur")
+dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
+dat$chl <- c(chl.dat$covar,NA)
+dat$mld <- c(mld.dat$covar,NA,NA,NA)
+
+# may.dat <- dat
+aug.dat <- dat
+# may.dat$Condition <- dat.may$Condition
+aug.dat$Condition <- dat.aug$Condition
+# Also make an SST sum covar
+# may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
+aug.dat$SST.sum <- aug.dat$SST.cur + aug.dat$SST.last
+
+#----------------------------------------------------------------------------------
+# Now we run the analyses necessary for the paper.
+
+# Now we can omit the years we don't have data right off the top, a bit too harsh but good for model comparisons...
+aug.dat.comp <- na.omit(aug.dat)
+# I wonder if standardizing the data might make any difference to our results, I sure hope not...
+# Now the August models, we are now starting with a really really big model.
+# Removing the chl*SST inter
+aug.max.mod <- lm(Condition~ SST.last * SST.cur + chl * SST.last + chl*SST.cur + mld*SST.cur + mld*SST.last + chl*mld,data = aug.dat.comp)
+summary(aug.max.mod)
+
+
+# The best of the August models.
+final.step.aug.mod <- stepAIC(aug.max.mod,direction="backward", lower = ~1)
+summary(final.step.aug.mod)
+# But clearly the interaction doesn't help when we go a step further, go with the simplier model!
+final.aug.mod <- lm(Condition ~ SST.last+SST.cur + mld,data=aug.dat.comp)
+summary(final.aug.mod)
+# Now confirming there is no reasonable reason to remove the mld.
+final.sst.aug.mod <- lm(Condition ~ SST.last+SST.cur ,data=aug.dat.comp)
+summary(final.sst.aug.mod)
+AICctab(final.step.aug.mod,final.aug.mod,final.sst.aug.mod)
+# Now we can also just look at a mechanistic model with chl and mld in it to see how it does compared to our SST based models
+# aug.max.mld <- lm(Condition~ chl*mld,data = aug.dat.comp)
+# summary(aug.max.mld)
+
+# Some useful model summaries
+last.effect <- round(final.aug.mod$coefficients[2],digits=2)
+cur.effect <-  round(final.aug.mod$coefficients[3],digits=2)
+last.effect.sd <- round(coef(summary(final.aug.mod))[2,2],digits=2)
+cur.effect.sd <- round(coef(summary(final.aug.mod))[3,2],digits=2)
+mld.effect <- round(final.aug.mod$coefficients[4],digits=2)
+mld.effect.sd <- round(coef(summary(final.aug.mod))[4,2],digits=2) 
+
+# This is the best of the Aug models the addivtive model wins here
+# but again it's explaintory power will be far below that of the SST model.
+# final.aug.mld <- stepAIC(aug.max.mld,direction="backward", lower = ~1)
+# summary(final.aug.mld)
+
+# We should also compare with the ACF model.
+# Now we can look at the acf of condition on GB for 1999 - 2018, issue here is the data may not be stationary so need to detrend the longer ts
+# gb.may.cf <- base.cond.ts$may[base.cond.ts$year %in% 1999:2015]
+gba.aug.cf <- base.cond.ts$aug[base.cond.ts$year %in% 1999:2015]
+# gb.detrend <- resid(lm(gb.may.cf~ seq(1,length(gb.may.cf)),na.action = na.exclude))
+gba.detrend <- resid(lm(gba.aug.cf~ seq(1,length(gba.aug.cf)),na.action = na.exclude))
+acfs <- acf(gba.detrend, plot = FALSE,na.action = na.pass)
+acfs <- with(acfs, data.frame(lag, acf))
+# So a lag linear model...
+lag.aug.dat <- aug.dat[aug.dat$Year %in% 1998:2015,]
+lag.aug.dat$cond.covar <- c(NA,lag.aug.dat$Condition[1:(nrow(lag.aug.dat)-1)])
+lag.aug.mod <- lm(Condition ~ cond.covar,lag.aug.dat)
+summary(lag.aug.mod)
+# Finally make the NULL model
+null.aug.mod <- lm(Condition~1,aug.dat.comp)
+
+# So pretty clearly the lag based model is not particularly useful, really isn't any better than the NULL model according to AIC.
+aug.AIC.table <- AICctab(final.aug.mod,final.sst.aug.mod,lag.aug.mod,null.aug.mod,delta=T,base=T)
+
+AIC.table.print <- data.frame(AICc = aug.AIC.table$AICc,
+                              delta = aug.AIC.table$dAICc,
+                              df = aug.AIC.table$df,
+                              R_squared = signif(c(summary(final.aug.mod)$adj.r.squared,
+                                            summary(final.sst.aug.mod)$adj.r.squared,
+                                            summary(lag.aug.mod)$adj.r.squared,
+                                            NA),digits=2),row.names = c("Base model", "SST model","AR(1) model", "NULL model"))
+
+r2.sst.last <- signif(summary(lm(Condition~SST.last,data=aug.dat.comp))$r.squared,digits=2)
+r2.sst.cur <- signif(summary(lm(Condition~SST.cur,data=aug.dat.comp))$r.squared,digits=2)
+r2.cur <- signif(summary(lm(Condition~SST.cur+mld,data=aug.dat.comp))$r.squared,digits=2)
+# So let's do some cross validation, how well do the models do when leaving data out at predicting the missing data
+# Randomly remove 3 points and see how well the models predicts those points using MAPE.
+
+# Run this 100 times, note there are only 680 unique combinations of years with a sample size of 3 different years being removed.
+# when you go for 4 years (25% of the data) this jumps to 2400 possible combos
+n.boots <- 500
+s.size <- 4
+boot.res <- data.frame(sample =1:n.boots,MAPE.null = rep(NA,n.boots),MAPE.AR1 = rep(NA,n.boots),MAPE.sst = rep(NA,n.boots),MAPE.base = rep(NA,n.boots))
+
+for (i in 1:n.boots)
+{
+rm <- sample(1:17,size=s.size,replace=F)
+base.dat <- lag.aug.dat[-1,]
+boot.dat <- base.dat
+boot.dat$Condition[rm] <- NA
+
+# Now we can make the 3 models.  We don't include lag.boot because that's not really how we do it now, what we need for the 
+# MAPE for lag is the differece between last year and this year, and then we'll just remove the years suggested above in the caluclation.
+null.boot <-  lm(Condition ~ 1,boot.dat)
+sst.boot <-  lm(Condition ~ SST.last+SST.cur,boot.dat)
+base.boot <-  lm(Condition ~ SST.last+SST.cur+mld,boot.dat)
+#lag.boot <-  lm(Condition ~ cond.covar,boot.dat)
+
+boot.dat$predict.null <- predict(null.boot,newdata = boot.dat)
+#boot.dat$predict.lag <- predict(lag.boot,newdata = boot.dat)
+boot.dat$predict.sst <- predict(sst.boot,newdata = boot.dat)
+boot.dat$predict.base <- predict(base.boot,newdata = boot.dat)
+
+# And my MAPE for the missing points only.
+MAPE.null <- abs((base.dat$Condition[rm] - boot.dat$predict.null[rm])/base.dat$Condition[rm])
+MAPE.sst <- abs((base.dat$Condition[rm] - boot.dat$predict.sst[rm])/base.dat$Condition[rm])
+MAPE.base <- abs((base.dat$Condition[rm] - boot.dat$predict.base[rm])/base.dat$Condition[rm])
+
+boot.res$MAPE.null[i] <-  100*sum(MAPE.null)/s.size
+boot.res$MAPE.sst[i] <- 100*sum(MAPE.sst)/s.size 
+boot.res$MAPE.base[i] <- 100*sum(MAPE.base)/s.size
+
+# Now same idea but using our "AR1" methodology rather than the AR(1) model
+MAPE.AR1 <- abs((base.dat$Condition[rm] - base.dat$cond.covar[rm])/base.dat$Condition[rm])
+boot.res$MAPE.AR1[i] <- 100*sum(MAPE.AR1)/s.size
+} # end for(in in 1:n.boots)
+
+# now make this a lengther for ggplot and friends
+mape.boot <- reshape2::melt(boot.res,id.vars = "sample",variable.name="model",value.name = "MAPE")
+# What are our test results...
+mean.MAPE <- aggregate(MAPE~model,FUN = mean,dat=mape.boot)
+se.MAPE <- aggregate(MAPE~model,FUN = function(x) {sd(x)/sqrt(length(x))},dat=mape.boot)
+
+# Now summarized the MAPE
+mape.boot$predict.improve <- 0
+nulls <- mape.boot$MAPE[mape.boot$model=="MAPE.null"]
+mape.boot$predict.improve[mape.boot$model=="MAPE.AR1"] <- 100 * (mape.boot$MAPE[mape.boot$model=="MAPE.AR1"]-nulls)/nulls
+mape.boot$predict.improve[mape.boot$model=="MAPE.sst"] <- 100 * (mape.boot$MAPE[mape.boot$model=="MAPE.sst"]-nulls)/nulls
+mape.boot$predict.improve[mape.boot$model=="MAPE.base"] <- 100 * (mape.boot$MAPE[mape.boot$model=="MAPE.base"]-nulls)/nulls
+
+mean.MAPE.improve <- aggregate(predict.improve~model,FUN = mean,dat=mape.boot)
+se.MAPE.improve <- aggregate(predict.improve~model,FUN = function(x) {sd(x)/sqrt(length(x))},dat=mape.boot)
+
+# No reason not to build a model to test how much MAPE improves.
+
+MAPE.mod <- lm(MAPE~model,mape.boot)
+summary(MAPE.mod)
+# Slight increase in variance with mean, but it's fine, data is beyond normal
+#plot(MAPE.mod)
+MAPE.mod.preds <- data.frame(mean = rep(NA,4),se=rep(NA,4),model = unique(mape.boot$model))
+MAPE.mod.preds$mean <- predict(MAPE.mod,newdata=MAPE.mod.preds)
+MAPE.mod.preds$se <- predict(MAPE.mod,newdata=MAPE.mod.preds,se.fit = T)$se.fit
+MAPE.mod.preds$UCI <- MAPE.mod.preds$mean + 2 * MAPE.mod.preds$se 
+MAPE.mod.preds$LCI <- MAPE.mod.preds$mean - 2 * MAPE.mod.preds$se 
+
+MAPE.imp.mod <- lm(predict.improve~model,mape.boot[mape.boot$model != "MAPE.null",])
+summary(MAPE.imp.mod)
+# The skew due to large values is a bit annoyting, but otherwise residuals are nice!
+#plot(MAPE.imp.mod)
+MAPE.imp.mod.preds <- data.frame(mean = rep(NA,3),se=rep(NA,3),model = unique(mape.boot$model)[-1])
+MAPE.imp.mod.preds$mean <- predict(MAPE.imp.mod,newdata=MAPE.imp.mod.preds)
+MAPE.imp.mod.preds$se <- predict(MAPE.imp.mod,newdata=MAPE.imp.mod.preds,se.fit = T)$se.fit
+MAPE.imp.mod.preds$UCI <- MAPE.imp.mod.preds$mean + 2 * MAPE.imp.mod.preds$se 
+MAPE.imp.mod.preds$LCI <- MAPE.imp.mod.preds$mean - 2 * MAPE.imp.mod.preds$se 
+
+# 
+# windows(11,11)
+# ggplot(mape.boot[mape.boot$model != "MAPE.null",],aes(model,predict.improve)) + geom_jitter(size=0.4,width=0.1,height=0) +
+#   geom_point(data=MAPE.imp.mod.preds, aes(x=model,y=mean),colour="blue",size=3) +
+#   geom_errorbar(data=MAPE.imp.mod.preds,aes(x= model,y=mean,ymin=LCI,ymax=UCI),width=0,colour="blue",size=1)
+# 
+# windows(11,11)
+# ggplot(mape.boot,aes(model,MAPE)) + geom_jitter(size=0.4,width=0.1,height=0) +
+#   geom_point(data=MAPE.mod.preds, aes(x=model,y=mean),colour="blue",size=3) +
+#   geom_errorbar(data=MAPE.mod.preds,aes(x= model,y=mean,ymin=LCI,ymax=UCI),width=0,colour="blue",size=1)
+# 
+
+# Now I want to make a big table with the 3 MAPE tests in them
+MAPE.aug.table <- data.frame(Model = c("Base model","SST model","AR(1) model","NULL model"),
+                             MAPE =  rev(c(MAPE.mod.preds$mean)),
+                             Percent.MAPE.decline = rev(c(NA,MAPE.imp.mod.preds$mean)))
+
+# A couple of comparisons for in the paper
+SST.mape.vs.AR1 <- -signif((MAPE.aug.table$MAPE[2] - MAPE.aug.table$MAPE[3]) /  MAPE.aug.table$MAPE[3],digits=2)
+MLD.mape.vs.AR1 <- -signif((MAPE.aug.table$MAPE[1] - MAPE.aug.table$MAPE[3]) /  MAPE.aug.table$MAPE[3],digits=2)
+
+
+# Now combine the MAPE and AIC tables into one summary table.
+Final.table <- cbind(AIC.table.print,MAPE.aug.table[,2:3])
+ 
+# Next we add in the missing data (everything we tossed due to NA's + 2018) and see how the model predicts those.
+# Then we calculate the MAPE for those as well.  Then do something with ACF I think and we're done here.
+# For model comparison purposes the models were constrained to compare 1999-2014.  We have SST data for
+# 2015-2018 for SST, and we have 2016-2018 for may condition and 2015-2018 for Aug condition to predict
+
+# We can also predict condition for the most recent 3 years using our SST model.  MLD data for these 3 years
+# was not available at this time.  We can test out the NULL, SST, and AR(1) models... we also want to get the predictions for the base model, just won't have anything for last
+# 3 years.
+
+aug.dat$pred.base <- predict(final.aug.mod,aug.dat,se=F)
+aug.dat$pred.sst <- predict(final.sst.aug.mod,aug.dat,se=F)
+aug.dat$cond.covar <- c(NA,aug.dat$Condition[-nrow(aug.dat)])
+# We actually don't want to use this pred AR(1) model for the prediction as this isn't exactly what our prediction is
+# here' we just want to use cond.covar as our prediction for the following year (which is what we do...), not via a model.
+#aug.dat$pred.AR1 <- predict(AR1.aug.mod,aug.dat,se=F)
+aug.dat$pred.null <- predict(null.aug.mod,aug.dat,se=F)
+
+# So what is our predictive error for the years that weren't included in the orginal model.  There 
+# is something wrong in here right now I think...
+
+pred.years <- c(2016:2018)
+aug.new.year.pred <- aug.dat[aug.dat$Year %in% pred.years, ]
+
+aug.new.year.pred$MAPE.null <- abs((aug.new.year.pred$Condition - aug.new.year.pred$pred.null)/aug.new.year.pred$Condition)
+aug.new.year.pred$MAPE.AR1 <- abs((aug.new.year.pred$Condition - aug.new.year.pred$cond.covar)/aug.new.year.pred$Condition)
+aug.new.year.pred$MAPE.sst <- abs((aug.new.year.pred$Condition - aug.new.year.pred$pred.sst)/aug.new.year.pred$Condition)
+
+MAPE.new.years.pred <- data.frame(model = c("NULL","AR(1)","SST"))
+MAPE.new.years.pred$MAPE <- c(100*sum(aug.new.year.pred$MAPE.null,na.rm=T)/nrow(aug.new.year.pred[!is.na(aug.new.year.pred$Condition),]),
+                              100*sum(aug.new.year.pred$MAPE.AR1,na.rm=T)/nrow(aug.new.year.pred[!is.na(aug.new.year.pred$Condition),]),
+                              100*sum(aug.new.year.pred$MAPE.sst,na.rm=T)/nrow(aug.new.year.pred[!is.na(aug.new.year.pred$Condition),]))
+MAPE.new.years.pred$percent.decline <- NA
+nulls2 <- MAPE.new.years.pred$MAPE[MAPE.new.years.pred$model == "NULL"]
+MAPE.new.years.pred$percent.decline[MAPE.new.years.pred$model == "AR(1)"] <- 100 *(MAPE.new.years.pred$MAPE[MAPE.new.years.pred$model=="AR(1)"]-nulls2)/nulls2
+MAPE.new.years.pred$percent.decline[MAPE.new.years.pred$model == "SST"] <- 100*(MAPE.new.years.pred$MAPE[MAPE.new.years.pred$model=="SST"]-nulls2)/nulls2
+
+# And a MAPE table for the new data.
+MAPE.new.data.table <- data.frame(Model = c("NULL","AR(1)","SST"),
+                             MAPE =  round(c(MAPE.new.years.pred$MAPE),digits=2),
+                             Percent.decline = round(c(MAPE.new.years.pred$percent.decline),digits=2))
+```
+
+# Introduction
+
+There is an urgent need to sustainably manage fish stocks due to pressures from over-fishing, pollution, habitat destruction, and climate change [@faoStateWorldFisheries2018]. While it is well known that oceanographic conditions influence natural fluctuations in fish stocks, disentangling environmental variability from fishing effects remains challenging,  often due to the non-stationarity of the relationships and a lack of scientific resources [@myersWhenEnvironmentRecruitment1998; @skern-mauritzenEcosystemProcessesAre2016]. For this reason stock assessment methods historically only directly account for the effects of population demographics and fishing while ignoring environmental effects outright [@skern-mauritzenEcosystemProcessesAre2016]. More recently, methods have been developed which indirectly account for environmental variability by allowing for model parameters to vary over time [@swainExtremeIncreasesNatural2015]  but the integration of environmental data directly into traditional stock assessment models remains the exception [@cadrinStockAssessmentMethods2015]. Improved understanding of the influence of environmental variation on fish populations dynamics would  improve science advice within an ecosystem context and help operationalize an ecosystem approach to fisheries management (EAFM). Further, climate and environmental considerations are increasingly required in fisheries management decision making in order to mitigate, adapt, and respond to the impacts of climate change [@wilsonAdaptiveComanagementAchieve2018; @ActAmendFisheries2019].   
+
+Fisheries management decisions often include setting removals limits in terms of biomass;  however, these decision are complicated by fluctuations in stock size due to variable recruitment, growth, condition, and survival all of which are influenced by the environment. For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada, reliable indices of recruitment are available through fishery independent surveys; however, outside of major recruitment events, annual variations in growth underlie major fluctuations in catch rate and yield. In Canada, the scallop adductor muscle is the harvested part of the scallop, with landings reported and managed (e.g. Total Allowable Catch (TAC)) in terms of the biomass (weight) of the adductor meat (muscle).
+
+Growth is an integrated response of energy acquisition and expenditure. For scallop, growth can be defined either in terms of an increase in some dimension of the shell or in terms of the change in the soft tissue [@macdonaldPhysiologyEnergyAcquisition2016]. Shell growth continues as scallops age and generally the adductor muscle increases with shell size; however,  the growth and size of the adductor muscle will also vary throughout the year [e.g. resorption of somatic tissue: @vahlEnergyTransformationsIceland1981; @macdonaldInfluenceTemperatureFood1985]. For *P. magellanicus*, intra-annual changes in the meat weight for the same shell height are characterized by increases in weight in late winter and early spring and declines during spawning in the late summer and early fall [@naiduReproductionBreedingCycle1970; @robinsonSeasonalChangesSoftbody1981; @thompsonIdentifyingSpawningEvents2014]. This seasonal pattern is attributed to gametogenesis and the buildup of energy reserves; however, the magnitude of this cycle has been observed to vary between years within season [@robinsonSeasonalChangesSoftbody1981; @macdonaldInfluenceTemperatureFood1985; @macdonaldInfluenceTemperatureFood1985a; @macdonaldInfluenceTemperatureFood1986;@macdonaldInfluenceTemperatureFood1987; @schickAllometricRelationshipsGrowth1992a].
+
+
+Inter-annual differences in meat weight for the same shell height are likely due to environmental conditions. When seasonal patterns are controlled for, spatial and depth differences in meat weight for a given shell size are often observed; with larger meats found at shallow water depths where temperature and food availability are often more favorable [@macdonaldInfluenceTemperatureFood1985; @macdonaldInfluenceTemperatureFood1986; @macdonaldInfluenceTemperatureFood1987; @schickAllometricRelationshipsGrowth1992a]. In sea scallops, food ration, consisting of suspended detrital material and phytoplankton, is a major factor in the regulation of growth and production [@cranfordParticleClearanceAbsorption1990; @shumwayFoodResourcesRelated1987; @macdonaldPhysiologyEnergyAcquisition2016]. Whereas temperature is positively correlated with metabolic rate, as measured by the rate of oxygen consumption [@shumwaySeasonalChangesOxygen1988; @macdonaldPhysiologyEnergyAcquisition2016].
+
+The relationship between meat weight and shell height is usually defined using an allometric model [@laiLinearMixedeffectsModels2004; @hennenShellHeightToWeightRelationships2012; @sarroSpatialTemporalVariation2009] and in Canada’s Maritimes Region an allometric relationship is used to determine the meat weight of a 100 mm shell height scallop – hereafter referred to as Scallop Condition (SC).  This index is used to track inter-annual change in meat condition and yearly fluctuations in SC have been observed to be as great as 30% [@hubleyGeorgesBankBrowns2014; @nasmithScallopProductionAreas2016; @sameotoScallopFishingArea2015]. Better understanding and prediction of inter-annual changes in SC will facilitate the sustainable management of scallop fisheries because SC is required to estimate biomass, growth rates, and future biomass projections which are used inform catch limits [@jonsenGeorgesBankScallop2009; @hubleyGeorgesBankBrowns2014; @dfoStockStatusUpdate2018]. The current study focuses on the Canadian portion of Georges Bank which supports one of Canada’s most valuable commercial fisheries with approximately 75% of Canadian scallop landings coming from this bank [@stewartEnvironmentalRequirementsSea1994].
+
+Management decisions for the Canadian Georges Bank sea scallop fishery are based on annual scientific surveys conducted in August, with estimates from these surveys used in a Bayesian state space assessment model [@smithImpactSurveyDesign2014] to provide 1-year projections of biomass [@hubleyGeorgesBankBrowns2014; @dfoStockStatusUpdate2018]. The fishery runs from January to December with decisions on an interim TAC made in December of the previous year and a final TAC is set after the science assessment is complete in the spring of the current year.  The biomass projections for the current fishing year requires a prediction of SC; the current methodology assumes SC for the current year is  unchanged from the August survey in the previous year [@hubleyGeorgesBankBrowns2014; @dfoStockStatusUpdate2018]. Implicitly this assumes that the best predictor of future SC is the past year SC (i.e. it is an autoregressive process with a 1 year lag; AR(1)); this approach cannot account for environmental effects that may alter the condition of the scallop meat after the survey. Alternatively, a methodology that incorporates environmental effects could result in improved predictions of SC and in turn lead to more accurate biomass projections and science advice. 
+
+The primary purpose of this study was to determine if SC could be related to environmental factors known to influence scallop growth on the Canadian portion of Georges Bank and used to improve predictions of SC. The environmental factors included in the study are sea surface temperature (SST) and phytoplankton biomass (as indicated by Chlorophyll-a (CHL)) derived from satellite remote sensing, and mixed layer depth (MLD) obtained from an oceanographic model. The objectives of this project were to; (a) determine periods within which the environmental variables were most correlated with SC, (b) develop SC models which account for the environmental factors and compare these with models that do not account for the environment, (c) quantitatively evaluate the predictive ability of these models and (d) discuss the applicability of these models for inclusion in science advice provided to fisheries management.
+
+# Methods
+
+Georges Bank (GB) is a large elevated area of seafloor located in the Gulf of Maine between Massachusetts and Nova Scotia (Figure 1).  It is one of the most physically energetic and biologically productive oceanic regions and has supported commercial fisheries for centuries [@townsendNitrogenLimitationSecondary1997]. The primary production cycle on GB is highly seasonal, and typically exhibits a pronounced late winter-early spring bloom [@townsendOceanographyNorthwestAtlantic2006]. GB is dominated by tidal mixing currents throughout most of its area, especially in the central shallow region on the top of the bank (inside the 60 m isobath), where the waters remain vertically homogeneous under the influence of tidal mixing throughout the year [@townsendNitrogenLimitationSecondary1997; @townsendOceanographyNorthwestAtlantic2006]. 
+
+_Figure 1: (a) Location of the Georges Bank study area and (b) the bathymetry contour used to define Georges Bank (120 m)_
+
+```{r Overview, echo=F, include=T,warning=F,message=F,out.width=10}
+knitr::include_graphics("Y:/Projects/Condition_Environment/Figures/Figure_1.png")
+```
+
+
+
+## Scallop Survey
+Fisheries and Oceans Canada (DFO) has been conducting annual scallop surveys on the Canadian portion of Georges Bank since 1981. The annual dredge survey is conducted on GB every August; the survey uses a 2.44 m New Bedford style scallop dredge with a 38 mm polypropylene liner. The survey collects detailed meat weight and shell height data for an average of 2011 scallop each year (range from 539-6548 samples; note that the sampling intensity increased in 2010).  Scallop condition (SC) is calculated using the weights of the sampled meat and the associated shell heights; SC is then used to develop a biomass index. Complete details of sampling design and modelling methodology can be found in @hubleyGeorgesBankBrowns2014.
+
+## Satellite Observed and Ocean Model Data
+
+The satellite remote sensed and model data was subset to the Canadian portion of Georges Bank with depths shallower than 120 m; this Georges Bank domain includes all of the primary scallop habitat on the Canadian portion of Georges Bank (Figure 1). The 120 m bathymetric contour was extracted from the ETOPO5 database [@noaaDataAnnouncement88MGG021988, https://www.ngdc.noaa.gov/mgg/global/etopo5.HTML].  The total area within the Georges Bank domain was approximately 6,500 km^2^.
+
+### Sea surface temperature
+
+Monthly sea-surface temperature (SST) estimates from the Moderate Resolution Imaging Spectroradiometer on the Aqua Earth-observing satellite (Aqua MODIS) were downloaded from the NASA ocean-color website (https://oceancolor.gsfc.nasa.gov/), from August 2002 to August 2018 with a 4 km resolution. SST data from the Advanced Very High Resolution Radiometer (AVHRR) pathfinder version 5.2 (PFV5.2) were downloaded from the NASA Jet Propulsion Laboratory archive (http://podaac.jpl.nasa.gov) for the time period of January 1998 to December 2009 with a 4 km resolution. The overlapping period between AVHRR pathfinder and MODIS SST data, from August 2002 to December 2009 was used to compare both data sets and revealed a difference of less than 0.2$^{\circ}$C. Given the consistency in SST estimates between these data sources the AVHRR pathfinder SST from  January 1998-December 2008 was combined with the MODIS SST from January 2009-August 2018. The SST data were spatially averaged over the domain to provide one mean value per month, resulting in 248 monthly SST estimates.
+
+### Chlorophyll-a concentration
+Monthly chlorophyll-a (CHL) estimates ($mg \times m^{-3}$) were derived from the arithmetic average of daily CHL concentration obtained from the Ocean Color Climate Change Initiative (OC-CCI) v3.1 which were downloaded from the European Space Agency (ESA) ocean color website (https://esa-oceancolour-cci.org/), when extracted, data were available from 1998 to 2017. The CHL product is calculated using a blended merger of multiple sensor-depended band-ratio algorithms (e.g., OC3, OCI, OC5) using a weighted approach that depends on an optical-based water mass classification [@grantProductUserGuide2017]. The data were projected on a 4-km resolution sinusoidal grid. This satellite product uses the following sensors: MERIS, Aqua-MODIS, SeaWiFS, VIIRS, and OLCI data, that have been reprocessed under the ESA Ocean Color CCI project to ensure climate-compatible ocean color observation between period and sensors at the global scale [@belocoutoIntercomparisonOCCCIChlorophylla2016]. The CHL data were spatially averaged over the region of interest to provide one mean value per month, resulting in a total of 240 monthly CHL estimates.
+
+### Mixed layer depth
+Monthly Mixed layer depth (MLD) estimates from version 7 of CMCC Global Ocean Reanalysis System (C-GLORS v7) were downloaded from the University Corporation for Atmospheric Research website (https://climatedataguide.ucar.edu/variables/ocean/mixed-layer-depth; ftp://cglorsguest@downloads.cmcc.bo.it/p_cglors/C-GLORSV5/MONTHLY_0.5x0.5/), when extracted, data were available from 1998 to 2015. The C-GLORS consists of a variational data assimilation system (OceanVar), capable of assimilating all in-situ observations along with altimetry data, and a forecast step performed by the ocean model NEMO (Nucleus for European Modelling of the Ocean) coupled with the LIM2 (Louvain-la-Neuve) sea-ice model [@madecNEMOOceanEngine2016]. The MLD product was obtained at half a degree resolution ($\approx$ 50 km). The MLD data were spatially averaged over the domain for each month, resulting in a total of 216 monthly MLD estimates.
+
+## Condition-Environment Relationship
+
+The strength of the relationship between SC in August of a given year and each environmental covariate (i.e. SST, CHL, and MLD) was assessed using the monthly environmental data.  To investigate the influence of past environmental conditions on SC the relationship between SC and each environmental covariate was investigated at time lags of up to 32 months; for example the relationship between SC in 2015 was compared with each monthly SST estimate between January 2013 to July of 2015.  Whereas, the cumulative effect of each environmental covariate on SC was assessed as the sum of the monthly estimates; for example, the SC in August of 2015 was compared to the sum of the monthly SST estimates between January 2013 and July 2015. For SST and CHL the sum of the monthly values were used for the cumulative effects comparison, while for MLD the average over each period was used.  The strength of the relationship between the environmental covariate and SC was assessed using the coefficient of determination ($R^2$) from a simple linear model and the correlation using the non-parametric Kendall's $\tau$-value [@kendallNewMeasureRank1938]. The result of these analyses are large matrices of $R^2$ and $\tau$ values for each of the environmental covariates.  There was little effect of any environmental covariate at lags greater than 20 months (i.e. SC in the current year is not correlated with any of the environmental covariates at lags longer than January of the previous year); therefore, only the results from January of the previous year to July of the current year are discussed.  Additionally,  the interpretation of the Kendall's $\tau$ and $R^2$ results were similar so only the $R^2$ results are discussed further. 
+
+## Condition Modelling
+
+The results of the correlation analysis and documented increase in scallop condition in the spring in this region [@thompsonIdentifyingSpawningEvents2014] led to the decision to use cumulative SST from January to April of the previous year ($SST_{last}$) and cumulative SST and chlorophyll-a for January to March in the current year ($SST_{cur}$ and $CHL$ respectively). For the mixed layer depth ($MLD$) the average for January to March of the current year was used.  The data were subset to the years in which the data were available for all covariates (1999-2015) which facilitates model comparison using AICc. Both forward and backward model selection were performed using a maximum model including all 2-way interactions between these covariates; when the AICc difference between models was less than 2, the more parsimonious model was selected. For all models the error ($\epsilon_i$) was assumed to be normally distributed with a variance of $\sigma^2$. Both forward and backward model selection resulted in the same $Base$ model (Equation 1) being selected:
+
+_Equation 1. The $Base$ model._
+\[SC_{i} = SST_{last} + SST_{cur} + MLD + \epsilon_i    \]
+
+The $Base$ model includes MLD which comes from an oceanographic model.  Thee data are generally not available when the predictions of SC are required for stock assessment purposes, therefore, a $SST$ model (Equation 2), which uses only remotely sensed data that are available in near real time, was evaluated.
+
+_Equation 2. The $SST$ model._
+\[SC_{i} = SST_{last} + SST_{cur} + \epsilon_i    \]
+
+The currently adopted assessment methodology uses condition from the previous year to predict condition in the following year [@hubleyGeorgesBankBrowns2014; @dfoStockStatusUpdate2018]. This approach was formalized as a first order auto-regressive model ($AR(1)$ model; Equation 3) in order to compare the current methodology with the other models.
+
+_Equation 3. The $AR(1)$ model._
+\[SC_{i} = SC_{last} + \epsilon_i    \]
+
+The final model was a simple $NULL$ model which includes only an intercept term representing the mean SC ($SC_{mean}$) for the time series (1999-2015; Equation 4); this model was used as a baseline to compare against the more complex models.  
+
+_Equation 4. The $NULL$ model._
+\[SC_{i} =  SC_{mean} + \epsilon_i    \]
+
+## Condition Model Predictive Error
+
+Cross validation was performed to assess the predictive ability of each model (i.e. the model's ability to predict new observations).  For each simulation 4 years of data were excluded and the models were fit using the remaining data.  These models were then used to predict the condition for the 4 randomly selected years which were excluded from the model; for the $AR(1)$ model the condition from the year before the excluded year was used to predict the condition.  For each simulation the difference between the model predicted and the actual observed condition for the 4 years was calculated using the mean absolute predictive error ($MAPE$; Equation 5).  This procedure was repeated `r n.boots` times and provided a distribution of $MAPE$ estimates for each of the models. 
+
+_Equation 5.  The mean absolute predictive error, $n$ is the number of observations_
+\[MAPE = \frac{100}{n}\sum_{i=1}^{n} \frac{\mid Obs_i - Pred_i \mid }{Obs_i} \]
+
+In addition to this simulation, the three additional years of data (2016-2018) which were available for SST and SC were used to compare the $SST$, $AR(1)$, and $NULL$ models. These three models (using the model results obtained from fitting to the data from 1999-2015) were used to generate predictions of scallop condition from 2016-2018.  The predictions for each of the models was compared with the observed SC during these three years using $MAPE$ to quantify the ability of each model to predict future scallop condition.
+
+# Results
+
+SC in August on Georges Bank ranged from `r signif(min(cond.list$aug$Condition),digits=3)` to `r signif(max(cond.list$aug$Condition),digits=3)` grams during the study period (Figure 2). On average SST was lowest in March and peaked in August; it varied from a low of `r signif(min(sst.raw.dat$covar,na.rm=T),digits=2)`&deg;C , to a high of `r signif(max(sst.raw.dat$covar,na.rm=T),digits=2)`&deg;C (Figure 2). Monthly average CHL tends to be lower in the winter, with a peak observed in April, while the MLD tends to be shallow during the summer and deep in the winter; it ranged from `r signif(min(mld.raw.dat$covar,na.rm=T),digits=2)` to `r signif(max(mld.raw.dat$covar,na.rm=T),digits=2)` meters during the study period (Figure 2).  The annual SC time series shows no long term trend since 1998, although condition has been above average since 2012 (Figure 2a). The time-series for each environmental covariate provides evidence for a decline in CHL and an increase in SST since 2012, but there is no evidence of a sustained trend in any of the environmental covariates since 1998 (Figure 2b-d).   
+
+<!-- Revised this to not be an anomaly time series but a straight up time series of actual values --> 
+_Figure 2: Condition time series of (a) Scallop condition $(\frac{meat\:weight\:(g)}{100\:mm\:SH})$  (b) $SST\:(^{\circ}C)$, (c) $CHL\:(mg \times m^{-3})$, and (d) $MLD\:(m)$ from 1998 to 2018._
+
+<!-- Covariate time series-->
+```{r time_series, echo=F, include=T,warning=F,message=F,fig.width=10,fig.height=8}
+
+aug.dat$date <- ymd(paste0(aug.dat$Year,"-08-01"))
+s.date <- ymd("1998-03-01")
+# Now plot the data, this is based on the model using only the data from 1999 to 2015.
+p1 <- ggplot(aug.dat, aes(x=date,y=Condition)) + geom_line(size=1) +  theme_classic() + xlab("") + ylab("Condition (g)") +
+      scale_x_date(date_breaks = "3 year", date_labels = "%Y",limits = c(min(sst.raw.dat$date)-30,max(sst.raw.dat$date+140))) +
+     # annotate(geom = "text", x = seq((min(sst.raw.dat$date))+180,max(sst.raw.dat$date),by=365.4*3), y = 13, label = seq(min(unique(aug.dat$Year)),max(unique(aug.dat$Year)),by=3), size = 4) +
+      theme_classic() + #geom_hline(aes(yintercept=mean(Condition)),linetype = "dashed",colour = "blue")+
+      coord_cartesian(ylim = c(13.5,18.5), expand = FALSE, clip = "off") + theme(text = element_text(size=20)) +
+      annotate("text",y=18,x=s.date,label="a") + geom_smooth(span=0.75)
+
+p2 <- ggplot(sst.raw.dat, aes(x=date,y=covar)) + geom_line(size=1) +  theme_classic() + xlab("") + ylab( expression('SST ' (degree*C))) +
+      scale_x_date(date_breaks = "3 year", date_labels = "%Y",limits = c(min(sst.raw.dat$date)-30,max(sst.raw.dat$date+140))) +
+#  annotate(geom = "text", x = seq((min(sst.raw.dat$date)+180),max(sst.raw.dat$date),by=365.4*3), y = -0.9, label = seq(min(unique(aug.dat$Year)),max(unique(aug.dat$Year)),by=3), size = 4)  +
+  coord_cartesian(ylim = c(0,20), expand = FALSE, clip = "off") + theme_classic() +#geom_hline(aes(yintercept=0),linetype = "dashed",colour = "blue")+
+  geom_smooth(span=0.25) + theme(text = element_text(size=20)) +#theme(axis.text.x=element_blank()) + 
+  annotate("text",x=s.date,y=19,label="b")
+
+p3 <- ggplot(chl.raw.dat, aes(x=date,y=covar)) + geom_line(size=1) +  theme_classic() + xlab("") + ylab(expression(paste("Chl:",bgroup("(",mg %*% m^-3  ,")")))) +
+      scale_x_date(date_breaks = "3 year", date_labels = "%Y",limits = c(min(sst.raw.dat$date)-30,max(sst.raw.dat$date+140))) +
+#  annotate(geom = "text", x = seq((min(sst.raw.dat$date)+180),max(sst.raw.dat$date),by=365.4*3), y = -.05, label = seq(min(unique(aug.dat$Year)),max(unique(aug.dat$Year)),by=3), size = 4)  +
+  coord_cartesian(ylim = c(0,3), expand = FALSE, clip = "off") + theme_classic() +#geom_hline(aes(yintercept=0),linetype = "dashed",colour = "blue")+
+  geom_smooth(span=0.25) + theme(text = element_text(size=20)) +#theme(axis.text.x=element_blank()) + 
+  annotate("text",x=s.date,y=2.9,label="c")
+
+p4 <- ggplot(mld.raw.dat, aes(x=date,y=covar)) + geom_line(size=1) +  theme_classic() + xlab("") + ylab(expression('MLD  (m)')) +
+      scale_x_date(date_breaks = "3 year", date_labels = "%Y",limits = c(min(sst.raw.dat$date)-30,max(sst.raw.dat$date+140))) +
+#  annotate(geom = "text", x = seq((min(sst.raw.dat$date)+180),max(sst.raw.dat$date),by=365.4*3), y = -8, label = seq(min(unique(aug.dat$Year)),max(unique(aug.dat$Year)),by=3), size = 4) +
+  coord_cartesian(ylim = c(10,60), expand = FALSE, clip = "off") + theme(text = element_text(size=20)) +
+  #geom_hline(aes(yintercept=0),linetype = "dashed",colour = "blue")+
+  geom_smooth(span=0.25) + #theme(axis.text.x=element_blank()) + 
+  annotate("text",x=s.date,y=55,label="d")
+
+plot_grid(p1, p2, p3,p4, align = "v", nrow = 4, rel_heights = c(1/4, 1/4, 1/4,1/4))
+```
+
+
+The strongest evidence of a relationship between current SC and cumulative monthly averaged SST is during the winter and early spring period and includes cumulative SST in both the current and the previous year (Figure 3a). There is no evidence of a direct relationship between SC and cumulative monthly averaged CHL or the average MLD in the current or previous year (Figure 3b,c). The peak $R^2$ estimates are observed when looking at the cumulative average SST from January to April in the previous year; while in the current year the strongest relationship is observed for the cumulative average SST from January to March.  Models were developed based on these results and the known timing of the increase in scallop condition during the winter and early spring.  The model terms included the cumulative monthly average SST from the previous January to April ($SST_{last}$) and the cumulative monthly average SST January to March of the current year ($SST_{cur}$).  For CHL the cumulative monthly averages between January to March of the current year were used, while for MLD the average monthly mixed layer depth between January and March of the current year was used.
+
+Both forward and backward model selection using AICc identified the model with an additive effect of $SST_{last}$, $SST_{cur}$ and MLD as the most parsimonious model (Equation 1; the $Base$ model).  Higher SST in the winter and early spring in both the current and previous year along with a deeper mixed layer are consistently associated with higher condition in the summer of the current year.  A 1&deg;C increase in the cumulative monthly average SST in January to April of the previous year is associated with a `r last.effect` ($se =$ `r last.effect.sd`) gram increase in condition. The same increase in SST from January to March of the current year is associated with an increase in condition of `r cur.effect` ($se =$ `r cur.effect.sd`) grams.  A 1 meter increase in the average depth of the mixed layer during January to March is associated with a `r mld.effect` ($se =$ `r mld.effect.sd`) gram increase in condition.
+
+
+_Figure 3: Correlation between Scallop Condition and (a) cumulative SST, (b) cumulative CHL, and (c) average MLD. The colour of each block represents the $R^2$ estimate for the linear relationship of SC and the effect of the environmental covariate.  The asterisks represent the significance level of the correlation: (\*) represents $p < 0.05$, (\*\*) represents $p < 0.01$, and (\*\*\*) represents $p < 0.001$.  For example, in panel 'a' the colour of the cell in bottom right corner of the matrix represents the $R^2$ estimate of the linear relationship between SC and the sum of SST from January of the previous year to July of the current year, the (\*\*) indicates the p-value of this linear model was < 0.01._
+
+```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=14}
+dat.list <- list(sst = sst.raw.dat,chl = chl.raw.dat,mld = mld.raw.dat)
+cond.list <- list(aug = dat.aug)
+res <- NULL
+n.months <- 19
+for(i in 1:length(dat.list))
+{
+  for(j in 1:length(cond.list))
+  {
+    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- cor_dat(dat = dat.list[[i]], response = cond.list[[j]],n.months = n.months,last.month =7)
+  }  # end for(j in 1:length(cond.list))
+} # end for(i in 1:length(dat.list))
+
+mods <- names(res)
+num.mods <- length(mods)
+str.names <- c(paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"),"last",sep=" "),
+               paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul"),"cur",sep=" "))
+p1 <- NULL
+#pdf(file = "Figures/R2_and_correlation_for_covariates.pdf",onefile=T,width = 32, height = 8)
+for(i in 1:num.mods)
+{
+tmp <- res[[i]]
+#print(paste("R2 range=" , range(tmp$resp$r2,na.rm=T)))
+#print(paste("Pearson range=" , range(tmp$resp$pearson,na.rm=T)))
+#print(paste("Kendall range=" , range(tmp$resp$kendall,na.rm=T)))
+txt <- c("a","b","c") # for labelling the figure...
+p <- ggplot(tmp$resp, aes(end.num,start.num)) + scale_x_continuous(name= "End month", breaks=1:n.months, labels = str.names) +
+     scale_y_continuous(name= "Start month", breaks=1:n.months,labels = str.names) +
+     theme_classic() + theme(text = element_text(size=20),axis.text.x = element_text(angle = -30)) 
+
+p1[[i]] <- p + geom_raster(aes(fill = r2)) +  scale_fill_gradientn(limits = c(0,0.7),colours=c("blue","white","red")) +
+          geom_text(aes(label= p.r2.lev, angle=0,hjust=0.5,vjust=1),colour="black")#+ annotate("text",x=1,y=n.months,label=txt[i])
+
+#print(p1)
+# p2 <- p+ geom_raster(aes(fill = kendall)) + scale_fill_gradientn(limits = c(-0.4,0.8),colours=c("blue","white","red"))+
+#          geom_text(aes(label= p.kend.lev, angle=0,hjust=0.5,vjust=1),colour="black") +  ggtitle(mods[i])
+
+} # end for(i in 1:num.mods)
+plot_grid(p1[[1]],p1[[2]],p1[[3]], align = "v", nrow = 3, rel_widths = 1.5)
+
+```
+
+## Predictive SC Models
+
+The $Base$ model outperforms the $SST$ model, the $AR(1)$ model, and the $NULL$ model in terms of $R^2$ and $MAPE$, however, the $SST$ model is also a significant improvement over the current $AR(1)$ methodology and the $NULL$ model (Table 1; Figures 5 and 6). The $Base$ model explains `r Final.table$R_squared[1]*100`\% of the variance in condition, the $SST$ model explains `r Final.table$R_squared[2]*100`\%, while the $AR(1)$ model explains just `r Final.table$R_squared[3]*100`\%. The $Base$ model $MAPE$ is  the lowest of the models with a reduction in the predictive error of `r -signif(Final.table$Percent.MAPE.decline[1],digits=2)`\%, however, the predictive error from the $SST$ model is also a significant improvement over the $AR(1)$ model and the $NULL$ models (Table 1; Figures 5 and 6).
+
+_Table 1:  AICc, change in AICc (delta), $R^2$, $MAPE$, and the percent decline in $MAPE$ compared to the NULL model_
+<!-- Model Comparison Results  -->
+```{r, echo=F, include=T,warning=F,fig.width=8}
+pander(Final.table,digits=2)
+```
+
+_Figure 4: Auto-correlation of condition data from 1998-2018_
+
+<!-- ACF Figure  -->
+```{r acf, echo=F, include=T,warning=F,echo=F,fig.width=4}
+ggplot(data = acfs, mapping = aes(x = lag, y = acf)) + geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = lag, yend = 0)) +
+  ylab("Correlation") + xlab("Lag") + theme_classic() +
+  scale_x_continuous(breaks=seq(0,12,by=1))
+
+```
+
+
+_Figure 5: $MAPE$ for each of the 4 models calculated from `r n.boots` simulations in which 4 years of data were randomly excluded from the model. The black points represent each of the `r n.boots` simulations, the blue point represents the mean estimate, and the blue lines represent the 95% confidence intervals._
+
+<!-- MAPE improvement Figure  -->
+```{r MAPE, echo=F, include=T,warning=F,echo=F,fig.width=8,fig.height=6}
+ ggplot(mape.boot,aes(model,MAPE)) + geom_jitter(size=1,width=0.02,height=0,colour='black',alpha=0.1) +
+   geom_point(data=MAPE.mod.preds, aes(x=model,y=mean),colour="blue",size=2,position = position_nudge(x = 0.05)) +
+   geom_errorbar(data=MAPE.mod.preds,aes(x= model,y=mean,ymin=LCI,ymax=UCI),width=0,colour="blue",size=2,position = position_nudge(x = 0.05)) +
+   scale_x_discrete(labels = c("NULL", "AR(1)", "SST", "MLD + SST")) + xlab("") + theme_classic() + theme(text = element_text(size=20)) 
+
+ # ggplot(mape.boot,aes(model,MAPE)) + geom_jitter(size=1,width=0.02,height=0,colour='black',alpha=0.1) + ylab("Mean Average Predictive Error (MAPE)") +
+ #   geom_point(data=MAPE.mod.preds, aes(x=model,y=mean),colour="blue",size=2,position = position_nudge(x = 0.05)) +
+ #   geom_errorbar(data=MAPE.mod.preds,aes(x= model,y=mean,ymin=LCI,ymax=UCI),width=0,colour="blue",size=1,position = position_nudge(x = 0.05)) +
+ #   scale_x_discrete(labels = c("Mean SC", "Previous Year SC", "SST", "MLD + SST")) + xlab("") + theme_classic() + theme(text = element_text(size=20))
+```
+
+
+There were an additional 3 years of SST data which were not included in the original model as the MLD was unavailable for these years (2016-2018); these data were used to further test the predictive skill of the $NULL$, $AR(1)$, and $SST$ models.  The $SST$ model ($MAPE =$  `r signif(MAPE.new.data.table$MAPE[3],digits =2)`) outperformed both the $NULL$ model and the $AR(1)$ model ($MAPE =$  `r signif(MAPE.new.data.table$MAPE[2],digits =2)` for both models);  the $SST$ model provided improved predictions in 2 of the 3 years (Figure 6b-d).  
+
+
+_Figure 6: Model predicted versus actual condition for the a) $Base$ model, b) $SST$ model, c) $AR(1)$ model, and d) $NULL$ model.  Points labelled in blue in b-d are the model predictions for years that SST data were available but were unavailable for MLD.  The dashed line is the 1:1 line, points above this line represent predicted SC above observed, and below the line represents predictions below observed SC.  Note in d) the year labels were rotated to improve readability._
+
+<!-- <!-- August FULL Model Correlation Figure +  a couple of simple numbers for the Discussion --> -->
+```{r pred_plot, echo=F, include=T,warning=F,echo=F,fig.width=8,fig.height = 8}
+# now August
+
+p1 <- ggplot(aug.dat, aes(y = pred.base,x = Condition)) + geom_text(aes(label = Year)) + # Add the points from the model
+  geom_abline(intercept = 0,slope=1,lty=2)+ scale_y_continuous(limits = range(aug.dat$pred.base,na.rm=T))+
+  ylab("Predicted Condition") + xlab("") + theme_classic() + annotate("text",x=13.5,y=18,label ="a)")
+
+p2 <- ggplot(aug.dat, aes(y = pred.sst,x = Condition)) + geom_text(aes(label = Year)) + # Add the points from the model
+  geom_text(data = aug.dat[aug.dat$Year %in% pred.years,], aes(y = pred.sst ,x = Condition,label=Year),colour="blue",fontface="bold") + # Add the predicted points
+  geom_abline(intercept = 0,slope=1,lty=2)+scale_y_continuous(limits = range(aug.dat$pred.base,na.rm=T))+
+  ylab("") + xlab("") + theme_classic()+ annotate("text",x=13.5,y=18,label="b)")
+
+p3 <- ggplot(aug.dat, aes(y = cond.covar,x = Condition)) + geom_text(aes(label = Year)) + # Add the points from the model
+  geom_text(data = aug.dat[aug.dat$Year %in% pred.years,], aes(y = cond.covar ,x = Condition,label=Year),colour="blue",fontface="bold") + 
+  geom_abline(intercept = 0,slope=1,lty=2)+ scale_y_continuous(limits = range(aug.dat$pred.base,na.rm=T))+
+  ylab("Predicted Condition") + xlab("Observed Condition") + theme_classic() + annotate("text",x=13.5,y=18,label ="c)")
+
+p4 <- ggplot(aug.dat, aes(y = pred.null,x = Condition)) + geom_text(aes(label = Year,angle=45)) + # Add the points from the model
+  geom_text(data = aug.dat[aug.dat$Year %in% pred.years,], aes(y = pred.null ,x = Condition,label=Year,angle=45),colour="blue",fontface="bold") + 
+  
+  geom_abline(intercept = 0,slope=1,lty=2)+ scale_y_continuous(limits = range(aug.dat$pred.base,na.rm=T))+
+  ylab("") + xlab("Observed Condition") + theme_classic()+ annotate("text",x=13.5,y=18,label="d)")
+
+plot_grid(p1,p2,p3,p4,nrow=2)
+
+# p1 <- ggplot(aug.dat, aes(y = pred.base,x = Condition)) + geom_text(aes(label = Year)) + # Add the points from the model
+#   geom_abline(intercept = 0,slope=1,lty=2)+ scale_y_continuous(limits = range(aug.dat$cond.covar,na.rm=T))+
+#   ylab("Predicted Condition") + xlab("") + theme_classic() + annotate("text",x=14.25,y=18,label ="SST + MLD",colour='red') + theme(text = element_text(size=20)) 
+# 
+# p2 <- ggplot(aug.dat, aes(y = pred.sst,x = Condition)) + geom_text(aes(label = Year)) + # Add the points from the model
+#   geom_text(data = aug.dat[aug.dat$Year %in% pred.years,], aes(y = pred.sst ,x = Condition,label=Year),colour="blue",fontface="bold") + # Add the predicted points
+#   geom_abline(intercept = 0,slope=1,lty=2)+scale_y_continuous(limits = range(aug.dat$cond.covar,na.rm=T))+
+#   ylab("") + xlab("Observed Condition") + theme_classic()+ annotate("text",x=14.25,y=18,label="SST Only",colour='red') + theme(text = element_text(size=20)) 
+# 
+# p3 <- ggplot(aug.dat, aes(y = cond.covar,x = Condition)) + geom_text(aes(label = Year)) + # Add the points from the model
+#   geom_text(data = aug.dat[aug.dat$Year %in% pred.years,], aes(y = cond.covar ,x = Condition,label=Year),colour="blue",fontface="bold") + 
+#   geom_abline(intercept = 0,slope=1,lty=2)+ scale_y_continuous(limits = range(aug.dat$cond.covar,na.rm=T))+
+#   ylab("") + xlab("") + theme_classic() + annotate("text",x=14.25,y=18,label ="Previous year SC",colour='red') + theme(text = element_text(size=20)) 
+# 
+# plot_grid(p1,p2,p3,nrow=1)
+
+
+SC.range <- signif(max(aug.dat$Condition) - min(aug.dat$Condition),digits=2)
+SC.dif <- NA ; for(i in 2:nrow(aug.dat)) SC.dif[i] <- aug.dat$Condition[i]- aug.dat$Condition[i-1]
+SC.diff <- signif(max(abs(SC.dif),na.rm=T),digits=2)
+SC.diff.per <- signif(100 * max(na.omit(SC.dif)/aug.dat$Condition[1:(nrow(aug.dat)-1)],na.rm=T),digits=2)
+```
+
+# Discussion 
+
+The meat weight observed in August on Georges Bank for a 100 mm shell height scallop (i.e. scallop condition) has varied by `r SC.range` grams over the time series, but inter-annual variability alone has been as large as `r SC.diff` grams; this corresponds to a maximum inter-annual percentage change in SC of `r SC.diff.per`%.  The implications of this change on stock assessment advice is significant since SC is assumed as a known input and is currently assumed unchanged from the previous year for biomass projections, from which fisheries management decisions on removal levels are made [@hubleyGeorgesBankBrowns2014;@dfoStockStatusUpdate2018].  Model projections based on underestimates of SC will therefore inherently underestimate biomass and may result in economic loss, whereas overestimates of SC will overestimate biomass leading to an increased risk of over-exploitation, all else being equal.  
+
+Scallop meat weight declines rapidly in the fall and this decline is associated with the primary spawning event which generally begins in August and ends in October or November on Georges Bank [@posgayObservationSpawningSea1958; @naiduReproductionBreedingCycle1970; @thompsonIdentifyingSpawningEvents2014].  After spawning, scallop meat weight remains low until the winter, at which time the meat weight begins to increase and generally reaches a maximum by June; meat weight then remains similar until spawning and the cycle begins again [@macdonaldInfluenceTemperatureFood1985; @macdonaldInfluenceTemperatureFood1985a; @sarroSpatialTemporalVariation2009; @thompsonIdentifyingSpawningEvents2014]. The increase in scallop meat weight is a gradual process, taking up to half a year [@sarroSpatialTemporalVariation2009]; therefore, identifying the environmental attributes that most influence scallop productivity requires continuous environmental data such that the effect of integrated environmental conditions can be evaluated.
+
+Our results show that the incorporation of environmental data from the winter and spring period significantly improves the modelling and prediction of SC. Through correlation analysis, cumulative SST was identified as most correlated with SC at the time of the survey in August. The periods of strongest correlation with SST were observed during January to April of the previous year and January to March of the current year. The observation that summer SC is correlated with this winter-spring period is supported by the annual cyclical nature of energy storage and utilization of  *P. magellanicus* [@naiduReproductionBreedingCycle1970; @sarroSpatialTemporalVariation2009; @thompsonIdentifyingSpawningEvents2014]. However, unexpectedly, SC did not show strong correlation with CHL or MLD, although further empirical modelling indicated that MLD did significantly improve the SC estimates ($Base$ model). The $Base$ model (covariates of SST and MLD) explained `r 100*Final.table$R_squared[1]`% and the $SST$ model (SST only) explained `r 100*Final.table$R_squared[2]`% of the variance in SC between years, compared to just `r 100*Final.table$R_squared[3]`% using the $AR(1)$ model; the latter is based on biological sampling alone and is the current adopted form for providing predictions on SC in stock assessments [@hubleyGeorgesBankBrowns2014; @dfoStockStatusUpdate2018].  Although sea scallops exhibit an annual cyclical nature to their energy cycle, the results of the SST correlation analysis, $Base$, $SST$, and $AR(1)$ models all support the notion that scallop condition is dependent on the cumulative environmental conditions experienced in the winter and spring period leading up to spawning and that this effect is not fully lost during spawning. Therefore, the condition of the scallop meat in August appears dependent on the environmental conditions up to 20 months prior. 
+
+We found no evidence for a relationship between CHL and SC which was surprising given the role of phytoplankton in scallop diets  [@shumwayFoodResourcesRelated1987; @macdonaldPhysiologyEnergyAcquisition2016]. Clearance rates in *P. magellanicus* are positively correlated to temperature [@macdonaldFeedingActivityScallops2009], however they have been shown to be independent across a broad range of food concentrations  [@cranfordParticleClearanceAbsorption1990; @macdonaldVariationFoodQuality1994; @cranfordSituFeedingAbsorption1998] and may decline at high food concentrations [@grantSedimentResuspensionRates1997].  Our results, combined with the strong mixing and high primary productivity that characterizes Georges Bank [@townsendNitrogenLimitationSecondary1997; @townsendOceanographyNorthwestAtlantic2006], suggests that food availability may not limit growth and thus scallop condition on Georges Bank. Alternatively, phytoplankton blooms are generally of short duration and do not cover the entire domain used in this study; the lack of evidence for an effect of CHL may therefore be due to the aggregation of the data in both space (6,500 km^2^) and time (monthly average) used in this study [@songPhenologyPhytoplanktonBlooms2010] (**CJ and ED can you provide a reference here and what do we mean by short duration, size of typical bloom etc??**). Further research at a finer spatio-temporal scale that more closely matches the scale of the phytoplankton blooms may better resolve this relationship.
+
+***Catherine/Emmanuel – a oceanographic paragraph to link SST, MLD, CHL and below observations:*** The increase in SC with increasing MLD (Base model) indicates that increased connectivity (mixing) between the surface and benthic communities generally leads to elevated condition SST direction with SC link to oceanography paragraph by CJ and ED.  link to oceanography paragraph by CJ and ED
+
+**Is this a reasonable summary of Brickman, especially the effect about Temp anomalies being relatively uniform from surface to depth, ideas for other references?**
+Within the SST range observed over the last two decades, SC improved when the SST in the spring was elevated and this effect was amplified when SST was elevated for consecutive years. The temperatures in the region have increased over the last decade, this has been driven by an increase in the occurrence of high salinity warm water eddies forming at the tail of the Grand Banks  [@brickmanMechanismRecentOcean2018]. These anomalous eddies propagate across the Scotian Shelf to the Gulf of Maine and are caused by an interaction between the Labrador Current and the Gulf Stream. Similar cold water eddies were likely more common in previous decades and appear to help regulate temperatures within the region during colder periods [@brickmanMechanismRecentOcean2018].  Within both cold and warm eddies the MLD would likely be above average and temperature anomalies are observed from near the surface to depths in excess of 120 meters. The SST anomaly would be correlated to the bottom temperature anomaly at the depths scallop inhabit on Georges Bank within an eddy which indicates that SST could be a good proxy for the environment scallop experience.  These eddies have a central role in modulating temperatures on Georges Bank and throughout the region, and therefore on the environmental conditions scallop experience.
+
+In the stock assessment process, environmental data can be incorporated to better understand the underlying processes driving patterns in a time series. However, providing environmentally-conditioned advice for real time management requires that at least two criteria are met: 1) the environmental relationship improves the estimation or prediction of an aspect of productivity over the current methodology (*predictive criterion*), and 2) the required environmental data is available for use in the stock assessment process (*availability criterion*).
+
+Both the $SST$ and $Base$ models meet the *predictive criteria*, with each outperforming the current methodology ($AR(1)$).  The predictive ability of each model was evaluated using the mean absolute prediction error and the environmentally informed $Base$ and $SST$ models showed significantly improved predictions, with percent gains of `r 100* MLD.mape.vs.AR1`% and `r 100* SST.mape.vs.AR1`% over the current methodology, respectively. Although the $Base$ model provides the best improvement, it does not meet the *availability criteria* as it depends on MLD data which is an oceanographic model output that is not available until after the stock assessment process has completed.  For this reason the MLD cannot currently be operationalized to provide real time assessment advice. In contrast, the *SST* model meets the *availability criteria* as it depends only on remote sensed SST data which is available in near real time and before the stock assessment process is completed; the $SST$ model is therefore highly likely to be operationalized within the stock assessment process. While the need to integrate oceanographic and climate information into fisheries assessment and management is widely recognized [@garciaEcosystemApproachFisheries2003; @chassotSatelliteRemoteSensing2011], the slow adoption of environmental considerations into the stock assessment process is partially due to the environmental relationships and associated data not meeting *both* the *predictive* and *availability criteria*. 
+
+## Conclusion
+
+The integration of oceanographic and environmental data in stock assessment advice is critical to implementing an ecosystem approach to fisheries management (EAFM) and is required to inform climate-ready fisheries management strategies [@wilsonAdaptiv=eComanagementAchieve2018]. The results of this study show how the combination of environmental datasets with traditional fisheries survey data can improve our understanding of the influence of the environment on scallop productivity. Conventional sampling methods using research vessels are limited in space and time with fishery surveys and in-situ oceanographic sampling occurring at most a few times a year. In contrast, satellite remote sensing and oceanographic modelling outputs provides near continuous, high spatio-temporal environmental data; although, only remote sensed data products are available in near real time. While the overall best model incorporates both SST and MLD, this relationship cannot be operationalized because of the limitations on the *availability* of the MLD data. However, the $SST$ model also improves the *prediction* of SC over the current biological-only methodology and these data are *available* in near real time. The $SST$ model meets both the *predictive* and the *availability criteria* and this relationship can be operationalized within the stock assessment process to help improve science advice.
+
+
+# References

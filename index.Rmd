@@ -1,0 +1,166 @@
+---
+output:
+  # bookdown::word_document2:
+  #   fig_caption: yes
+  #   number_sections: false
+  # fontsize: 12pt
+  # sansfont: Liberation Sans
+  # mainfont: Liberation Sans
+  # classoption: twocolumn
+  # language: english
+  # bookdown::html_document2: default
+  bookdown::pdf_document2:
+      keep_tex: yes
+      number_sections: false
+      toc: no
+  language: english
+  classoption: twocolumn
+# End of options to set
+title: "Impact of the environmental drivers of condition on Biomass Prediction for sea scallop (*Placopecten magellanicus*) on Georges Bank, Canada"
+author: |
+  David M. Keith^1^,
+  Jessica A. Sameoto^1^,
+  Xiaohan Liu^2^, 
+  Emmanuel Devred^1^, and
+  Catherine Johnson^1^
+address: |
+  ^1^Bedford Institute of Oceanography\
+     Fisheries and Oceans Canada, 1 Challenger Dr.\
+     Dartmouth Nova Scotia, B2Y 4A2, Canada\
+  ^2^UK\
+month: November # fill in
+year: 2020
+report_number: nnn
+region: Maritimes Region
+author_list: "Keith, D.M., Sameoto, J.A., Liu, X., Devred, E., Johnson, C."
+abstract: |
+  Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate if environmental information from remotely sensed sea surface temperature (SST), Chlorophyll-a (CHL), and model-derived mixed layer depth (MLD) could improve the prediction of SC. Model formulations that incorporated SST and MLD, as well as SST alone, significantly improved predictions over the currently implemented biological-only model.  Additionally, these results indicate that scallop condition in August is dependent on the environmental conditions experienced in the winter and spring periods up to 20 months prior. Although MLD was included in the best *predictive* model, these data are not readily *available* in time for the stock assessment, alternatively, SST improves the SC *prediction* and the data are *available* in near real time; therefore this relationship can be operationalized within the quantitative assessment model to directly improve fisheries management advice. These results highlight how the operationalization of environmental relationships in fisheries assessment and management requires that the environmental relationship improves the estimation or prediction of an aspect of productivity over the current methodology (*predictive criterion*) and that the required environmental data is available for use in the stock assessment process (*availability criterion*). 
+  
+header: "Draft working paper --- Do not cite or circulate" # or "" to omit
+
+knit: bookdown::render_book
+link-citations: true
+bibliography: Y:/Zotero/MAR_SABHU.bib
+csl: Y:/Zotero/styles/canadian-journal-of-fisheries-and-aquatic-sciences.csl
+# Any extra LaTeX code for the header:
+#  Note that if you need to include more than one package you will have to have them on the same line like this:
+header-includes: 
+ - \usepackage{tikz} \usepackage{pdflscape}
+ - \newcommand{\blandscape}{\begin{landscape}}
+ - \newcommand{\elandscape}{\end{landscape}}
+ - \newcommand{\beginsupplement}{\setcounter{table}{0}  \renewcommand{\thetable}{S\arabic{table}} \setcounter{figure}{0} \renewcommand{\thefigure}{S\arabic{figure}}}
+
+---
+
+
+```{r setup, echo=FALSE, cache=FALSE, message=FALSE, results='hide', warning=FALSE}
+library(knitr)
+
+##### Bring in the data and functions
+library(MASS)
+library(readxl)
+library(bbmle)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(mgcv)
+library(lubridate)
+library(pander)
+library(scales)
+library(R.matlab)
+library(cowplot)
+library(visreg)
+
+# Bring in our in house functions. First combine them all in a vector
+funs <- c("https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
+          "https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/convert_inla_mesh_to_sf.R",
+          "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/centre_of_gravity.R",
+          "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R")
+# Now run through a quick loop to load each one, just be sure that your working directory is read/write!
+for(fun in funs) 
+{
+  download.file(fun,destfile = basename(fun))
+  source(paste0(getwd(),"/",basename(fun)))
+  file.remove(paste0(getwd(),"/",basename(fun)))
+}
+
+# A couple custom functions I may or may not use
+factor.2.number <- function(x) {as.numeric(levels(x))[x]} # My friend factor.2.number
+# Function in case you need it for transforming propotion data to not have 0's and 1's.  
+beta.transform <- function(dat,s=0.5)  (dat*(length(dat)-1) + s) / length(dat)
+# Just so this code is easily portable over to our eventual Res Doc..
+direct.proj <- "D:/Github/Paper_2_Cond_Env/"
+# The prediction prop function
+
+```
+
+```{r data-load, echo=FALSE, cache=T, message=FALSE, results='hide', warning=FALSE}
+
+
+#####  Data Load....
+dat <- read_xlsx(paste0(direct.proj,"Data/GB_satellite_1985_2019.xlsx"))
+cond.dat <- read.csv(paste0(direct.proj,"Data/CF_data_May_GB_for_revisions_1986_2019.csv"))
+ 
+##### Done with data loading... Set some variables for the rest of the show..
+
+if (is_latex_output()) {
+  knitr_figs_dir <- "knitr-figs-pdf/"
+  knitr_cache_dir <- "knitr-cache-pdf/"
+  fig_out_type <- "png"
+} else {
+  knitr_figs_dir <- "knitr-figs-docx/"
+  knitr_cache_dir <- "knitr-cache-docx/"
+  fig_out_type <- "png"
+}
+fig_asp <- 0.618
+fig_width <- 9
+fig_out_width <- "6in"
+fig_dpi <- 180
+fig_align <- "center"
+fig_pos <- "htb"
+opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  comment = "#>",
+  fig.path = knitr_figs_dir,
+  cache.path = knitr_cache_dir,
+  fig.asp = fig_asp,
+  fig.width = fig_width,
+  out.width = fig_out_width,
+  echo = FALSE,
+  #  autodep = TRUE,
+  #  cache = TRUE,
+  cache.comments = FALSE,
+  dev = fig_out_type,
+  dpi = fig_dpi,
+  fig.align = fig_align,
+  fig.pos = fig_pos
+)
+options(xtable.comment = FALSE)
+options(kableExtra.latex.load_packages = FALSE)
+
+
+# Don't use scientific notation please!!
+options(scipen=999)
+# Set a nice theme for the ggplots unless I override
+
+# For examplorary purposes I've kept the option to translate to French, and to ID if we are making a word or pdf docnot needed otherwise.
+# `french` is extracted from the YAML header metadata, also later we use metadata to make sure the tables are formatted correctly for word/pdf
+meta <- rmarkdown::metadata$output
+
+if(meta$language == 'french'){ french = T} else {french = F}
+print(french)
+# if(length(grep("pdf", names(meta)))){
+#   #french <- meta$`bookdown::pdf_document2`$french
+#   prepub <- meta$`bookdown::pdf_document2`$prepub
+# }else if(length(grep("word", names(meta)))){
+#   #french <- meta$`bookdown::word_document2`$french
+#   prepub <- meta$`bookdown::word_document2`$prepub
+# }
+if(french) options(OutDec =  ",")
+
+
+```
+
+
