@@ -1,7 +1,8 @@
 # Load the survey data 
-load("Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")  
+load("D:/NAS/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")  
+
 # Now figure out what to extract and save that to the our github repo
-vonB <- read.csv("Y:/Offshore/Assessment/Data/Ageing/Von_B_growth_parameters.csv")
+vonB <- read.csv("D:/NAS/Offshore/Assessment/Data/Ageing/Von_B_growth_parameters.csv")
 
 # We can't use the August condition because the relationship starts to break down.  If we need to discuss this 
 # I think the answer is that spawning starts in August and it is after the peak of the fishery, so we use May data
@@ -13,6 +14,11 @@ SS.dat <- SS.summary$GBa
 live.dat <- surv.Live$GBa
 sh.dat <- data.frame(year = survey.obj$GBa[[1]]$year,l.fr = survey.obj$GBa[[1]]$l.bar,l.r = survey.obj$GBa[[1]]$l.k)
 vonB <- vonB %>% dplyr::filter(Bank == "GBa")
+
+saveRDS(sh.dat,paste0(direct.proj,"Data/sh_dat.RDS"))
+sh.dat <- readRDS(paste0(direct.proj,"Data/sh_dat.RDS"))
+saveRDS(vonB,paste0(direct.proj,"Data/vonb_dat.RDS"))
+vonB <- readRDS(paste0(direct.proj,"Data/vonb_dat.RDS"))
 
 all.dat <- left_join(all.dat,sh.dat,by='year')
 
@@ -58,6 +64,12 @@ all.dat.long <- all.dat %>% reshape2::melt(id.vars = 'year',value.name = 'respon
 ggplot(all.dat.long %>% dplyr::filter(str_detect(covar,'prec.g.'))) + geom_boxplot(aes(y = response,x = covar))
 ggplot(all.dat.long %>% dplyr::filter(str_detect(covar,'^g.'))) + geom_boxplot(aes(y = response,x = covar))
 ggplot(all.dat.long %>% dplyr::filter(str_detect(covar,'^CF.'))) + geom_boxplot(aes(y = response,x = covar))
+
+
+
+
+
+
 
 # same thing here but for the recruits
 waa.tm1 <- mod.dat$CF*(mod.dat$l.k/100)^3
