@@ -27,9 +27,20 @@ BNAM_crop <- map(BNAM, crop_BNAM)
 save(BNAM_crop, file = "Data/BNAM_BtmTemp_GB_1990-2019.RData")
 ##########
 
-load("BNAM_BtmTemp_GB_1990-2019.RData")
+load("Data/BNAM_BtmTemp_GB_1990-2019.RData")
 
-BT_dat <- map_df(1:nrow(df), function(x) data.frame(year=df$year[x], month=df$month[x], BT = BNAM_crop[[x]][[1]])) %>% tidyr::pivot_longer(cols=starts_with("BT."))
+# And shapefiles of interest
+gb.good <- st_read("Y:/Projects/Condition_Environment/Data/Boundaries/GB_boundary_for_azmp/GB_PolyForRemoteSensing.shp")
+
+poly_BNAM <- function(obj) {
+  BNAM_poly <- obj %>%
+    st_crop(gb.good)
+}
+
+BNAM_poly <- map(BNAM_crop, poly_BNAM)
+
+
+BT_dat <- map_df(1:nrow(df), function(x) data.frame(year=df$year[x], month=df$month[x], BT = BNAM_poly[[x]][[1]])) %>% tidyr::pivot_longer(cols=starts_with("BT."))
 
 monthly_avg <- BT_dat %>%
   group_by(year, month) %>%
@@ -37,6 +48,8 @@ monthly_avg <- BT_dat %>%
   arrange(year, month) %>%
   ungroup() %>%
   mutate(monthnum = 1:360)
+
+write.csv(file = "Data/bt_gb.csv", monthly_avg)
 
 a <- ggplot() + geom_line(data=monthly_avg, aes(month, BT, group=year, colour=year)) +
   geom_smooth(data=monthly_avg, aes(month, BT, group=1), colour="black", lwd=2)
