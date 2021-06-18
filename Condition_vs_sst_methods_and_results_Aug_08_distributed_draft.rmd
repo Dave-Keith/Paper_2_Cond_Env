@@ -272,6 +272,34 @@ AICctab(final.step.may.mod.bt,final.may.mod.bt,final.bt.may.mod)
 # aug.max.mld <- lm(Condition~ chl*mld,data = aug.dat.comp)
 # summary(aug.max.mld)
 
+
+summary(lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ SST.last + SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ SST.last))
+summary(lm(data=may.dat.comp, Condition ~ SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ BT.last))
+
+AIC(lm(data=aug.dat.comp, Condition ~ SST.last),
+lm(data=aug.dat.comp, Condition ~ SST.cur),
+lm(data=aug.dat.comp, Condition ~ BT.last))
+
+AIC(lm(data=may.dat.comp, Condition ~ SST.last),
+lm(data=may.dat.comp, Condition ~ SST.cur),
+lm(data=may.dat.comp, Condition ~ BT.last))
+
+AICctab(lm(data=may.dat.comp, Condition ~ SST.last),
+lm(data=may.dat.comp, Condition ~ SST.last+SST.cur),
+lm(data=may.dat.comp, Condition ~ SST.last+SST.cur+BT.last))
+
+AICctab(lm(data=aug.dat.comp, Condition ~ SST.last),
+lm(data=aug.dat.comp, Condition ~ SST.last+SST.cur),
+lm(data=aug.dat.comp, Condition ~ SST.last+SST.cur+BT.last))
+
+cor.test(may.dat.comp$SST.last, may.dat.comp$BT.last)
+cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
+
+
+
 # Some useful model summaries
 last.effect <- round(final.aug.mod$coefficients[2],digits=2)
 cur.effect <-  round(final.aug.mod$coefficients[3],digits=2)
