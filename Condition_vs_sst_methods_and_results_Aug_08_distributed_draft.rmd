@@ -625,8 +625,8 @@ Both forward and backward model selection using AICc identified the model with a
 _Figure 3: Correlation between Scallop Condition and (a) cumulative SST, (b) cumulative CHL, and (c) average MLD. The colour of each block represents the $R^2$ estimate for the linear relationship of SC and the effect of the environmental covariate.  The asterisks represent the significance level of the correlation: (\*) represents $p < 0.05$, (\*\*) represents $p < 0.01$, and (\*\*\*) represents $p < 0.001$.  For example, in panel 'a' the colour of the cell in bottom right corner of the matrix represents the $R^2$ estimate of the linear relationship between SC and the sum of SST from January of the previous year to July of the current year, the (\*\*) indicates the p-value of this linear model was < 0.01._
 
 ```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=14}
-dat.list <- list(sst = sst.raw.dat,chl = chl.raw.dat,mld = mld.raw.dat, bt = bt.raw.dat)
-cond.list <- list(aug = dat.aug, may=dat.may)
+dat.list <- list(sst = sst.raw.dat,chl = chl.raw.dat,mld = mld.raw.dat)#, bt = bt.raw.dat)
+cond.list <- list(aug = dat.aug)#, may=dat.may)
 res <- NULL
 n.months <- 19
 for(i in 1:length(dat.list))
@@ -662,9 +662,9 @@ p1[[i]] <- p + geom_raster(aes(fill = r2)) +  scale_fill_gradientn(limits = c(0,
 #          geom_text(aes(label= p.kend.lev, angle=0,hjust=0.5,vjust=1),colour="black") +  ggtitle(mods[i])
 
 } # end for(i in 1:num.mods)
-plot_grid(p1[[1]],p1[[2]],p1[[3]],p1[[4]],
-          p1[[5]],p1[[6]],p1[[7]],p1[[8]],
-          align = "v", nrow = 4, rel_widths = 1.5)
+plot_grid(p1[[1]],p1[[2]],p1[[3]],#p1[[4]],
+          #p1[[5]],p1[[6]],p1[[7]],p1[[8]],
+          align = "v", nrow = 3, rel_widths = 1.5)
 
 ```
 
