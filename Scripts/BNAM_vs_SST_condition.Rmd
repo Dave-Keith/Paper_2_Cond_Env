@@ -1,7 +1,11 @@
 ---
 title: "BNAM bottom temperature vs. condition"
-output: pdf_document
+output:
+  pdf_document: default
+  word_document: default
 ---
+
+# Prep, just adding to existing code. 
 
 ```{r, message=F, warning=F}
 # Data loading and analysis
@@ -296,6 +300,7 @@ mld.effect.sd <- round(coef(summary(final.aug.mod))[4,2],digits=2)
 
 ```
 
+# This is the new stuff: 
 
 ```{r}
 summary(lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur))
