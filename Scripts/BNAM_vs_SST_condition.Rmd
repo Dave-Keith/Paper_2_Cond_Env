@@ -1,0 +1,374 @@
+---
+title: "BNAM bottom temperature vs. condition"
+output: pdf_document
+---
+
+```{r, message=F, warning=F}
+# Data loading and analysis
+set.seed(594)
+#setwd("Y:/Projects/Condition_Environment/Data/")
+setwd("Y:/Projects/Condition_Environment/")
+# directory you have the survey results stored in...
+direct <- "Y:/Offshore/Assessment/Data/Survey_data/2018/Survey_summary_output/"
+#direct <- "E:/R/Data/Survey_data/2018/Survey_summary_output/"
+
+# Looking a relationship between Condition and SST and phytoplankton
+library(MASS)
+library(readxl)
+library(bbmle)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(mgcv)
+library(lubridate)
+library(pander)
+library(scales)
+library(R.matlab)
+library(cowplot)
+require(formatR)
+
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+
+source("Scripts/correlation_table_function_revised.r")
+# Here we load in the raw data and get everything ready for further analyses.
+#----------------------------------------------------------------------------------
+# RAW Data Section
+# Bring in the raw data.
+chl.raw.dat <- as.data.frame(readMat("Data/chl_gb.mat")$chl.gb)
+mic.raw.dat <- as.data.frame(readMat("Data/mic_gb.mat")$mic.gb)
+mld.raw.dat <- as.data.frame(readMat("Data/mld_gb.mat")$mld.gb)
+sst.raw.dat <- as.data.frame(readMat("Data/sst_gb_adj.mat")$gb)
+bt.raw.dat <- dplyr::select(read.csv("Data/bt_gb.csv"), -X, -monthnum)
+
+names(chl.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(mic.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(mld.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(sst.raw.dat) <- c("Year","Month","covar")
+names(bt.raw.dat) <- c("Year", "Month", "covar")
+
+bt.raw.dat$Month <- match(bt.raw.dat$Month, month.abb)
+
+# dat.aug <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "Aug",col_types = "numeric")
+# dat.may <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "May",col_types = "numeric")
+
+# We want a month-Year combo field for these
+sst.raw.dat$date <- dmy(paste(01,sst.raw.dat$Month,sst.raw.dat$Year, sep="/"))
+sst.raw.dat$Year <- year(sst.raw.dat$date)
+sst.raw.dat$Month <- month(sst.raw.dat$date)
+bt.raw.dat$date <- dmy(paste(01,bt.raw.dat$Month,bt.raw.dat$Year, sep="/"))
+bt.raw.dat$Year <- year(bt.raw.dat$date)
+bt.raw.dat$Month <- month(bt.raw.dat$date)
+chl.raw.dat$date <- dmy(paste(01,chl.raw.dat$Month,chl.raw.dat$Year, sep="/"))
+chl.raw.dat$Year <- year(chl.raw.dat$date)
+chl.raw.dat$Month <- month(chl.raw.dat$date)
+mic.raw.dat$date <- dmy(paste(01,mic.raw.dat$Month,mic.raw.dat$Year, sep="/"))
+mic.raw.dat$Year <- year(mic.raw.dat$date)
+mic.raw.dat$Month <- month(mic.raw.dat$date)
+mld.raw.dat$date <- dmy(paste(01,mld.raw.dat$Month,mld.raw.dat$Year, sep="/"))
+mld.raw.dat$Year <- year(mld.raw.dat$date)
+mld.raw.dat$Month <- month(mld.raw.dat$date)
+# now bring in the condition data of the whole time series.
+# This is used to get the acf for condition from the whole time series of condition we have
+base.cond.ts <- read.csv("Data/Full_may_aug_condition_ts.csv")
+
+# base.cond.ts from 1998 on matches dat.aug and dat.may
+# ggplot() + geom_point(data=base.cond.ts, aes(year, aug), colour="blue") +
+#   geom_point(data=base.cond.ts, aes(year, may), colour="red") + 
+#   geom_point(data=dat.aug, aes(Year, Condition), colour="lightblue") + 
+#   geom_point(data=dat.may, aes(Year, Condition), colour="pink")
+
+# Building these by hand because I don't know where the SST data in the XLSX files came from
+dat.aug <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], 
+                      Condition=base.cond.ts$aug[base.cond.ts$year>1997])
+dat.may <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], 
+                      Condition=base.cond.ts$may[base.cond.ts$year>1997])
+
+
+# Now we want these as anomolies from average, so starting with SST...
+sst.raw.dat$anom <- sst.raw.dat$covar - mean(sst.raw.dat$covar,na.rm=T)
+bt.raw.dat$anom <- bt.raw.dat$covar - mean(bt.raw.dat$covar,na.rm=T)
+chl.raw.dat$anom <- chl.raw.dat$covar - mean(chl.raw.dat$covar,na.rm=T)
+chl.raw.dat$myst.anom <- chl.raw.dat$mystery.covar - mean(chl.raw.dat$mystery.covar,na.rm=T)
+mic.raw.dat$anom <- mic.raw.dat$covar - mean(mic.raw.dat$covar,na.rm=T)
+mic.raw.dat$myst.anom <- mic.raw.dat$mystery.covar - mean(mic.raw.dat$mystery.covar,na.rm=T)
+mld.raw.dat$anom <- mld.raw.dat$covar - mean(mld.raw.dat$covar,na.rm=T)
+mld.raw.dat$myst.anom <- mld.raw.dat$mystery.covar - mean(mld.raw.dat$mystery.covar,na.rm=T)
+
+# Now we want to remove the "seasonal" signal, one way to do this would be to remove the 
+# mean temperature anomoly found for each month, so for January, subtract off the mean Jan temp anomoly...
+for(i in 1:12) 
+{  
+  # Sea surface temp
+  sst.raw.dat$anom.seasonal[sst.raw.dat$Month == i] <- 
+    sst.raw.dat$anom[sst.raw.dat$Month == i] - 
+    mean(sst.raw.dat$anom[sst.raw.dat$Month == i],na.rm=T)
+  # Bottom temp
+  bt.raw.dat$anom.seasonal[bt.raw.dat$Month == i] <- 
+    bt.raw.dat$anom[bt.raw.dat$Month == i] - 
+    mean(bt.raw.dat$anom[bt.raw.dat$Month == i],na.rm=T)
+  
+  # Chlorophyll
+  chl.raw.dat$anom.seasonal[chl.raw.dat$Month == i] <- 
+    chl.raw.dat$anom[chl.raw.dat$Month == i] -
+    mean(chl.raw.dat$anom[chl.raw.dat$Month == i],na.rm=T)
+  
+  chl.raw.dat$anom.sea.myst[chl.raw.dat$Month == i] <- 
+    chl.raw.dat$myst.anom[chl.raw.dat$Month == i] -
+    mean(chl.raw.dat$myst.anom[chl.raw.dat$Month == i],na.rm=T)
+  # Micro phyto
+  mic.raw.dat$anom.seasonal[mic.raw.dat$Month == i] <- 
+    mic.raw.dat$anom[mic.raw.dat$Month == i] -
+    mean(mic.raw.dat$anom[mic.raw.dat$Month == i],na.rm=T)
+  
+  mic.raw.dat$anom.sea.myst[mic.raw.dat$Month == i] <- 
+    mic.raw.dat$myst.anom[mic.raw.dat$Month == i] -
+    mean(mic.raw.dat$myst.anom[mic.raw.dat$Month == i],na.rm=T)
+  # MLD
+  mld.raw.dat$anom.seasonal[mld.raw.dat$Month == i] <- 
+    mld.raw.dat$anom[mld.raw.dat$Month == i] -
+    mean(mld.raw.dat$anom[mld.raw.dat$Month == i],na.rm=T)
+
+  mld.raw.dat$anom.sea.myst[mld.raw.dat$Month == i] <- 
+    mld.raw.dat$myst.anom[mld.raw.dat$Month == i] -
+    mean(mld.raw.dat$myst.anom[mld.raw.dat$Month == i],na.rm=T)
+}
+
+#Now we can get the monthly SST, CHla, and MLD estimates, this is used for the first figure in the paper.
+chl.mon <- aggregate(covar~ Month,data = chl.raw.dat,FUN=mean)
+chl.mon$sd <- aggregate(covar~ Month,data = chl.raw.dat,FUN=sd)[,2]
+chl.mon$variable <- "chl"
+sst.mon <- aggregate(covar~ Month,data = sst.raw.dat,FUN=mean)
+sst.mon$sd <- aggregate(covar~ Month,data = sst.raw.dat,FUN=sd)[,2]
+sst.mon$variable <- "sst"
+
+bt.mon <- aggregate(covar~ Month,data = bt.raw.dat,FUN=mean)
+bt.mon$sd <- aggregate(covar~ Month,data = bt.raw.dat,FUN=sd)[,2]
+bt.mon$variable <- "bt"
+
+mld.mon <- aggregate(covar~ Month,data = mld.raw.dat,FUN=mean)
+mld.mon$sd <- aggregate(covar~ Month,data = mld.raw.dat,FUN=sd)[,2]
+mld.mon$variable <- "mld"
+
+month.dat <- rbind(chl.mon,
+                   sst.mon,
+                   bt.mon,
+                   mld.mon
+                   )
+
+# Here we get the data we want for the correlation figures, making one
+# for August SST, Chl, MLD, and MIC not sure which ones we'll use yet...
+
+dat.list <- list(#chl = chl.raw.dat,mic = mic.raw.dat,mld = mld.raw.dat,
+  sst = sst.raw.dat,
+  bt = bt.raw.dat)
+cond.list <- list(aug = dat.aug,may = dat.may)
+res <- NULL
+for(i in 1:length(dat.list))
+{
+  for(j in 1:length(cond.list))
+  {
+    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- 
+      cor_dat(dat = dat.list[[i]], response = cond.list[[j]])
+  }  # end for(j in 1:length(cond.list))
+} # end for(i in 1:length(dat.list))
+
+
+
+
+#----------------------------------------------------------------------------------
+# Sub-Section where we create the aggregated time series.
+#Putting the indices together...
+# SO based on the above analyses, it is pretty clear that mld and chl 'a' really 
+# aren't doing anything on their own.  What
+# stands out is SST in the previous spring and the current spring.  
+# The previous spring SST is best represented by Jan-April (even May?), while this years is Jan-Mar.
+# So this decision is still somewhat arbitrary and I think we should all chat abou it at some point...
+# the most stats logical move is to use SST from Jan-April last year, and Jan-March this year
+# But from a consistency point of view, Jan-March of both years is very useful
+# And from an applied point of view, given the timing of the advice, seemingly
+# using Jan/Feb of the current year, but Jan-Mar is the better choice
+#  So after much consternation we go for...
+
+# For SST use Jan-April last year and Jan-March this year as the model of choice (makes sense and gives excellent model fit..)
+SST.last <- aggregate(covar ~ Year, 
+                      data=sst.raw.dat[sst.raw.dat$Month %in% 1:4,], FUN = sum)
+names(SST.last) <- c("Year","SST.last")
+BT.last <- aggregate(covar ~ Year, 
+                     data=bt.raw.dat[bt.raw.dat$Month %in% 1:4 & 
+                                       bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+names(BT.last) <- c("Year","BT.last") 
+chl.dat <- aggregate(covar ~ Year, 
+                     data=chl.raw.dat[chl.raw.dat$Month %in% 1:3,], FUN = sum)
+mld.dat <- aggregate(covar ~ Year, 
+                     data=mld.raw.dat[mld.raw.dat$Month %in% 1:3,], FUN = mean)
+
+dat <- aggregate(covar ~ Year, 
+                 data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
+names(dat) <- c("Year","SST.cur")
+dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
+dat.bt <- aggregate(covar ~ Year, 
+                    data=bt.raw.dat[bt.raw.dat$Month %in% 1:3 & 
+                                      bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+names(dat.bt) <- c("Year","BT.cur")
+dat.bt$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
+
+dat <- dplyr::left_join(dat, dat.bt, by="Year")
+
+dat$chl <- c(chl.dat$covar,NA)
+dat$mld <- c(mld.dat$covar,NA,NA,NA)
+
+may.dat <- dat
+aug.dat <- dat
+may.dat$Condition <- dat.may$Condition
+aug.dat$Condition <- dat.aug$Condition
+# Also make an SST sum covar
+may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
+may.dat$BT.sum <- may.dat$BT.cur + may.dat$BT.last
+aug.dat$SST.sum <- aug.dat$SST.cur + aug.dat$SST.last
+aug.dat$BT.sum <- aug.dat$BT.cur + aug.dat$BT.last
+
+```
+
+```{r, echo=F, include=F}
+#----------------------------------------------------------------------------------
+# Now we run the analyses necessary for the paper.
+
+# Now we can omit the years we don't have data right off the top, a bit too harsh but good for model comparisons...
+aug.dat.comp <- na.omit(aug.dat)
+may.dat.comp <- na.omit(may.dat)
+# I wonder if standardizing the data might make any difference to our results, I sure hope not...
+# Now the August models, we are now starting with a really really big model.
+# Removing the chl*SST inter
+aug.max.mod <- lm(Condition~ SST.last * SST.cur + chl * SST.last + chl*SST.cur + mld*SST.cur + mld*SST.last + chl*mld,data = aug.dat.comp)
+summary(aug.max.mod)
+
+aug.max.mod.bt <- lm(Condition~ BT.last * BT.cur + chl * BT.last + chl*BT.cur + mld*BT.cur + mld*BT.last + chl*mld,data = aug.dat.comp)
+summary(aug.max.mod.bt)
+
+may.max.mod.bt <- lm(Condition~ BT.last * BT.cur + chl * BT.last + chl*BT.cur + mld*BT.cur + mld*BT.last + chl*mld,data = may.dat.comp)
+summary(may.max.mod.bt)
+
+# The best of the August models.
+final.step.aug.mod <- stepAIC(aug.max.mod,direction="backward", lower = ~1)
+summary(final.step.aug.mod)
+
+final.step.aug.mod.bt <- stepAIC(aug.max.mod.bt,direction="backward", lower = ~1)
+summary(final.step.aug.mod.bt)
+
+final.step.may.mod.bt <- stepAIC(may.max.mod.bt,direction="backward", lower = ~1)
+summary(final.step.may.mod.bt)
+
+# But clearly the interaction doesn't help when we go a step further, go with the simplier model!
+final.aug.mod <- lm(Condition ~ SST.last+SST.cur + mld,data=aug.dat.comp)
+summary(final.aug.mod)
+
+final.aug.mod.bt <- lm(Condition ~ BT.last+BT.cur + mld,data=aug.dat.comp)
+summary(final.aug.mod.bt)
+
+final.may.mod.bt <- lm(Condition ~ BT.last+BT.cur + mld,data=may.dat.comp)
+summary(final.may.mod.bt)
+
+# Now confirming there is no reasonable reason to remove the mld.
+final.sst.aug.mod <- lm(Condition ~ SST.last+SST.cur ,data=aug.dat.comp)
+summary(final.sst.aug.mod)
+AICctab(final.step.aug.mod,final.aug.mod,final.sst.aug.mod)
+
+final.bt.aug.mod <- lm(Condition ~ BT.last+BT.cur ,data=aug.dat.comp)
+summary(final.bt.aug.mod)
+AICctab(final.step.aug.mod.bt,final.aug.mod.bt,final.bt.aug.mod)
+
+final.bt.may.mod <- lm(Condition ~ BT.last+BT.cur ,data=may.dat.comp)
+summary(final.bt.may.mod)
+AICctab(final.step.may.mod.bt,final.may.mod.bt,final.bt.may.mod)
+
+# Now we can also just look at a mechanistic model with chl and mld in it to see how it does compared to our SST based models
+# aug.max.mld <- lm(Condition~ chl*mld,data = aug.dat.comp)
+# summary(aug.max.mld)
+# Some useful model summaries
+last.effect <- round(final.aug.mod$coefficients[2],digits=2)
+cur.effect <-  round(final.aug.mod$coefficients[3],digits=2)
+last.effect.sd <- round(coef(summary(final.aug.mod))[2,2],digits=2)
+cur.effect.sd <- round(coef(summary(final.aug.mod))[3,2],digits=2)
+mld.effect <- round(final.aug.mod$coefficients[4],digits=2)
+mld.effect.sd <- round(coef(summary(final.aug.mod))[4,2],digits=2) 
+bt.aug.effect <- round(final.aug.mod$coefficients[4],digits=2)
+mld.effect.sd <- round(coef(summary(final.aug.mod))[4,2],digits=2) 
+
+```
+
+
+```{r}
+summary(lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ SST.last + SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ SST.last))
+summary(lm(data=may.dat.comp, Condition ~ SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ BT.last))
+
+AIC(lm(data=aug.dat.comp, Condition ~ SST.last),
+lm(data=aug.dat.comp, Condition ~ SST.cur),
+lm(data=aug.dat.comp, Condition ~ BT.last))
+
+AIC(lm(data=may.dat.comp, Condition ~ SST.last),
+lm(data=may.dat.comp, Condition ~ SST.cur),
+lm(data=may.dat.comp, Condition ~ BT.last))
+
+AICctab(lm(data=may.dat.comp, Condition ~ SST.last),
+lm(data=may.dat.comp, Condition ~ SST.last+SST.cur),
+lm(data=may.dat.comp, Condition ~ SST.last+SST.cur+BT.last))
+
+AICctab(lm(data=aug.dat.comp, Condition ~ SST.last),
+lm(data=aug.dat.comp, Condition ~ SST.last+SST.cur),
+lm(data=aug.dat.comp, Condition ~ SST.last+SST.cur+BT.last))
+
+cor.test(may.dat.comp$SST.last, may.dat.comp$BT.last)
+cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
+
+```
+
+
+```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=18}
+dat.list <- list(sst = sst.raw.dat,chl = chl.raw.dat,mld = mld.raw.dat, bt = bt.raw.dat)
+cond.list <- list(aug = dat.aug, may=dat.may)
+res <- NULL
+n.months <- 19
+for(i in 1:length(dat.list))
+{
+  for(j in 1:length(cond.list))
+  {
+    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- cor_dat(dat = dat.list[[i]], response = cond.list[[j]],n.months = n.months,last.month =7)
+  }  # end for(j in 1:length(cond.list))
+} # end for(i in 1:length(dat.list))
+
+mods <- names(res)
+num.mods <- length(mods)
+str.names <- c(paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"),"last",sep=" "),
+               paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul"),"cur",sep=" "))
+aug.mods <- grep(pattern="aug", mods)
+may.mods <- grep(pattern="may", mods)
+p1<- NULL
+#pdf(file = "Figures/R2_and_correlation_for_covariates.pdf",onefile=T,width = 32, height = 8)
+for(i in 1:num.mods)
+{
+tmp <- res[[i]]
+#print(paste("R2 range=" , range(tmp$resp$r2,na.rm=T)))
+#print(paste("Pearson range=" , range(tmp$resp$pearson,na.rm=T)))
+#print(paste("Kendall range=" , range(tmp$resp$kendall,na.rm=T)))
+
+p <- ggplot(tmp$resp, aes(end.num,start.num)) + scale_x_continuous(name= "End month", breaks=1:n.months, labels = str.names) +
+     scale_y_continuous(name= "Start month", breaks=1:n.months,labels = str.names) +
+     theme_classic() + theme(text = element_text(size=20),axis.text.x = element_text(angle = -30, hjust=0)) 
+
+p1[[i]] <- p + geom_raster(aes(fill = r2)) +  scale_fill_gradientn(limits = c(0,0.7),colours=c("blue","white","red")) +
+          geom_text(aes(label= p.r2.lev, angle=0,hjust=0.5,vjust=1),colour="black")+ annotate("text",x=1,y=n.months,label=mods[i])
+
+#print(p1)
+# p2 <- p+ geom_raster(aes(fill = kendall)) + scale_fill_gradientn(limits = c(-0.4,0.8),colours=c("blue","white","red"))+
+#          geom_text(aes(label= p.kend.lev, angle=0,hjust=0.5,vjust=1),colour="black") +  ggtitle(mods[i])
+
+} # end for(i in 1:num.mods)
+
+plot_grid(p1[[aug.mods[1]]], p1[[aug.mods[2]]], p1[[aug.mods[3]]], p1[[aug.mods[4]]], align="v", nrow=4, rel_widths=1.5)
+plot_grid(p1[[may.mods[1]]], p1[[may.mods[2]]], p1[[may.mods[3]]], p1[[may.mods[4]]], align="v", nrow=4, rel_widths=1.5)
+
+
+```
