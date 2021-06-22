@@ -176,163 +176,13 @@ for(i in 1:length(dat.list))
   }  # end for(j in 1:length(cond.list))
 } # end for(i in 1:length(dat.list))
 
-
-
-
-#----------------------------------------------------------------------------------
-# Sub-Section where we create the aggregated time series.
-#Putting the indices together...
-# SO based on the above analyses, it is pretty clear that mld and chl 'a' really 
-# aren't doing anything on their own.  What
-# stands out is SST in the previous spring and the current spring.  
-# The previous spring SST is best represented by Jan-April (even May?), while this years is Jan-Mar.
-# So this decision is still somewhat arbitrary and I think we should all chat abou it at some point...
-# the most stats logical move is to use SST from Jan-April last year, and Jan-March this year
-# But from a consistency point of view, Jan-March of both years is very useful
-# And from an applied point of view, given the timing of the advice, seemingly
-# using Jan/Feb of the current year, but Jan-Mar is the better choice
-#  So after much consternation we go for...
-
-# For SST use Jan-April last year and Jan-March this year as the model of choice (makes sense and gives excellent model fit..)
-SST.last <- aggregate(covar ~ Year, 
-                      data=sst.raw.dat[sst.raw.dat$Month %in% 1:4,], FUN = sum)
-names(SST.last) <- c("Year","SST.last")
-BT.last <- aggregate(covar ~ Year, 
-                     data=bt.raw.dat[bt.raw.dat$Month %in% 1:4 & 
-                                       bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
-names(BT.last) <- c("Year","BT.last") 
-chl.dat <- aggregate(covar ~ Year, 
-                     data=chl.raw.dat[chl.raw.dat$Month %in% 1:3,], FUN = sum)
-mld.dat <- aggregate(covar ~ Year, 
-                     data=mld.raw.dat[mld.raw.dat$Month %in% 1:3,], FUN = mean)
-
-dat <- aggregate(covar ~ Year, 
-                 data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
-names(dat) <- c("Year","SST.cur")
-dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
-dat.bt <- aggregate(covar ~ Year, 
-                    data=bt.raw.dat[bt.raw.dat$Month %in% 1:3 & 
-                                      bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
-names(dat.bt) <- c("Year","BT.cur")
-dat.bt$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
-
-dat <- dplyr::left_join(dat, dat.bt, by="Year")
-
-dat$chl <- c(chl.dat$covar,NA)
-dat$mld <- c(mld.dat$covar,NA,NA,NA)
-
-may.dat <- dat
-aug.dat <- dat
-may.dat$Condition <- dat.may$Condition
-aug.dat$Condition <- dat.aug$Condition
-# Also make an SST sum covar
-may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
-may.dat$BT.sum <- may.dat$BT.cur + may.dat$BT.last
-aug.dat$SST.sum <- aug.dat$SST.cur + aug.dat$SST.last
-aug.dat$BT.sum <- aug.dat$BT.cur + aug.dat$BT.last
-
 ```
 
-```{r, echo=F, include=F}
-#----------------------------------------------------------------------------------
-# Now we run the analyses necessary for the paper.
+# Identifying correlation timing
 
-# Now we can omit the years we don't have data right off the top, a bit too harsh but good for model comparisons...
-aug.dat.comp <- na.omit(aug.dat)
-may.dat.comp <- na.omit(may.dat)
-# I wonder if standardizing the data might make any difference to our results, I sure hope not...
-# Now the August models, we are now starting with a really really big model.
-# Removing the chl*SST inter
-aug.max.mod <- lm(Condition~ SST.last * SST.cur + chl * SST.last + chl*SST.cur + mld*SST.cur + mld*SST.last + chl*mld,data = aug.dat.comp)
-summary(aug.max.mod)
-
-aug.max.mod.bt <- lm(Condition~ BT.last * BT.cur + chl * BT.last + chl*BT.cur + mld*BT.cur + mld*BT.last + chl*mld,data = aug.dat.comp)
-summary(aug.max.mod.bt)
-
-may.max.mod.bt <- lm(Condition~ BT.last * BT.cur + chl * BT.last + chl*BT.cur + mld*BT.cur + mld*BT.last + chl*mld,data = may.dat.comp)
-summary(may.max.mod.bt)
-
-# The best of the August models.
-final.step.aug.mod <- stepAIC(aug.max.mod,direction="backward", lower = ~1)
-summary(final.step.aug.mod)
-
-final.step.aug.mod.bt <- stepAIC(aug.max.mod.bt,direction="backward", lower = ~1)
-summary(final.step.aug.mod.bt)
-
-final.step.may.mod.bt <- stepAIC(may.max.mod.bt,direction="backward", lower = ~1)
-summary(final.step.may.mod.bt)
-
-# But clearly the interaction doesn't help when we go a step further, go with the simplier model!
-final.aug.mod <- lm(Condition ~ SST.last+SST.cur + mld,data=aug.dat.comp)
-summary(final.aug.mod)
-
-final.aug.mod.bt <- lm(Condition ~ BT.last+BT.cur + mld,data=aug.dat.comp)
-summary(final.aug.mod.bt)
-
-final.may.mod.bt <- lm(Condition ~ BT.last+BT.cur + mld,data=may.dat.comp)
-summary(final.may.mod.bt)
-
-# Now confirming there is no reasonable reason to remove the mld.
-final.sst.aug.mod <- lm(Condition ~ SST.last+SST.cur ,data=aug.dat.comp)
-summary(final.sst.aug.mod)
-AICctab(final.step.aug.mod,final.aug.mod,final.sst.aug.mod)
-
-final.bt.aug.mod <- lm(Condition ~ BT.last+BT.cur ,data=aug.dat.comp)
-summary(final.bt.aug.mod)
-AICctab(final.step.aug.mod.bt,final.aug.mod.bt,final.bt.aug.mod)
-
-final.bt.may.mod <- lm(Condition ~ BT.last+BT.cur ,data=may.dat.comp)
-summary(final.bt.may.mod)
-AICctab(final.step.may.mod.bt,final.may.mod.bt,final.bt.may.mod)
-
-# Now we can also just look at a mechanistic model with chl and mld in it to see how it does compared to our SST based models
-# aug.max.mld <- lm(Condition~ chl*mld,data = aug.dat.comp)
-# summary(aug.max.mld)
-# Some useful model summaries
-last.effect <- round(final.aug.mod$coefficients[2],digits=2)
-cur.effect <-  round(final.aug.mod$coefficients[3],digits=2)
-last.effect.sd <- round(coef(summary(final.aug.mod))[2,2],digits=2)
-cur.effect.sd <- round(coef(summary(final.aug.mod))[3,2],digits=2)
-mld.effect <- round(final.aug.mod$coefficients[4],digits=2)
-mld.effect.sd <- round(coef(summary(final.aug.mod))[4,2],digits=2) 
-bt.aug.effect <- round(final.aug.mod$coefficients[4],digits=2)
-mld.effect.sd <- round(coef(summary(final.aug.mod))[4,2],digits=2) 
-
-```
-
-# This is the new stuff: 
-
-```{r}
-summary(lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur))
-summary(lm(data=may.dat.comp, Condition ~ SST.last + SST.cur))
-summary(lm(data=may.dat.comp, Condition ~ SST.last))
-summary(lm(data=may.dat.comp, Condition ~ SST.cur))
-summary(lm(data=may.dat.comp, Condition ~ BT.last))
-
-AIC(lm(data=aug.dat.comp, Condition ~ SST.last),
-lm(data=aug.dat.comp, Condition ~ SST.cur),
-lm(data=aug.dat.comp, Condition ~ BT.last))
-
-AIC(lm(data=may.dat.comp, Condition ~ SST.last),
-lm(data=may.dat.comp, Condition ~ SST.cur),
-lm(data=may.dat.comp, Condition ~ BT.last))
-
-AICctab(lm(data=may.dat.comp, Condition ~ SST.last),
-lm(data=may.dat.comp, Condition ~ SST.last+SST.cur),
-lm(data=may.dat.comp, Condition ~ SST.last+SST.cur+BT.last))
-
-AICctab(lm(data=aug.dat.comp, Condition ~ SST.last),
-lm(data=aug.dat.comp, Condition ~ SST.last+SST.cur),
-lm(data=aug.dat.comp, Condition ~ SST.last+SST.cur+BT.last))
-
-cor.test(may.dat.comp$SST.last, may.dat.comp$BT.last)
-cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
-
-```
-
-
-```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=18}
-dat.list <- list(sst = sst.raw.dat,chl = chl.raw.dat,mld = mld.raw.dat, bt = bt.raw.dat)
+```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=5}
+dat.list <- list(sst = sst.raw.dat,#chl = chl.raw.dat,mld = mld.raw.dat, 
+                 bt = bt.raw.dat)
 cond.list <- list(aug = dat.aug, may=dat.may)
 res <- NULL
 n.months <- 19
@@ -358,6 +208,14 @@ tmp <- res[[i]]
 #print(paste("R2 range=" , range(tmp$resp$r2,na.rm=T)))
 #print(paste("Pearson range=" , range(tmp$resp$pearson,na.rm=T)))
 #print(paste("Kendall range=" , range(tmp$resp$kendall,na.rm=T)))
+print(mods[i])
+print("Last year:")
+LY <- res[[i]]$resp[res[[i]]$resp$start.num<13 & res[[i]]$resp$end.num < 13 & !is.na(res[[i]]$resp$p.r2.lev),]
+print(LY[which(LY$r2 == max(LY$r2)),])
+print("Current year:")
+CY <- res[[i]]$resp[res[[i]]$resp$start.num>12 & res[[i]]$resp$end.num > 12 & !is.na(res[[i]]$resp$p.r2.lev),]
+print(CY[which(CY$r2 == max(CY$r2)),])
+
 
 p <- ggplot(tmp$resp, aes(end.num,start.num)) + scale_x_continuous(name= "End month", breaks=1:n.months, labels = str.names) +
      scale_y_continuous(name= "Start month", breaks=1:n.months,labels = str.names) +
@@ -366,14 +224,147 @@ p <- ggplot(tmp$resp, aes(end.num,start.num)) + scale_x_continuous(name= "End mo
 p1[[i]] <- p + geom_raster(aes(fill = r2)) +  scale_fill_gradientn(limits = c(0,0.7),colours=c("blue","white","red")) +
           geom_text(aes(label= p.r2.lev, angle=0,hjust=0.5,vjust=1),colour="black")+ annotate("text",x=1,y=n.months,label=mods[i])
 
-#print(p1)
+print(p1[[i]])
 # p2 <- p+ geom_raster(aes(fill = kendall)) + scale_fill_gradientn(limits = c(-0.4,0.8),colours=c("blue","white","red"))+
 #          geom_text(aes(label= p.kend.lev, angle=0,hjust=0.5,vjust=1),colour="black") +  ggtitle(mods[i])
 
 } # end for(i in 1:num.mods)
-
-plot_grid(p1[[aug.mods[1]]], p1[[aug.mods[2]]], p1[[aug.mods[3]]], p1[[aug.mods[4]]], align="v", nrow=4, rel_widths=1.5)
-plot_grid(p1[[may.mods[1]]], p1[[may.mods[2]]], p1[[may.mods[3]]], p1[[may.mods[4]]], align="v", nrow=4, rel_widths=1.5)
-
+# 
+# plot_grid(p1[[aug.mods[1]]], p1[[aug.mods[2]]], 
+#           #p1[[aug.mods[3]]], p1[[aug.mods[4]]], 
+#           align="v", nrow=length(aug.mods), rel_widths=1.5)
+# plot_grid(p1[[may.mods[1]]], p1[[may.mods[2]]], 
+#           #p1[[may.mods[3]]], p1[[may.mods[4]]], 
+#           align="v", nrow=length(may.mods), rel_widths=1.5)
 
 ```
+
+
+# August correlation-informed aggregations
+```{r, message=F, warning=F}
+#----------------------------------------------------------------------------------
+# AUGUST FIRST
+# Sub-Section where we create the aggregated time series.
+#Putting the indices together...
+# SO based on the above analyses, it is pretty clear that mld and chl 'a' really 
+# aren't doing anything on their own.  What
+# stands out is SST in the previous spring and the current spring.  
+# The previous spring SST is best represented by Jan-April, while this years is Jan-Mar.
+# So this decision is still somewhat arbitrary and I think we should all chat abou it at some point...
+# the most stats logical move is to use SST from Jan-April last year, and Jan-March this year
+# But from a consistency point of view, Jan-March of both years is very useful
+# And from an applied point of view, given the timing of the advice, seemingly
+# using Jan/Feb of the current year, but Jan-Mar is the better choice
+#  So after much consternation we go for...
+
+# For SST use Jan-April last year and Jan-March this year as the model of choice (makes sense and gives excellent model fit..)
+SST.last <- aggregate(covar ~ Year, 
+                      data=sst.raw.dat[sst.raw.dat$Month %in% 1:4,], FUN = sum)
+names(SST.last) <- c("Year","SST.last")
+
+BT.last <- aggregate(covar ~ Year, 
+                     data=bt.raw.dat[bt.raw.dat$Month %in% 4 & 
+                                       bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+names(BT.last) <- c("Year","BT.last") 
+
+dat <- aggregate(covar ~ Year, 
+                 data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
+names(dat) <- c("Year","SST.cur")
+
+dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
+
+dat <- dplyr::left_join(dat, BT.last, by="Year")
+
+aug.dat <- dat
+
+aug.dat$Condition <- dat.aug$Condition
+# Also make an SST sum covar
+aug.dat$SST.sum <- aug.dat$SST.cur + aug.dat$SST.last
+
+```
+
+
+# May correlation-informed aggregations
+```{r, message=F, warning=F}
+SST.last <- aggregate(covar ~ Year, 
+                      data=sst.raw.dat[sst.raw.dat$Month %in% 2:3,], FUN = sum)
+names(SST.last) <- c("Year","SST.last")
+
+dat <- aggregate(covar ~ Year, 
+                 data=sst.raw.dat[sst.raw.dat$Month %in% 1:2,], FUN = sum)
+names(dat) <- c("Year","SST.cur")
+
+dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
+
+dat.bt <- aggregate(covar ~ Year, 
+                    data=bt.raw.dat[bt.raw.dat$Month %in% 4 & 
+                                      bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+names(dat.bt) <- c("Year","BT.cur")
+
+dat <- dplyr::left_join(dat, dat.bt, by="Year")
+
+may.dat <- dat
+may.dat$Condition <- dat.may$Condition
+# Also make an SST sum covar
+may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
+
+```
+
+# Model selection
+```{r, message=F, warning=F}
+#----------------------------------------------------------------------------------
+# Now we run the analyses necessary for the paper.
+
+# Now we can omit the years we don't have data right off the top, a bit too harsh but good for model comparisons...
+aug.dat.comp <- na.omit(aug.dat)
+may.dat.comp <- na.omit(may.dat)
+
+aug.sst.last <- lm(data=aug.dat.comp, Condition ~ SST.last)
+aug.sst.cur <- lm(data=aug.dat.comp, Condition ~ SST.cur)
+aug.sst.sum <- lm(data=aug.dat.comp, Condition ~ SST.sum)
+aug.sst.sum2 <- lm(data=aug.dat.comp, Condition ~ SST.sum + SST.cur)
+summary(aug.sst.last)
+summary(aug.sst.cur)
+summary(aug.sst.sum)
+summary(aug.sst.sum2)
+AIC(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2)
+AICctab(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2)
+
+aug.bt.last <- lm(data=aug.dat.comp, Condition ~ BT.last)
+summary(aug.bt.last)
+AIC(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2, aug.bt.last)
+AICctab(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2, aug.bt.last)
+
+aug.bt.sum3 <- lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur + BT.last)
+summary(aug.bt.sum3)
+AIC(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2, aug.bt.last, aug.bt.sum3)
+AICctab(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2, aug.bt.last, aug.bt.sum3)
+
+# SST sum wins for August.
+
+# What about May?
+may.sst.last <- lm(data=may.dat.comp, Condition ~ SST.last)
+may.sst.cur <- lm(data=may.dat.comp, Condition ~ SST.cur)
+may.sst.sum <- lm(data=may.dat.comp, Condition ~ SST.sum)
+may.sst.sum2 <- lm(data=may.dat.comp, Condition ~ SST.sum + SST.cur)
+summary(may.sst.last)
+summary(may.sst.cur)
+summary(may.sst.sum)
+summary(may.sst.sum2)
+AIC(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2)
+AICctab(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2)
+
+may.bt.cur <- lm(data=may.dat.comp, Condition ~ BT.cur)
+summary(may.bt.cur)
+AIC(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2, may.bt.cur)
+AICctab(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2, may.bt.cur)
+
+may.bt.sum3 <- lm(data=may.dat.comp, Condition ~ SST.last + SST.cur + BT.cur)
+summary(may.bt.sum3)
+AIC(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2, may.bt.cur, may.bt.sum3)
+AICctab(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2, may.bt.cur, may.bt.sum3)
+
+cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
+
+```
+
