@@ -266,6 +266,7 @@ BT.last <- aggregate(covar ~ Year,
                      data=bt.raw.dat[bt.raw.dat$Month %in% 4 & 
                                        bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
 names(BT.last) <- c("Year","BT.last") 
+BT.last$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
 
 dat <- aggregate(covar ~ Year, 
                  data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
@@ -319,52 +320,72 @@ may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
 aug.dat.comp <- na.omit(aug.dat)
 may.dat.comp <- na.omit(may.dat)
 
+# correlation between sst and bt
+cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
+
 aug.sst.last <- lm(data=aug.dat.comp, Condition ~ SST.last)
 aug.sst.cur <- lm(data=aug.dat.comp, Condition ~ SST.cur)
-aug.sst.sum <- lm(data=aug.dat.comp, Condition ~ SST.sum)
-aug.sst.sum2 <- lm(data=aug.dat.comp, Condition ~ SST.sum + SST.cur)
+aug.bt.last <- lm(data=aug.dat.comp, Condition ~ BT.last)
 summary(aug.sst.last)
 summary(aug.sst.cur)
+summary(aug.bt.last)
+
+aug.sst.sum <- lm(data=aug.dat.comp, Condition ~ SST.sum)
+aug.sst.sum2 <- lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur)
 summary(aug.sst.sum)
 summary(aug.sst.sum2)
-AIC(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2)
-AICctab(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2)
 
-aug.bt.last <- lm(data=aug.dat.comp, Condition ~ BT.last)
-summary(aug.bt.last)
-AIC(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2, aug.bt.last)
-AICctab(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2, aug.bt.last)
+aug.sst.sum3 <- lm(data=aug.dat.comp, Condition ~ SST.last + BT.last)
+aug.sst.sum4 <- lm(data=aug.dat.comp, Condition ~ SST.cur + BT.last)
+summary(aug.sst.sum3)
+summary(aug.sst.sum4)
 
-aug.bt.sum3 <- lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur + BT.last)
-summary(aug.bt.sum3)
-AIC(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2, aug.bt.last, aug.bt.sum3)
-AICctab(aug.sst.last, aug.sst.cur, aug.sst.sum, aug.sst.sum2, aug.bt.last, aug.bt.sum3)
+aug.sst.int <- lm(data=aug.dat.comp, Condition ~ SST.last*SST.cur)
+aug.sst.int2 <- lm(data=aug.dat.comp, Condition ~ SST.last*SST.cur + BT.last)
+summary(aug.sst.int)
+summary(aug.sst.int2)
 
-# SST sum wins for August.
+
+AICctab(aug.sst.last, aug.sst.cur, aug.bt.last, 
+        aug.sst.sum, aug.sst.sum2,
+        aug.sst.sum3, aug.sst.sum4,
+        aug.sst.int, aug.sst.int2)
+
+
+# SST sum wins for August, but it's better to use the explicit model so:
+summary(aug.sst.sum2)
 
 # What about May?
 may.sst.last <- lm(data=may.dat.comp, Condition ~ SST.last)
 may.sst.cur <- lm(data=may.dat.comp, Condition ~ SST.cur)
-may.sst.sum <- lm(data=may.dat.comp, Condition ~ SST.sum)
-may.sst.sum2 <- lm(data=may.dat.comp, Condition ~ SST.sum + SST.cur)
+may.bt.cur <- lm(data=may.dat.comp, Condition ~ BT.cur)
 summary(may.sst.last)
 summary(may.sst.cur)
+summary(may.bt.cur)
+
+may.sst.sum <- lm(data=may.dat.comp, Condition ~ SST.sum)
+may.sst.sum2 <- lm(data=may.dat.comp, Condition ~ SST.last + SST.cur)
 summary(may.sst.sum)
 summary(may.sst.sum2)
-AIC(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2)
-AICctab(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2)
 
-may.bt.cur <- lm(data=may.dat.comp, Condition ~ BT.cur)
-summary(may.bt.cur)
-AIC(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2, may.bt.cur)
-AICctab(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2, may.bt.cur)
+may.sst.sum3 <- lm(data=may.dat.comp, Condition ~ SST.last + BT.cur)
+may.sst.sum4 <- lm(data=may.dat.comp, Condition ~ SST.cur + BT.cur)
+summary(may.sst.sum3)
+summary(may.sst.sum4)
 
-may.bt.sum3 <- lm(data=may.dat.comp, Condition ~ SST.last + SST.cur + BT.cur)
-summary(may.bt.sum3)
-AIC(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2, may.bt.cur, may.bt.sum3)
-AICctab(may.sst.last, may.sst.cur, may.sst.sum, may.sst.sum2, may.bt.cur, may.bt.sum3)
+may.sst.int <- lm(data=may.dat.comp, Condition ~ SST.last*SST.cur)
+may.sst.int2 <- lm(data=may.dat.comp, Condition ~ SST.last*SST.cur + BT.cur)
+summary(may.sst.int)
+summary(may.sst.int2)
 
-cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
+
+AICctab(may.sst.last, may.sst.cur, may.bt.cur, 
+        may.sst.sum, may.sst.sum2,
+        may.sst.sum3, may.sst.sum4,
+        may.sst.int, may.sst.int2)
+
+#sst.sum3 wins
+summary(may.sst.sum3)
 
 ```
 
