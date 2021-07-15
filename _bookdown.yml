@@ -1,4 +1,4 @@
-book_filename: "SDM_Paper"
+book_filename: "Predicting_condition_and_biomass"
 rmd_files: ["index.Rmd",
             "analyses-code.Rmd",
             "01-intro.Rmd",
