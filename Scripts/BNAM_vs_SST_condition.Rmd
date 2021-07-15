@@ -3,6 +3,8 @@ title: "BNAM bottom temperature vs. condition"
 output:
   pdf_document: default
   word_document: default
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Prep, just adding to existing code. 
@@ -389,3 +391,64 @@ summary(may.sst.sum3)
 
 ```
 
+
+# Autocorrelation within condition
+
+## Instructions...
+The next bit is doing the autocorrelation analysis, is there autocorrelation in condition time series (that is already in my code I'm 99% sure), but then also using the last 2,5,10 year (or X years) median condition to see if any of those are decent predictors of next years condition.  I suspect using last years condition is the best and that's the 'non-environmental' predictive model we'd use to compare with the environmental model. But this will be a useful exercise to see how well using a LTM of some sort to predict condition does so we can tell industry we did all this analysis and none of it helps.
+You can ignore the May stuff I think from here out, let's just dial in on August.
+After that we pick 2-3 models and do the biomass predictions with them.  Undecided if we drop bottom temperature at this stage given your results, or we toss in a bottom temperature model that we know isn't great just to have a couple of environmental models in there...
+
+### Original (one-year lag autocorrelation?)
+```{r}
+# Now we can look at the acf of condition on GB for 1999 - 2018, issue here is the data may not be stationary so need to detrend the longer ts
+# gb.may.cf <- base.cond.ts$may[base.cond.ts$year %in% 1999:2015]
+gba.aug.cf <- base.cond.ts$aug[base.cond.ts$year %in% 1984:2018]
+# gb.detrend <- resid(lm(gb.may.cf~ seq(1,length(gb.may.cf)),na.action = na.exclude))
+gba.detrend <- resid(lm(gba.aug.cf~ seq(1,length(gba.aug.cf)),na.action = na.exclude))
+acfs <- acf(gba.detrend, plot = FALSE,na.action = na.pass)
+plot(acfs)
+acfs <- with(acfs, data.frame(lag, acf))
+# So a lag linear model...
+lag.aug.dat <- aug.dat[aug.dat$Year %in% 1984:2018,]
+lag.aug.dat$cond.covar <- c(NA,lag.aug.dat$Condition[1:(nrow(lag.aug.dat)-1)])
+lag.aug.mod <- lm(Condition ~ cond.covar,lag.aug.dat)
+summary(lag.aug.mod)
+# Finally make the NULL model
+null.aug.mod <- lm(Condition~1,aug.dat.comp)
+```
+
+### Long term median autocorrelation? 
+```{r}
+# build a function to use any number of years
+lastNyears_med <- function(N){
+  lag <- NULL
+  for(i in (N+1):length(lag.aug.dat$Condition)){
+    lagged <- median(lag.aug.dat$Condition[(i-N):(i-1)])
+    lag <- c(lag, lagged)
+  }
+  lag <- c(rep(NA, N), lag)
+  lag.median <- cbind(lag.aug.dat, lag)
+  
+  mod <- lm(data=lag.median, Condition ~ lag)
+  
+  return(list(lag.median, mod))
+  
+}
+
+# try 2, 5, 10 years
+medyrs2 <- lastNyears_med(2)
+medyrs5 <- lastNyears_med(5)
+medyrs10 <- lastNyears_med(10)
+
+summary(medyrs2[[2]])
+summary(medyrs5[[2]])
+summary(medyrs10[[2]])
+
+mod2 <- lm(data=medyrs2[[1]][11:nrow(medyrs2[[1]]),], Condition ~ lag)
+mod5 <- lm(data=medyrs5[[1]][11:nrow(medyrs5[[1]]),], Condition ~ lag)
+mod10 <- lm(data=medyrs10[[1]][11:nrow(medyrs10[[1]]),], Condition ~ lag)
+
+AICctab(mod2, mod5, mod10)
+
+```

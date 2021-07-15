@@ -1,16 +1,15 @@
 ---
 output: 
+  bookdown::pdf_document2: default
+  bookdown::html_document2: default
   bookdown::word_document2: 
     fig_caption: yes
-  bookdown::html_document2: default
-  bookdown::pdf_document2: default
 bibliography: Y:/Zotero/MAR_SABHU.bib
 title: Identifying environmental drivers of variability in the condition of sea scallop (*Placopecten magellanicus*)
 author: David M. Keith^a,b^, Jessica A. Sameoto^a^, Xiaohan Liu^a^, Emmanuel Devred^a^, Catherine Johnson^a^
 date:  ^a^ Bedford Institute of Oceanography 
        ^b^ Dalhousie University  
 csl: Y:/Zotero/styles/canadian-journal-of-fisheries-and-aquatic-sciences.csl
-
 abstract: Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate if environmental information from remotely sensed sea surface temperature (SST), Chlorophyll-a (CHL), and model-derived mixed layer depth (MLD) could improve the prediction of SC. Model formulations that incorporated SST and MLD, as well as SST alone, significantly improved predictions over the currently implemented biological-only model.  Additionally, these results indicate that scallop condition in August is dependent on the environmental conditions experienced in the winter and spring periods up to 20 months prior. Although MLD was included in the best *predictive* model, these data are not readily *available* in time for the stock assessment, alternatively, SST improves the SC *prediction* and the data are *available* in near real time; therefore this relationship can be operationalized within the quantitative assessment model to directly improve fisheries management advice. These results highlight how the operationalization of environmental relationships in fisheries assessment and management requires that the environmental relationship improves the estimation or prediction of an aspect of productivity over the current methodology (*predictive criterion*) and that the required environmental data is available for use in the stock assessment process (*availability criterion*). 
 ---
 
@@ -201,7 +200,7 @@ dat.bt <- aggregate(covar ~ Year, data=bt.raw.dat[bt.raw.dat$Month %in% 1:3 & bt
 names(dat.bt) <- c("Year","BT.cur")
 dat.bt$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
 
-dat <- left_join(dat, dat.bt, by="Year")
+dat <- dplyr::left_join(dat, dat.bt, by="Year")
 
 dat$chl <- c(chl.dat$covar,NA)
 dat$mld <- c(mld.dat$covar,NA,NA,NA)
