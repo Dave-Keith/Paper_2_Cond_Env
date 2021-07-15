@@ -32,9 +32,9 @@ month: November # fill in
 year: 2020
 report_number: nnn
 region: Maritimes Region
-author_list: "Keith, D.M., Sameoto, J.A., Liu, X., Devred, E., Johnson, C."
+author_list: "Keith, D.M., Sameoto, J.A., Keyser, F., Liu, X., Devred, E., Johnson, C."
 abstract: |
-  Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate if environmental information from remotely sensed sea surface temperature (SST), Chlorophyll-a (CHL), and model-derived mixed layer depth (MLD) could improve the prediction of SC. Model formulations that incorporated SST and MLD, as well as SST alone, significantly improved predictions over the currently implemented biological-only model.  Additionally, these results indicate that scallop condition in August is dependent on the environmental conditions experienced in the winter and spring periods up to 20 months prior. Although MLD was included in the best *predictive* model, these data are not readily *available* in time for the stock assessment, alternatively, SST improves the SC *prediction* and the data are *available* in near real time; therefore this relationship can be operationalized within the quantitative assessment model to directly improve fisheries management advice. These results highlight how the operationalization of environmental relationships in fisheries assessment and management requires that the environmental relationship improves the estimation or prediction of an aspect of productivity over the current methodology (*predictive criterion*) and that the required environmental data is available for use in the stock assessment process (*availability criterion*). 
+  Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate how using a recently developed model to predict SC using winter sea surface temperature (SST) impacts the prediction of current year biomass. A retrospective analysis was undertaken in which the current year biomass estimates from the stock assessment model were compared using the currently implemented bioloigical-only model and two SC-SST models. The results of this retrospective analysis indicated that there is a small positive bias of approximately 2% in the model biomass predictions using the biological-only model.  The biological-only model tends to predict that SC will be lower than the SC-SST model, thus the use of the SC-SST model results in a slight statistically insignificant increase in the bias of the model biomass predictions.  The underestiamte of SC in the biological model helps to offset the tendency for the assessment model to overestimate biomass in the current fishing year. These results highlight the challenges of attempting to incorporate environmental information into existing stock assessment frameworks and suggests that the development of next generation integrated stock assessment frameworks are needed to quantiatively develop science advice that can operationlize EAFM into the science advice.
   
 header: "Draft working paper --- Do not cite or circulate" # or "" to omit
 
@@ -70,12 +70,16 @@ library(scales)
 library(R.matlab)
 library(cowplot)
 library(visreg)
+library(tidyverse)
+library(bbmle)
+library(effects)
 
 # Bring in our in house functions. First combine them all in a vector
 funs <- c("https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
           "https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/convert_inla_mesh_to_sf.R",
           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/centre_of_gravity.R",
-          "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R")
+          "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R",
+          "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Model/projections.r")
 # Now run through a quick loop to load each one, just be sure that your working directory is read/write!
 for(fun in funs) 
 {
@@ -98,9 +102,19 @@ direct.proj <- "D:/Github/Paper_2_Cond_Env/"
 
 
 #####  Data Load....
+# Load the data, most of these were made in teh script "trim_down_survey_and_model_data.R"
+dat <- read_xlsx(paste0(direct.proj,"Data/GB_satellite_1985_2019.xlsx"))
+vonB <- readRDS(paste0(direct.proj,"Data/vonb_dat.RDS"))
+gb.proj.catch <- readRDS(paste0(direct.proj,"Data/gb_proj_catch.RDS"))
+gb.fish.dat <- readRDS(paste0(direct.proj,"Data/gb_fish_dat.RDS"))
+DD.out <- readRDS(paste0(direct.proj,"Data/gb_model_output.RDS"))
+sh.dat <- readRDS(paste0(direct.proj,"Data/sh_dat.RDS"))
+survey.obj <- readRDS(paste0(direct.proj,"Data/survey_obj.RDS"))
+
+vonB <- readRDS(paste0(direct.proj,"Data/vonb_dat.RDS"))
 dat <- read_xlsx(paste0(direct.proj,"Data/GB_satellite_1985_2019.xlsx"))
 cond.dat <- read.csv(paste0(direct.proj,"Data/CF_data_May_GB_for_revisions_1986_2019.csv"))
- 
+
 ##### Done with data loading... Set some variables for the rest of the show..
 
 if (is_latex_output()) {
