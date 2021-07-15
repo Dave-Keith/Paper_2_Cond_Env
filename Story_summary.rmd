@@ -1,0 +1,86 @@
+---
+title: "Condition Environment Draft Story Summary"
+author: "DK"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  word_document: default
+  html_document: default
+params:
+  date: !r Sys.Date()
+---
+
+## Intro
+
+1. Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM).
+
+1. Fisheries management decisions often include setting removals limits in terms of biomass;  however, these decision are complicated by fluctuations in stock size due to variable recruitment, growth, condition, and survival all of which are influenced by the environment. Expand on fish condition and how better knowledge of fish condition will lead to better estimates of biomass
+
+1. Expand on fish condition, limitations and challenges in getting it right.
+
+1. Now talk about using environmental information to estimate condition.  Point to our SRS paper, point to papers using Oceanographic data (if they exist) and other useful environment-condition papers I find.
+
+Scallop section?  The above could be stand alone intro, but I think we need a scallop section to hammer home that it really matters for sea scallop
+
+1.	For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada, annual variations in condition underlie major fluctuations in catch rate and yield. For scallop, condition is measured in terms of the change in the size of the adductor muscle for a particular size scallop (e.g. mass of adductor muscle in a scallop with a 100 mm shell).  It is variable throughout the year, for example on Georges Bank condition increases in late winter and early spring and declines during spawning in the late summer and early fall.
+
+1.	In this region the inter-annual differences condition are likely strongly influenced by environmental conditions during the spring. Talk about our paper and other papers here.
+
+1.	Management decisions for the Canadian Georges Bank sea scallop fishery are based on annual scientific surveys, with estimates from these surveys used in a Bayesian state space assessment model
+1.	Objectives:
+  - Using Sea scallop on GB as a case study…
+  - Identify potential indices of SST and MBT that may best predict SC in August.
+  - Develop predictive models of scallop condition using satellite remote sensing SST data, 2) bottom temperature from an oceanographic model (MBT), 3) and condition from the previous X-years.
+  - Compare predictions of condition for the upcoming year using the three different methods.
+  - Incorporate the results of each of the 3 predictive models into the existing stock assessment to predict biomass for the upcoming year.  Compare these results with the realized biomass estimate from the model. 
+
+## Methods
+
+1.	Standard GB backgrounder
+1.	Explain the correlation matrix analysis and how it’ll be used for MBT and SST
+1.	Talk about 3 models (we should also run this on May condition).
+    a. Aug SC ~ some SST model
+    a. Aug SC ~ some MBT model
+    a. Model using condition from previous X years
+       - I think run a correlation between SC and SC in the previous X years, where X is the median (go back up to 10 years perhaps), find the best one and use that, I suspect it’ll suggest that last years condition is best, but worth doing the exercise.  I think this piece is probably a 1-2 liner in methods (We compared SC to median SC from 1-10 years in the past, the best predictor was SC from the previous year so we used that).
+4.	Discuss assessment model
+    a.	I don’t want to get deep into details here, just show the process model and how condition fits into the growth calculation  This part could get out of control quickly so mostly just want to refer back to relevant publications.
+    a.	Explain and show how we project forward.
+    a.	Explain the retrospective analysis, if that’s the right word for it
+
+5.	Statistical analyses of the results of the retrospective modelling. Compare models using AICc
+    a.	A few simple linear models  looks like it’ll do the trick.
+        i.	Biomass ~ model
+        ii.	Delta B ~ model
+        iii.	Prop B error ~ model
+
+## Results
+
+1.  U.S. story
+
+ -	Compare the three models and see what works bestSC best predicted by Full model, but more parsimonious “Last” model would be preferred based on AICc.  Current model has lower predictive ability and higher AICc.
+
+Figure 1 is the condition matrices for SST and MBT.
+
+Figure 2: Is fit of SC ~ covariate models we want
+
+1.	Retrospective Analysis
+  - Compared each of these models with the realized biomass estimate from the model from 19XX-2019
+  - The biomass from the one year projections methods  all were slightly  positively biased (≈ 10-12% : Figures 3 and 4)
+  - The bias and uncertainty of method X gives the least bias (though not significantly different) than method Y and Z.  Bias from method X was ≈ XXXX tonnes, while model Y  was ≈ YYY tonnes and model Z was ZZZZ tonnes Figures 3 and 4.
+
+Figure 3: Difference (tonnes) in median biomass from actual observed biomass estimate for each method.   Second panel is the proportional difference.
+
+Figure 4: Time series of the Actual biomass and biomass estimates from the 3 one-year projection models.  Second panel is the difference (tonnes) in median biomass from actual observed biomass estimate for each method.   Third panel is the proportional difference.
+
+## Discussion
+
+1.	Summarize results.
+  -	Model X can produce better predictions of scallop condition for the upcoming year
+  -	But this doesn’t translate into better estimates of scallop biomass 
+  -	This is due to the relatively small bias in the biomass predictions from the model due to an over-estimate of other productivity parameters   and a slight under-prediction of condition using the current method.
+  -	There is a laundry list of environmental variables that correlate in some way to metrics of productivity for numerous stocks.  It has long been recognized that these relationship often break down over time and the use of environmental data in stock assessments has remained limited.  Unfortunately, we show how even when the relationship holds, it does not necessarily lead to better science advice.  And it’s not like condition doesn’t matter, it can lead to swings in biomass of up to 30% year over year.  
+  -	An additionally challenge that has received less attention is the practical challenge of implementation of these data into traditional stock assessments. Given the availability of the SST data in near real time, this should facilitate it’s use in the stock assessment process.  But, in this case, the SST in Jan-March is required to predict condition for the current year so even with this near real time availability of this data its use for tactical science advice for the current year is challenging and this relationship would serve no benefit if the science advice is required before this data is available.  The situation is more problematic for modelled oceanographic data which is not available in near real time and would rarely be available in time to inform science advice.  
+  -	These challenges suggest that in the near term the most useful path forward for utilizing environmental data may be to use it for strategic longer-term planning, for example to predict impacts of climate change (although extrapolating relationships to unobserved ecosystems states has its own suite of challenges).  In the longer-term, to achieve EAFM/EBFM/EBM goals it will require new stock assessment modelling frameworks in which the environmental considerations are intrinsically linked into the assessment (Punt).  A first step in this direction is Raph’s spatial paper in which spatial variability it accounted for in the assessment.  While this doesn’t account for environmental effects in the traditional sense, the spatial variability modelled through this method is integrating productivity changes due to environmental variability.  This and other next-gen stock assessment methods will likely need to be developed before we are able to have tactical in-year science advice that is fully informed by environmental and ecosystem considerations (Punt paper).
+
+2.	Conclusion
+ - So, while we could do EAFM with these data, we really need to be careful because in this case it isn’t going to give us better science advice.  Close collaboration between stock assessment scientists, marine ecologists, and oceanographers are going to needed to develop products and stock assessment models that can help move us towards EAFM/EBFM/EBM objectives.
