@@ -7,18 +7,18 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Prep, just adding to existing code. 
-
+# Loading required functions, packages and data
 ```{r, message=F, warning=F}
 # Data loading and analysis
 set.seed(594)
 #setwd("Y:/Projects/Condition_Environment/Data/")
-setwd("Y:/Projects/Condition_Environment/")
+#setwd("Y:/Projects/Condition_Environment/")
 # directory you have the survey results stored in...
-direct <- "Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/"
+# direct <- "Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/"
+direct2 <- "Y:/Projects/Condition_Environment/"
 #direct <- "E:/R/Data/Survey_data/2018/Survey_summary_output/"
 
-
+#Functions
 funs <- c("https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
           "https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/convert_inla_mesh_to_sf.R",
           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/centre_of_gravity.R",
@@ -31,7 +31,9 @@ for(fun in funs)
   source(paste0(getwd(),"/",basename(fun)))
   file.remove(paste0(getwd(),"/",basename(fun)))
 }
+source(paste0(direct2, "Scripts/correlation_table_function_revised.r"))
 
+#Packages
 # Looking a relationship between Condition and SST and phytoplankton
 library(MASS)
 library(readxl)
@@ -46,20 +48,35 @@ library(scales)
 library(R.matlab)
 library(cowplot)
 require(formatR)
+require(tidyverse)
+require(dplyr)
+require(tidyr)
 
 knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
 
-source("Scripts/correlation_table_function_revised.r")
+#Data
+
+#load("Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")
+sh.dat<- readRDS("Data/sh_dat.RDS")
+vonB <- readRDS("Data/vonb_dat.RDS")
+gb.proj.catch <- readRDS("Data/gb_proj_catch.RDS")
+gb.fish.dat <- readRDS("Data/gb_fish_dat.RDS")
+DD.out <- readRDS("Data/gb_model_output.RDS")
+base.cond.ts <- read.csv(paste0(direct2, "Data/Full_may_aug_condition_ts.csv"))
 # Here we load in the raw data and get everything ready for further analyses.
 #----------------------------------------------------------------------------------
 # RAW Data Section
 # Bring in the raw data.
-chl.raw.dat <- as.data.frame(readMat("Data/chl_gb.mat")$chl.gb)
-mic.raw.dat <- as.data.frame(readMat("Data/mic_gb.mat")$mic.gb)
-mld.raw.dat <- as.data.frame(readMat("Data/mld_gb.mat")$mld.gb)
-sst.raw.dat <- as.data.frame(readMat("Data/sst_gb_adj.mat")$gb)
-bt.raw.dat <- dplyr::select(read.csv("Data/bt_gb.csv"), -X, -monthnum)
+chl.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/chl_gb.mat"))$chl.gb)
+mic.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/mic_gb.mat"))$mic.gb)
+mld.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/mld_gb.mat"))$mld.gb)
+sst.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/sst_gb_adj.mat"))$gb)
+bt.raw.dat <- dplyr::select(read.csv(paste0(direct2, "Data/bt_gb.csv")), -X, -monthnum)
+```
 
+# Data prep
+
+```{r, message=F, warning=F}
 names(chl.raw.dat) <- c("Year","Month","covar","mystery.covar")
 names(mic.raw.dat) <- c("Year","Month","covar","mystery.covar")
 names(mld.raw.dat) <- c("Year","Month","covar","mystery.covar")
@@ -87,9 +104,10 @@ mic.raw.dat$Month <- month(mic.raw.dat$date)
 mld.raw.dat$date <- dmy(paste(01,mld.raw.dat$Month,mld.raw.dat$Year, sep="/"))
 mld.raw.dat$Year <- year(mld.raw.dat$date)
 mld.raw.dat$Month <- month(mld.raw.dat$date)
+
+
 # now bring in the condition data of the whole time series.
 # This is used to get the acf for condition from the whole time series of condition we have
-base.cond.ts <- read.csv("Data/Full_may_aug_condition_ts.csv")
 
 # base.cond.ts from 1998 on matches dat.aug and dat.may
 # ggplot() + geom_point(data=base.cond.ts, aes(year, aug), colour="blue") +
@@ -414,7 +432,7 @@ You can ignore the May stuff I think from here out, let's just dial in on August
 After that we pick 2-3 models and do the biomass predictions with them.  Undecided if we drop bottom temperature at this stage given your results, or we toss in a bottom temperature model that we know isn't great just to have a couple of environmental models in there...
 
 ### Original (one-year lag autocorrelation?)
-```{r}
+```{r, message=F, echo=F}
 # Now we can look at the acf of condition on GB for 1999 - 2018, issue here is the data may not be stationary so need to detrend the longer ts
 # gb.may.cf <- base.cond.ts$may[base.cond.ts$year %in% 1999:2015]
 gba.aug.cf <- base.cond.ts$aug[base.cond.ts$year %in% 1984:2018]
@@ -433,7 +451,7 @@ null.aug.mod <- lm(Condition~1,aug.dat.comp)
 ```
 
 ### Long term median autocorrelation? 
-```{r}
+```{r, message=F, echo=F}
 # build a function to use any number of years
 lastNyears_med <- function(N){
   lag <- NULL
@@ -471,7 +489,9 @@ AICctab(mod2, mod5, mod10)
 
 
 # Model fit
-```{r}
+
+### Environmental model options
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
 p1 <- ggplot(aug.dat.comp,aes(x=I(SST.cur+SST.last),y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
                           xlab("SST (Previous Year + Current Year)") + ylab("Current Year SC (grams)")
@@ -487,7 +507,7 @@ p3 <- ggplot(aug.dat.comp,aes(x=CF_off,y = Condition)) + geom_text(aes(label=sub
 
 p4 <- ggplot(aug.dat.comp,aes(x=BT.last,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
-                          xlab("BT Previous Year") + ylab("")
+                          xlab("BT Previous Year") + ylab("Current Year SC (grams)")
 
 p5 <- ggplot(aug.dat.comp,aes(x=I(BT.last + SST.last),y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
@@ -496,11 +516,13 @@ p5 <- ggplot(aug.dat.comp,aes(x=I(BT.last + SST.last),y = Condition)) + geom_tex
 p.sc <- plot_grid(p1,p2,p3,p4,p5,nrow=2)
 print(p.sc)
 #save_plot(plot= p.sc,filename = paste0(direct.proj,"Results/Figures/SC_models.png"),base_height = 5,base_width = 10)
+```
 
-
+### LTM options
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
 p6 <- ggplot(medyrs2[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
-                          xlab("Previous 2-year median SC (grams)") + ylab("")
+                          xlab("Previous 2-year median SC (grams)") + ylab("Current Year SC (grams)")
 
 p7 <- ggplot(medyrs5[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
@@ -512,10 +534,15 @@ p8 <- ggplot(medyrs10[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=subs
 
 p.sc2 <- plot_grid(p6,p7,p8,nrow=1)
 print(p.sc2)
+```
 
+### Range of best options
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
 p.sc3 <- plot_grid(p1,p2, p3, p4, p5, p6,nrow=2)
 print(p.sc3)
+```
 
+```{r, message=F, warning=F}
 # Get our predicted CF and compare to the Predicted condition we actually used
 aug.dat.comp$CF.all <- predict(aug.sst.sum2,aug.dat.comp)
 aug.dat.comp$CF.last <- predict(aug.sst.last,aug.dat.comp)
@@ -526,11 +553,8 @@ aug.dat.comp$CF.BT <- predict(aug.bt.last,aug.dat.comp)
 names(aug.dat.comp)[which(names(aug.dat.comp)=="Year")] <- "year"
 names(aug.dat.comp)[which(names(aug.dat.comp)=="Condition")] <- "CF"
 
-#load("Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")
-sh.dat<- readRDS("Data/sh_dat.RDS")
-vonB <- readRDS("Data/vonb_dat.RDS")
 # Now we need the SH data to get the the growth rates.
-all.dat <- left_join(aug.dat.comp,sh.dat,by='year')
+all.dat <- dplyr::left_join(aug.dat.comp,sh.dat,by='year')
 
 
 # Now start the growth calculations.... Here's the 'known' weight in year X based on either the May or August survey
@@ -629,18 +653,16 @@ summary(all.dat$prec.gr.BTSST)
 #summary(all.dat$prec.gr.aug)
 # Pivot to long form
 #all.dat.long <- all.dat %>% reshape2::melt(id.vars = 'year',value.name = 'response',variable.name = 'covar')
+```
 
-gb.proj.catch <- readRDS("Data/gb_proj_catch.RDS")
-gb.fish.dat <- readRDS("Data/gb_fish_dat.RDS")
-DD.out <- readRDS("Data/gb_model_output.RDS")
-
+# Projections
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=10}
 # So what I need to do is replace the last g and gr value in this object with the predicted number and then see how much differences
 # that makes in the projection.  We can go back to like 2000 with this no problem I think.
 
 proj.B.yr <- NULL
 base.year <- 2018
-scenarios <- c("BM.Current","BM.All","BM.Last","BM.Realized",#"BM.Aug", 
-               "BM.BT", "BM.BTSST")
+scenarios <- c("BM.Current","BM.All","BM.Last","BM.Realized","BM.BT", "BM.BTSST")
 for(y in 2000:2018)
 {
   pick <- base.year - y+1
@@ -768,11 +790,11 @@ diff.summary %>% group_by(variable) %>% dplyr::summarise(m = mean(median))
 # The labels for the levels...
 labs <- c("Full SST Model","Previous Year SST Model","Current Method","Actual", "BT", "BTSST")
 bm.summary$variable <- factor(bm.summary$variable,levels =c("BM.All","BM.Last","BM.Current","BM.Actual", "BM.BT", "BM.BTSST"),
-                              labels = labs)
+                              labels = labs[c(1,2,3,4,5,6)])
 prop.summary$variable <- factor(prop.summary$variable,levels =c("Prop.All","Prop.Last","Prop.Current", "Prop.BT", "Prop.BTSST"),#,"Prop.Aug"),
-                              labels = labs[1:5])
+                              labels = labs[c(1,2,3,5,6)])
 diff.summary$variable <- factor(diff.summary$variable,levels =c("Diff.All","Diff.Last","Diff.Current", "Diff.BT", "Diff.BTSST"),#,"Diff.Aug"),
-                                labels = labs[1:5])
+                                labels = labs[c(1,2,3,5,6)])
 
 cols <- addalpha(c("orange","darkgreen","grey20","darkblue",'red', "purple"))
 
@@ -817,11 +839,22 @@ p.prop.ts <- ggplot(prop.summary#[prop.summary$variable %in% c("Current Method",
               
 
 p.ts <- plot_grid(leg,p.bm.ts,p.diff.ts,p.prop.ts,ncol=1,rel_heights = c(0.2,1,1,1))
-
+print(p.ts)
 #save_plot(plot = p.ts, filename = "D:/Github/Paper_2_Cond_Env/Results/Figures/timeseries_bm_comparision.png", base_width = 6,base_height = 10)
+```
 
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=7}
+actual <- bm.summary %>%
+  filter(variable=="Actual") %>%
+  rename(Actual=median) %>%
+  dplyr::select(year, Actual)
 
+bm.summary <- dplyr::left_join(bm.summary, actual)
 
+ggplot() + geom_point(data=bm.summary[!bm.summary$variable == "Actual",], aes(median, Actual)) +
+  geom_smooth(data=bm.summary[!bm.summary$variable == "Actual",], aes(median, Actual), method = "lm") +
+  geom_abline(slope=1, intercept=0, lwd=1)+
+  facet_wrap(~variable) + theme_bw()
 
 ## Now we can fit a model which should replace the below fun...
 
@@ -842,9 +875,9 @@ d.mod.pred$se <- predict(diff.mod,d.mod.pred,se=T)$se.fit
 d.mod.pred$uci <- d.mod.pred$est + 2*d.mod.pred$se
 d.mod.pred$lci <- d.mod.pred$est - 2*d.mod.pred$se
 # Now the proportion model...
-p.mod.pred <- data.frame(variable = unique(diff.summary$variable))
-p.mod.pred$est <- predict(diff.mod,p.mod.pred)
-p.mod.pred$se <- predict(diff.mod,p.mod.pred,se=T)$se.fit
+p.mod.pred <- data.frame(variable = unique(prop.summary$variable))
+p.mod.pred$est <- predict(prop.mod,p.mod.pred)
+p.mod.pred$se <- predict(prop.mod,p.mod.pred,se=T)$se.fit
 p.mod.pred$uci <- p.mod.pred$est + 2*p.mod.pred$se
 p.mod.pred$lci <- p.mod.pred$est - 2*p.mod.pred$se
 
@@ -858,8 +891,8 @@ p.diff <- ggplot(d.mod.pred,  aes(x=variable,y=est/1000)) + geom_point(lwd=2) +
                                   scale_y_continuous(breaks = seq(-3,6,by=1)) +
                                   theme(legend.title = element_blank())
 
-p.prop <- ggplot(prop.overall, aes(x=variable,y=100*med)) + geom_point(lwd=2) +
-                                  geom_errorbar(aes(x=variable,ymin=100*lqr,ymax=100*uqr),width=0) +
+p.prop <- ggplot(p.mod.pred, aes(x=variable,y=100*est)) + geom_point(lwd=2) +
+                                  geom_errorbar(aes(x=variable,ymin=100*lci,ymax=100*uci),width=0) +
                                   xlab("") + ylab("Difference from Actual Biomass (%)") +
                                   scale_fill_manual(values = cols[1:3]) +
                                   scale_color_manual(values=cols[1:3]) + 
@@ -870,10 +903,8 @@ p.prop <- ggplot(prop.overall, aes(x=variable,y=100*med)) + geom_point(lwd=2) +
 
 
 p <- plot_grid(p.diff,p.prop,ncol=1)
-
-save_plot(plot = p, filename = "D:/Github/Paper_2_Cond_Env/Results/Figures/Overall_effect.png", base_width = 6,base_height =10 )
-
-```
-
+print(p)
+#save_plot(plot = p, filename = "D:/Github/Paper_2_Cond_Env/Results/Figures/Overall_effect.png", base_width = 6,base_height =10 )
 
 ```
+
