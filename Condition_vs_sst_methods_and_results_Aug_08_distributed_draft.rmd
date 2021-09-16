@@ -1,16 +1,15 @@
 ---
 output: 
+  bookdown::pdf_document2: default
+  bookdown::html_document2: default
   bookdown::word_document2: 
     fig_caption: yes
-  bookdown::html_document2: default
-  bookdown::pdf_document2: default
 bibliography: Y:/Zotero/MAR_SABHU.bib
 title: Identifying environmental drivers of variability in the condition of sea scallop (*Placopecten magellanicus*)
 author: David M. Keith^a,b^, Jessica A. Sameoto^a^, Xiaohan Liu^a^, Emmanuel Devred^a^, Catherine Johnson^a^
 date:  ^a^ Bedford Institute of Oceanography 
        ^b^ Dalhousie University  
 csl: Y:/Zotero/styles/canadian-journal-of-fisheries-and-aquatic-sciences.csl
-
 abstract: Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate if environmental information from remotely sensed sea surface temperature (SST), Chlorophyll-a (CHL), and model-derived mixed layer depth (MLD) could improve the prediction of SC. Model formulations that incorporated SST and MLD, as well as SST alone, significantly improved predictions over the currently implemented biological-only model.  Additionally, these results indicate that scallop condition in August is dependent on the environmental conditions experienced in the winter and spring periods up to 20 months prior. Although MLD was included in the best *predictive* model, these data are not readily *available* in time for the stock assessment, alternatively, SST improves the SC *prediction* and the data are *available* in near real time; therefore this relationship can be operationalized within the quantitative assessment model to directly improve fisheries management advice. These results highlight how the operationalization of environmental relationships in fisheries assessment and management requires that the environmental relationship improves the estimation or prediction of an aspect of productivity over the current methodology (*predictive criterion*) and that the required environmental data is available for use in the stock assessment process (*availability criterion*). 
 ---
 
@@ -22,7 +21,7 @@ set.seed(594)
 #setwd("Y:/Projects/Condition_Environment/Data/")
 setwd("Y:/Projects/Condition_Environment/")
 # directory you have the survey results stored in...
-direct <- "Y:/Offshore scallop/Assessment/Data/Survey_data/2018/Survey_summary_output/"
+direct <- "Y:/Offshore/Assessment/Data/Survey_data/2018/Survey_summary_output/"
 #direct <- "E:/R/Data/Survey_data/2018/Survey_summary_output/"
 
 # Looking a relationship between Condition and SST and phytoplankton
@@ -49,19 +48,26 @@ chl.raw.dat <- as.data.frame(readMat("Data/chl_gb.mat")$chl.gb)
 mic.raw.dat <- as.data.frame(readMat("Data/mic_gb.mat")$mic.gb)
 mld.raw.dat <- as.data.frame(readMat("Data/mld_gb.mat")$mld.gb)
 sst.raw.dat <- as.data.frame(readMat("Data/sst_gb_adj.mat")$gb)
+bt.raw.dat <- dplyr::select(read.csv("Data/bt_gb.csv"), -X, -monthnum)
 
 names(chl.raw.dat) <- c("Year","Month","covar","mystery.covar")
 names(mic.raw.dat) <- c("Year","Month","covar","mystery.covar")
 names(mld.raw.dat) <- c("Year","Month","covar","mystery.covar")
 names(sst.raw.dat) <- c("Year","Month","covar")
+names(bt.raw.dat) <- c("Year", "Month", "covar")
 
-dat.aug <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "Aug",col_types = "numeric")
-dat.may <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "May",col_types = "numeric")
+bt.raw.dat$Month <- match(bt.raw.dat$Month, month.abb)
+
+# dat.aug <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "Aug",col_types = "numeric")
+# dat.may <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "May",col_types = "numeric")
 
 # We want a month-Year combo field for these
 sst.raw.dat$date <- dmy(paste(01,sst.raw.dat$Month,sst.raw.dat$Year, sep="/"))
 sst.raw.dat$Year <- year(sst.raw.dat$date)
 sst.raw.dat$Month <- month(sst.raw.dat$date)
+bt.raw.dat$date <- dmy(paste(01,bt.raw.dat$Month,bt.raw.dat$Year, sep="/"))
+bt.raw.dat$Year <- year(bt.raw.dat$date)
+bt.raw.dat$Month <- month(bt.raw.dat$date)
 chl.raw.dat$date <- dmy(paste(01,chl.raw.dat$Month,chl.raw.dat$Year, sep="/"))
 chl.raw.dat$Year <- year(chl.raw.dat$date)
 chl.raw.dat$Month <- month(chl.raw.dat$date)
@@ -75,9 +81,20 @@ mld.raw.dat$Month <- month(mld.raw.dat$date)
 # This is used to get the acf for condition from the whole time series of condition we have
 base.cond.ts <- read.csv("Data/Full_may_aug_condition_ts.csv")
 
+# base.cond.ts from 1998 on matches dat.aug and dat.may
+# ggplot() + geom_point(data=base.cond.ts, aes(year, aug), colour="blue") +
+#   geom_point(data=base.cond.ts, aes(year, may), colour="red") + 
+#   geom_point(data=dat.aug, aes(Year, Condition), colour="lightblue") + 
+#   geom_point(data=dat.may, aes(Year, Condition), colour="pink")
+
+# Building these by hand because I don't know where the SST data in the XLSX files came from
+dat.aug <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], Condition=base.cond.ts$aug[base.cond.ts$year>1997])
+dat.may <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], Condition=base.cond.ts$may[base.cond.ts$year>1997])
+
 
 # Now we want these as anomolies from average, so starting with SST...
 sst.raw.dat$anom <- sst.raw.dat$covar - mean(sst.raw.dat$covar,na.rm=T)
+bt.raw.dat$anom <- bt.raw.dat$covar - mean(bt.raw.dat$covar,na.rm=T)
 chl.raw.dat$anom <- chl.raw.dat$covar - mean(chl.raw.dat$covar,na.rm=T)
 chl.raw.dat$myst.anom <- chl.raw.dat$mystery.covar - mean(chl.raw.dat$mystery.covar,na.rm=T)
 mic.raw.dat$anom <- mic.raw.dat$covar - mean(mic.raw.dat$covar,na.rm=T)
@@ -89,23 +106,28 @@ mld.raw.dat$myst.anom <- mld.raw.dat$mystery.covar - mean(mld.raw.dat$mystery.co
 # mean temperature anomoly found for each month, so for January, subtract off the mean Jan temp anomoly...
 for(i in 1:12) 
 {  
+  # Sea surface temp
   sst.raw.dat$anom.seasonal[sst.raw.dat$Month == i] <- sst.raw.dat$anom[sst.raw.dat$Month == i] - 
                                                         mean(sst.raw.dat$anom[sst.raw.dat$Month == i],na.rm=T)
+  # Bottom temp
+  bt.raw.dat$anom.seasonal[bt.raw.dat$Month == i] <- bt.raw.dat$anom[bt.raw.dat$Month == i] - 
+                                                        mean(bt.raw.dat$anom[bt.raw.dat$Month == i],na.rm=T)
+  
   # Chlorophyll
-  chl.raw.dat$anom.seasonal[chl.raw.dat$Month == i] <- chl.raw.dat$anom[chl.raw.dat$Month == i] - 
+  chl.raw.dat$anom.seasonal[chl.raw.dat$Month == i] <- chl.raw.dat$anom[chl.raw.dat$Month == i] -
                                                         mean(chl.raw.dat$anom[chl.raw.dat$Month == i],na.rm=T)
-  chl.raw.dat$anom.sea.myst[chl.raw.dat$Month == i] <- chl.raw.dat$myst.anom[chl.raw.dat$Month == i] - 
+  chl.raw.dat$anom.sea.myst[chl.raw.dat$Month == i] <- chl.raw.dat$myst.anom[chl.raw.dat$Month == i] -
                                                         mean(chl.raw.dat$myst.anom[chl.raw.dat$Month == i],na.rm=T)
   # Micro phyto
-  mic.raw.dat$anom.seasonal[mic.raw.dat$Month == i] <- mic.raw.dat$anom[mic.raw.dat$Month == i] - 
+  mic.raw.dat$anom.seasonal[mic.raw.dat$Month == i] <- mic.raw.dat$anom[mic.raw.dat$Month == i] -
                                                         mean(mic.raw.dat$anom[mic.raw.dat$Month == i],na.rm=T)
-  mic.raw.dat$anom.sea.myst[mic.raw.dat$Month == i] <- mic.raw.dat$myst.anom[mic.raw.dat$Month == i] - 
+  mic.raw.dat$anom.sea.myst[mic.raw.dat$Month == i] <- mic.raw.dat$myst.anom[mic.raw.dat$Month == i] -
                                                          mean(mic.raw.dat$myst.anom[mic.raw.dat$Month == i],na.rm=T)
-  # MLD 
-  mld.raw.dat$anom.seasonal[mld.raw.dat$Month == i] <- mld.raw.dat$anom[mld.raw.dat$Month == i] - 
+  # MLD
+  mld.raw.dat$anom.seasonal[mld.raw.dat$Month == i] <- mld.raw.dat$anom[mld.raw.dat$Month == i] -
                                                         mean(mld.raw.dat$anom[mld.raw.dat$Month == i],na.rm=T)
-  
-  mld.raw.dat$anom.sea.myst[mld.raw.dat$Month == i] <- mld.raw.dat$myst.anom[mld.raw.dat$Month == i] - 
+
+  mld.raw.dat$anom.sea.myst[mld.raw.dat$Month == i] <- mld.raw.dat$myst.anom[mld.raw.dat$Month == i] -
                                                         mean(mld.raw.dat$myst.anom[mld.raw.dat$Month == i],na.rm=T)
 }
 
@@ -116,16 +138,27 @@ chl.mon$variable <- "chl"
 sst.mon <- aggregate(covar~ Month,data = sst.raw.dat,FUN=mean)
 sst.mon$sd <- aggregate(covar~ Month,data = sst.raw.dat,FUN=sd)[,2]
 sst.mon$variable <- "sst"
+
+bt.mon <- aggregate(covar~ Month,data = bt.raw.dat,FUN=mean)
+bt.mon$sd <- aggregate(covar~ Month,data = bt.raw.dat,FUN=sd)[,2]
+bt.mon$variable <- "bt"
+
 mld.mon <- aggregate(covar~ Month,data = mld.raw.dat,FUN=mean)
 mld.mon$sd <- aggregate(covar~ Month,data = mld.raw.dat,FUN=sd)[,2]
 mld.mon$variable <- "mld"
 
-month.dat <- rbind(chl.mon,sst.mon,mld.mon)
+month.dat <- rbind(chl.mon,
+                   sst.mon,
+                   bt.mon,
+                   mld.mon
+                   )
 
 # Here we get the data we want for the correlation figures, making one for August SST, Chl, MLD, and MIC
 # not sure which ones we'll use yet...
 
-dat.list <- list(chl = chl.raw.dat,mic = mic.raw.dat,mld = mld.raw.dat,sst = sst.raw.dat)
+dat.list <- list(#chl = chl.raw.dat,mic = mic.raw.dat,mld = mld.raw.dat,
+  sst = sst.raw.dat,
+  bt = bt.raw.dat)
 cond.list <- list(aug = dat.aug,may = dat.may)
 res <- NULL
 for(i in 1:length(dat.list))
@@ -155,48 +188,116 @@ for(i in 1:length(dat.list))
 # For SST use Jan-April last year and Jan-March this year as the model of choice (makes sense and gives excellent model fit..)
 SST.last <- aggregate(covar ~ Year, data=sst.raw.dat[sst.raw.dat$Month %in% 1:4,], FUN = sum)
 names(SST.last) <- c("Year","SST.last")
+BT.last <- aggregate(covar ~ Year, data=bt.raw.dat[bt.raw.dat$Month %in% 1:4 & bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+names(BT.last) <- c("Year","BT.last") 
 chl.dat <- aggregate(covar ~ Year, data=chl.raw.dat[chl.raw.dat$Month %in% 1:3,], FUN = sum)
 mld.dat <- aggregate(covar ~ Year, data=mld.raw.dat[mld.raw.dat$Month %in% 1:3,], FUN = mean)
 
 dat <- aggregate(covar ~ Year, data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
 names(dat) <- c("Year","SST.cur")
 dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
+dat.bt <- aggregate(covar ~ Year, data=bt.raw.dat[bt.raw.dat$Month %in% 1:3 & bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+names(dat.bt) <- c("Year","BT.cur")
+dat.bt$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
+
+dat <- dplyr::left_join(dat, dat.bt, by="Year")
+
 dat$chl <- c(chl.dat$covar,NA)
 dat$mld <- c(mld.dat$covar,NA,NA,NA)
 
-# may.dat <- dat
+may.dat <- dat
 aug.dat <- dat
-# may.dat$Condition <- dat.may$Condition
+may.dat$Condition <- dat.may$Condition
 aug.dat$Condition <- dat.aug$Condition
 # Also make an SST sum covar
-# may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
+may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
+may.dat$BT.sum <- may.dat$BT.cur + may.dat$BT.last
 aug.dat$SST.sum <- aug.dat$SST.cur + aug.dat$SST.last
+aug.dat$BT.sum <- aug.dat$BT.cur + aug.dat$BT.last
+
 
 #----------------------------------------------------------------------------------
 # Now we run the analyses necessary for the paper.
 
 # Now we can omit the years we don't have data right off the top, a bit too harsh but good for model comparisons...
 aug.dat.comp <- na.omit(aug.dat)
+may.dat.comp <- na.omit(may.dat)
 # I wonder if standardizing the data might make any difference to our results, I sure hope not...
 # Now the August models, we are now starting with a really really big model.
 # Removing the chl*SST inter
 aug.max.mod <- lm(Condition~ SST.last * SST.cur + chl * SST.last + chl*SST.cur + mld*SST.cur + mld*SST.last + chl*mld,data = aug.dat.comp)
 summary(aug.max.mod)
 
+aug.max.mod.bt <- lm(Condition~ BT.last * BT.cur + chl * BT.last + chl*BT.cur + mld*BT.cur + mld*BT.last + chl*mld,data = aug.dat.comp)
+summary(aug.max.mod.bt)
+
+may.max.mod.bt <- lm(Condition~ BT.last * BT.cur + chl * BT.last + chl*BT.cur + mld*BT.cur + mld*BT.last + chl*mld,data = may.dat.comp)
+summary(may.max.mod.bt)
 
 # The best of the August models.
 final.step.aug.mod <- stepAIC(aug.max.mod,direction="backward", lower = ~1)
 summary(final.step.aug.mod)
+
+final.step.aug.mod.bt <- stepAIC(aug.max.mod.bt,direction="backward", lower = ~1)
+summary(final.step.aug.mod.bt)
+
+final.step.may.mod.bt <- stepAIC(may.max.mod.bt,direction="backward", lower = ~1)
+summary(final.step.may.mod.bt)
+
 # But clearly the interaction doesn't help when we go a step further, go with the simplier model!
 final.aug.mod <- lm(Condition ~ SST.last+SST.cur + mld,data=aug.dat.comp)
 summary(final.aug.mod)
+
+final.aug.mod.bt <- lm(Condition ~ BT.last+BT.cur + mld,data=aug.dat.comp)
+summary(final.aug.mod.bt)
+
+final.may.mod.bt <- lm(Condition ~ BT.last+BT.cur + mld,data=may.dat.comp)
+summary(final.may.mod.bt)
+
 # Now confirming there is no reasonable reason to remove the mld.
 final.sst.aug.mod <- lm(Condition ~ SST.last+SST.cur ,data=aug.dat.comp)
 summary(final.sst.aug.mod)
 AICctab(final.step.aug.mod,final.aug.mod,final.sst.aug.mod)
+
+final.bt.aug.mod <- lm(Condition ~ BT.last+BT.cur ,data=aug.dat.comp)
+summary(final.bt.aug.mod)
+AICctab(final.step.aug.mod.bt,final.aug.mod.bt,final.bt.aug.mod)
+
+final.bt.may.mod <- lm(Condition ~ BT.last+BT.cur ,data=may.dat.comp)
+summary(final.bt.may.mod)
+AICctab(final.step.may.mod.bt,final.may.mod.bt,final.bt.may.mod)
+
 # Now we can also just look at a mechanistic model with chl and mld in it to see how it does compared to our SST based models
 # aug.max.mld <- lm(Condition~ chl*mld,data = aug.dat.comp)
 # summary(aug.max.mld)
+
+
+summary(lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ SST.last + SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ SST.last))
+summary(lm(data=may.dat.comp, Condition ~ SST.cur))
+summary(lm(data=may.dat.comp, Condition ~ BT.last))
+
+AIC(lm(data=aug.dat.comp, Condition ~ SST.last),
+lm(data=aug.dat.comp, Condition ~ SST.cur),
+lm(data=aug.dat.comp, Condition ~ BT.last))
+
+AIC(lm(data=may.dat.comp, Condition ~ SST.last),
+lm(data=may.dat.comp, Condition ~ SST.cur),
+lm(data=may.dat.comp, Condition ~ BT.last))
+
+AICctab(lm(data=may.dat.comp, Condition ~ SST.last),
+lm(data=may.dat.comp, Condition ~ SST.last+SST.cur),
+lm(data=may.dat.comp, Condition ~ SST.last+SST.cur+BT.last))
+
+AICctab(lm(data=aug.dat.comp, Condition ~ SST.last),
+lm(data=aug.dat.comp, Condition ~ SST.last+SST.cur),
+lm(data=aug.dat.comp, Condition ~ SST.last+SST.cur+BT.last))
+
+cor.test(may.dat.comp$SST.last, may.dat.comp$BT.last)
+cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
+
+
 
 # Some useful model summaries
 last.effect <- round(final.aug.mod$coefficients[2],digits=2)
@@ -523,8 +624,8 @@ Both forward and backward model selection using AICc identified the model with a
 _Figure 3: Correlation between Scallop Condition and (a) cumulative SST, (b) cumulative CHL, and (c) average MLD. The colour of each block represents the $R^2$ estimate for the linear relationship of SC and the effect of the environmental covariate.  The asterisks represent the significance level of the correlation: (\*) represents $p < 0.05$, (\*\*) represents $p < 0.01$, and (\*\*\*) represents $p < 0.001$.  For example, in panel 'a' the colour of the cell in bottom right corner of the matrix represents the $R^2$ estimate of the linear relationship between SC and the sum of SST from January of the previous year to July of the current year, the (\*\*) indicates the p-value of this linear model was < 0.01._
 
 ```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=14}
-dat.list <- list(sst = sst.raw.dat,chl = chl.raw.dat,mld = mld.raw.dat)
-cond.list <- list(aug = dat.aug)
+dat.list <- list(sst = sst.raw.dat,chl = chl.raw.dat,mld = mld.raw.dat)#, bt = bt.raw.dat)
+cond.list <- list(aug = dat.aug)#, may=dat.may)
 res <- NULL
 n.months <- 19
 for(i in 1:length(dat.list))
@@ -560,7 +661,9 @@ p1[[i]] <- p + geom_raster(aes(fill = r2)) +  scale_fill_gradientn(limits = c(0,
 #          geom_text(aes(label= p.kend.lev, angle=0,hjust=0.5,vjust=1),colour="black") +  ggtitle(mods[i])
 
 } # end for(i in 1:num.mods)
-plot_grid(p1[[1]],p1[[2]],p1[[3]], align = "v", nrow = 3, rel_widths = 1.5)
+plot_grid(p1[[1]],p1[[2]],p1[[3]],#p1[[4]],
+          #p1[[5]],p1[[6]],p1[[7]],p1[[8]],
+          align = "v", nrow = 3, rel_widths = 1.5)
 
 ```
 

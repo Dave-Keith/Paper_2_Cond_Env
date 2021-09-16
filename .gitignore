@@ -25,3 +25,5 @@ _bookdown_files
 *.upa
 *.utf8.md
 *.RData
+*.pdf
+*.docx

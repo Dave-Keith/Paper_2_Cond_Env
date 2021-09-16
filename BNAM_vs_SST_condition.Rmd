@@ -1,0 +1,910 @@
+---
+title: "BNAM bottom temperature vs. condition"
+output:
+  pdf_document: default
+  word_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+# Loading required functions, packages and data
+```{r, message=F, warning=F}
+# Data loading and analysis
+set.seed(594)
+#setwd("Y:/Projects/Condition_Environment/Data/")
+#setwd("Y:/Projects/Condition_Environment/")
+# directory you have the survey results stored in...
+# direct <- "Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/"
+direct2 <- "Y:/Projects/Condition_Environment/"
+#direct <- "E:/R/Data/Survey_data/2018/Survey_summary_output/"
+
+#Functions
+funs <- c("https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
+          "https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/convert_inla_mesh_to_sf.R",
+          "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/centre_of_gravity.R",
+          "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R",
+          "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Model/projections.r")
+# Now run through a quick loop to load each one, just be sure that your working directory is read/write!
+for(fun in funs) 
+{
+  download.file(fun,destfile = basename(fun))
+  source(paste0(getwd(),"/",basename(fun)))
+  file.remove(paste0(getwd(),"/",basename(fun)))
+}
+source(paste0(direct2, "Scripts/correlation_table_function_revised.r"))
+
+#Packages
+# Looking a relationship between Condition and SST and phytoplankton
+library(MASS)
+library(readxl)
+library(bbmle)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(mgcv)
+library(lubridate)
+library(pander)
+library(scales)
+library(R.matlab)
+library(cowplot)
+require(formatR)
+require(tidyverse)
+require(dplyr)
+require(tidyr)
+
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+
+#Data
+
+#load("Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")
+sh.dat<- readRDS("Data/sh_dat.RDS")
+vonB <- readRDS("Data/vonb_dat.RDS")
+gb.proj.catch <- readRDS("Data/gb_proj_catch.RDS")
+gb.fish.dat <- readRDS("Data/gb_fish_dat.RDS")
+DD.out <- readRDS("Data/gb_model_output.RDS")
+base.cond.ts <- read.csv(paste0(direct2, "Data/Full_may_aug_condition_ts.csv"))
+# Here we load in the raw data and get everything ready for further analyses.
+#----------------------------------------------------------------------------------
+# RAW Data Section
+# Bring in the raw data.
+chl.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/chl_gb.mat"))$chl.gb)
+mic.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/mic_gb.mat"))$mic.gb)
+mld.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/mld_gb.mat"))$mld.gb)
+sst.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/sst_gb_adj.mat"))$gb)
+bt.raw.dat <- dplyr::select(read.csv(paste0(direct2, "Data/bt_gb.csv")), -X, -monthnum)
+```
+
+# Data prep
+
+```{r, message=F, warning=F}
+names(chl.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(mic.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(mld.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(sst.raw.dat) <- c("Year","Month","covar")
+names(bt.raw.dat) <- c("Year", "Month", "covar")
+
+bt.raw.dat$Month <- match(bt.raw.dat$Month, month.abb)
+
+# dat.aug <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "Aug",col_types = "numeric")
+# dat.may <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "May",col_types = "numeric")
+
+# We want a month-Year combo field for these
+sst.raw.dat$date <- dmy(paste(01,sst.raw.dat$Month,sst.raw.dat$Year, sep="/"))
+sst.raw.dat$Year <- year(sst.raw.dat$date)
+sst.raw.dat$Month <- month(sst.raw.dat$date)
+bt.raw.dat$date <- dmy(paste(01,bt.raw.dat$Month,bt.raw.dat$Year, sep="/"))
+bt.raw.dat$Year <- year(bt.raw.dat$date)
+bt.raw.dat$Month <- month(bt.raw.dat$date)
+chl.raw.dat$date <- dmy(paste(01,chl.raw.dat$Month,chl.raw.dat$Year, sep="/"))
+chl.raw.dat$Year <- year(chl.raw.dat$date)
+chl.raw.dat$Month <- month(chl.raw.dat$date)
+mic.raw.dat$date <- dmy(paste(01,mic.raw.dat$Month,mic.raw.dat$Year, sep="/"))
+mic.raw.dat$Year <- year(mic.raw.dat$date)
+mic.raw.dat$Month <- month(mic.raw.dat$date)
+mld.raw.dat$date <- dmy(paste(01,mld.raw.dat$Month,mld.raw.dat$Year, sep="/"))
+mld.raw.dat$Year <- year(mld.raw.dat$date)
+mld.raw.dat$Month <- month(mld.raw.dat$date)
+
+
+# now bring in the condition data of the whole time series.
+# This is used to get the acf for condition from the whole time series of condition we have
+
+# base.cond.ts from 1998 on matches dat.aug and dat.may
+# ggplot() + geom_point(data=base.cond.ts, aes(year, aug), colour="blue") +
+#   geom_point(data=base.cond.ts, aes(year, may), colour="red") + 
+#   geom_point(data=dat.aug, aes(Year, Condition), colour="lightblue") + 
+#   geom_point(data=dat.may, aes(Year, Condition), colour="pink")
+
+# Building these by hand because I don't know where the SST data in the XLSX files came from
+dat.aug <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], 
+                      Condition=base.cond.ts$aug[base.cond.ts$year>1997])
+dat.may <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], 
+                      Condition=base.cond.ts$may[base.cond.ts$year>1997])
+
+
+# Now we want these as anomolies from average, so starting with SST...
+sst.raw.dat$anom <- sst.raw.dat$covar - mean(sst.raw.dat$covar,na.rm=T)
+bt.raw.dat$anom <- bt.raw.dat$covar - mean(bt.raw.dat$covar,na.rm=T)
+chl.raw.dat$anom <- chl.raw.dat$covar - mean(chl.raw.dat$covar,na.rm=T)
+chl.raw.dat$myst.anom <- chl.raw.dat$mystery.covar - mean(chl.raw.dat$mystery.covar,na.rm=T)
+mic.raw.dat$anom <- mic.raw.dat$covar - mean(mic.raw.dat$covar,na.rm=T)
+mic.raw.dat$myst.anom <- mic.raw.dat$mystery.covar - mean(mic.raw.dat$mystery.covar,na.rm=T)
+mld.raw.dat$anom <- mld.raw.dat$covar - mean(mld.raw.dat$covar,na.rm=T)
+mld.raw.dat$myst.anom <- mld.raw.dat$mystery.covar - mean(mld.raw.dat$mystery.covar,na.rm=T)
+
+# Now we want to remove the "seasonal" signal, one way to do this would be to remove the 
+# mean temperature anomoly found for each month, so for January, subtract off the mean Jan temp anomoly...
+for(i in 1:12) 
+{  
+  # Sea surface temp
+  sst.raw.dat$anom.seasonal[sst.raw.dat$Month == i] <- 
+    sst.raw.dat$anom[sst.raw.dat$Month == i] - 
+    mean(sst.raw.dat$anom[sst.raw.dat$Month == i],na.rm=T)
+  # Bottom temp
+  bt.raw.dat$anom.seasonal[bt.raw.dat$Month == i] <- 
+    bt.raw.dat$anom[bt.raw.dat$Month == i] - 
+    mean(bt.raw.dat$anom[bt.raw.dat$Month == i],na.rm=T)
+  
+  # Chlorophyll
+  chl.raw.dat$anom.seasonal[chl.raw.dat$Month == i] <- 
+    chl.raw.dat$anom[chl.raw.dat$Month == i] -
+    mean(chl.raw.dat$anom[chl.raw.dat$Month == i],na.rm=T)
+  
+  chl.raw.dat$anom.sea.myst[chl.raw.dat$Month == i] <- 
+    chl.raw.dat$myst.anom[chl.raw.dat$Month == i] -
+    mean(chl.raw.dat$myst.anom[chl.raw.dat$Month == i],na.rm=T)
+  # Micro phyto
+  mic.raw.dat$anom.seasonal[mic.raw.dat$Month == i] <- 
+    mic.raw.dat$anom[mic.raw.dat$Month == i] -
+    mean(mic.raw.dat$anom[mic.raw.dat$Month == i],na.rm=T)
+  
+  mic.raw.dat$anom.sea.myst[mic.raw.dat$Month == i] <- 
+    mic.raw.dat$myst.anom[mic.raw.dat$Month == i] -
+    mean(mic.raw.dat$myst.anom[mic.raw.dat$Month == i],na.rm=T)
+  # MLD
+  mld.raw.dat$anom.seasonal[mld.raw.dat$Month == i] <- 
+    mld.raw.dat$anom[mld.raw.dat$Month == i] -
+    mean(mld.raw.dat$anom[mld.raw.dat$Month == i],na.rm=T)
+
+  mld.raw.dat$anom.sea.myst[mld.raw.dat$Month == i] <- 
+    mld.raw.dat$myst.anom[mld.raw.dat$Month == i] -
+    mean(mld.raw.dat$myst.anom[mld.raw.dat$Month == i],na.rm=T)
+}
+
+#Now we can get the monthly SST, CHla, and MLD estimates, this is used for the first figure in the paper.
+chl.mon <- aggregate(covar~ Month,data = chl.raw.dat,FUN=mean)
+chl.mon$sd <- aggregate(covar~ Month,data = chl.raw.dat,FUN=sd)[,2]
+chl.mon$variable <- "chl"
+sst.mon <- aggregate(covar~ Month,data = sst.raw.dat,FUN=mean)
+sst.mon$sd <- aggregate(covar~ Month,data = sst.raw.dat,FUN=sd)[,2]
+sst.mon$variable <- "sst"
+
+bt.mon <- aggregate(covar~ Month,data = bt.raw.dat,FUN=mean)
+bt.mon$sd <- aggregate(covar~ Month,data = bt.raw.dat,FUN=sd)[,2]
+bt.mon$variable <- "bt"
+
+mld.mon <- aggregate(covar~ Month,data = mld.raw.dat,FUN=mean)
+mld.mon$sd <- aggregate(covar~ Month,data = mld.raw.dat,FUN=sd)[,2]
+mld.mon$variable <- "mld"
+
+month.dat <- rbind(chl.mon,
+                   sst.mon,
+                   bt.mon,
+                   mld.mon
+                   )
+
+# Here we get the data we want for the correlation figures, making one
+# for August SST, Chl, MLD, and MIC not sure which ones we'll use yet...
+
+dat.list <- list(#chl = chl.raw.dat,mic = mic.raw.dat,mld = mld.raw.dat,
+  sst = sst.raw.dat,
+  bt = bt.raw.dat)
+cond.list <- list(aug = dat.aug,may = dat.may)
+res <- NULL
+for(i in 1:length(dat.list))
+{
+  for(j in 1:length(cond.list))
+  {
+    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- 
+      cor_dat(dat = dat.list[[i]], response = cond.list[[j]])
+  }  # end for(j in 1:length(cond.list))
+} # end for(i in 1:length(dat.list))
+
+```
+
+# Identifying correlation timing
+
+```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=5}
+dat.list <- list(sst = sst.raw.dat,#chl = chl.raw.dat,mld = mld.raw.dat, 
+                 bt = bt.raw.dat)
+cond.list <- list(aug = dat.aug, may=dat.may)
+res <- NULL
+n.months <- 19
+for(i in 1:length(dat.list))
+{
+  for(j in 1:length(cond.list))
+  {
+    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- cor_dat(dat = dat.list[[i]], response = cond.list[[j]],n.months = n.months,last.month =7)
+  }  # end for(j in 1:length(cond.list))
+} # end for(i in 1:length(dat.list))
+
+mods <- names(res)
+num.mods <- length(mods)
+str.names <- c(paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"),"last",sep=" "),
+               paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul"),"cur",sep=" "))
+aug.mods <- grep(pattern="aug", mods)
+may.mods <- grep(pattern="may", mods)
+p1<- NULL
+#pdf(file = "Figures/R2_and_correlation_for_covariates.pdf",onefile=T,width = 32, height = 8)
+for(i in 1:num.mods)
+{
+tmp <- res[[i]]
+#print(paste("R2 range=" , range(tmp$resp$r2,na.rm=T)))
+#print(paste("Pearson range=" , range(tmp$resp$pearson,na.rm=T)))
+#print(paste("Kendall range=" , range(tmp$resp$kendall,na.rm=T)))
+print(mods[i])
+print("Last year:")
+LY <- res[[i]]$resp[res[[i]]$resp$start.num<13 & res[[i]]$resp$end.num < 13 & !is.na(res[[i]]$resp$p.r2.lev),]
+print(LY[which(LY$r2 == max(LY$r2)),])
+print("Current year:")
+CY <- res[[i]]$resp[res[[i]]$resp$start.num>12 & res[[i]]$resp$end.num > 12 & !is.na(res[[i]]$resp$p.r2.lev),]
+print(CY[which(CY$r2 == max(CY$r2)),])
+
+
+p <- ggplot(tmp$resp, aes(end.num,start.num)) + scale_x_continuous(name= "End month", breaks=1:n.months, labels = str.names) +
+     scale_y_continuous(name= "Start month", breaks=1:n.months,labels = str.names) +
+     theme_classic() + theme(text = element_text(size=20),axis.text.x = element_text(angle = -30, hjust=0)) 
+
+p1[[i]] <- p + geom_raster(aes(fill = r2)) +  scale_fill_gradientn(limits = c(0,0.7),colours=c("blue","white","red")) +
+          geom_text(aes(label= p.r2.lev, angle=0,hjust=0.5,vjust=1),colour="black")+ annotate("text",x=1,y=n.months,label=mods[i])
+
+print(p1[[i]])
+# p2 <- p+ geom_raster(aes(fill = kendall)) + scale_fill_gradientn(limits = c(-0.4,0.8),colours=c("blue","white","red"))+
+#          geom_text(aes(label= p.kend.lev, angle=0,hjust=0.5,vjust=1),colour="black") +  ggtitle(mods[i])
+
+} # end for(i in 1:num.mods)
+# 
+# plot_grid(p1[[aug.mods[1]]], p1[[aug.mods[2]]], 
+#           #p1[[aug.mods[3]]], p1[[aug.mods[4]]], 
+#           align="v", nrow=length(aug.mods), rel_widths=1.5)
+# plot_grid(p1[[may.mods[1]]], p1[[may.mods[2]]], 
+#           #p1[[may.mods[3]]], p1[[may.mods[4]]], 
+#           align="v", nrow=length(may.mods), rel_widths=1.5)
+
+```
+
+
+# August correlation-informed aggregations
+```{r, message=F, warning=F}
+#----------------------------------------------------------------------------------
+# AUGUST FIRST
+# Sub-Section where we create the aggregated time series.
+#Putting the indices together...
+# SO based on the above analyses, it is pretty clear that mld and chl 'a' really 
+# aren't doing anything on their own.  What
+# stands out is SST in the previous spring and the current spring.  
+# The previous spring SST is best represented by Jan-April, while this years is Jan-Mar.
+# So this decision is still somewhat arbitrary and I think we should all chat abou it at some point...
+# the most stats logical move is to use SST from Jan-April last year, and Jan-March this year
+# But from a consistency point of view, Jan-March of both years is very useful
+# And from an applied point of view, given the timing of the advice, seemingly
+# using Jan/Feb of the current year, but Jan-Mar is the better choice
+#  So after much consternation we go for...
+
+# For SST use Jan-April last year and Jan-March this year as the model of choice (makes sense and gives excellent model fit..)
+SST.last <- aggregate(covar ~ Year, 
+                      data=sst.raw.dat[sst.raw.dat$Month %in% 1:4,], FUN = sum)
+names(SST.last) <- c("Year","SST.last")
+
+BT.last <- aggregate(covar ~ Year, 
+                     data=bt.raw.dat[bt.raw.dat$Month %in% 4 & 
+                                       bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+names(BT.last) <- c("Year","BT.last") 
+BT.last$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
+
+dat <- aggregate(covar ~ Year, 
+                 data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
+names(dat) <- c("Year","SST.cur")
+
+dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
+
+dat <- dplyr::left_join(dat, BT.last, by="Year")
+
+aug.dat <- dat
+
+aug.dat$Condition <- dat.aug$Condition
+# Also make an SST sum covar
+aug.dat$SST.sum <- aug.dat$SST.cur + aug.dat$SST.last
+
+```
+
+
+# May correlation-informed aggregations
+```{r, message=F, warning=F}
+SST.last <- aggregate(covar ~ Year, 
+                      data=sst.raw.dat[sst.raw.dat$Month %in% 2:3,], FUN = sum)
+names(SST.last) <- c("Year","SST.last")
+
+dat <- aggregate(covar ~ Year, 
+                 data=sst.raw.dat[sst.raw.dat$Month %in% 1:2,], FUN = sum)
+names(dat) <- c("Year","SST.cur")
+
+dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
+
+dat.bt <- aggregate(covar ~ Year, 
+                    data=bt.raw.dat[bt.raw.dat$Month %in% 4 & 
+                                      bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+names(dat.bt) <- c("Year","BT.cur")
+
+dat <- dplyr::left_join(dat, dat.bt, by="Year")
+
+may.dat <- dat
+may.dat$Condition <- dat.may$Condition
+# Also make an SST sum covar
+may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
+
+```
+
+# Model selection
+```{r, message=F, warning=F}
+#----------------------------------------------------------------------------------
+# Now we run the analyses necessary for the paper.
+
+# Now we can omit the years we don't have data right off the top, a bit too harsh but good for model comparisons...
+aug.dat.comp <- na.omit(aug.dat)
+may.dat.comp <- na.omit(may.dat)
+
+# correlation between sst and bt
+cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
+
+aug.sst.last <- lm(data=aug.dat.comp, Condition ~ SST.last)
+aug.sst.cur <- lm(data=aug.dat.comp, Condition ~ SST.cur)
+aug.bt.last <- lm(data=aug.dat.comp, Condition ~ BT.last)
+summary(aug.sst.last)
+summary(aug.sst.cur)
+summary(aug.bt.last)
+
+aug.sst.sum <- lm(data=aug.dat.comp, Condition ~ SST.sum)
+aug.sst.sum2 <- lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur)
+summary(aug.sst.sum)
+summary(aug.sst.sum2)
+
+aug.sst.sum3 <- lm(data=aug.dat.comp, Condition ~ SST.last + BT.last)
+aug.sst.sum4 <- lm(data=aug.dat.comp, Condition ~ SST.cur + BT.last)
+summary(aug.sst.sum3)
+summary(aug.sst.sum4)
+
+aug.sst.int <- lm(data=aug.dat.comp, Condition ~ SST.last*SST.cur)
+aug.sst.int2 <- lm(data=aug.dat.comp, Condition ~ SST.last*SST.cur + BT.last)
+summary(aug.sst.int)
+summary(aug.sst.int2)
+
+
+AICctab(aug.sst.last, aug.sst.cur, aug.bt.last, 
+        aug.sst.sum, aug.sst.sum2,
+        aug.sst.sum3, aug.sst.sum4,
+        aug.sst.int, aug.sst.int2)
+
+
+# SST sum wins for August, but it's better to use the explicit model so:
+summary(aug.sst.sum2)
+
+# What about May?
+may.sst.last <- lm(data=may.dat.comp, Condition ~ SST.last)
+may.sst.cur <- lm(data=may.dat.comp, Condition ~ SST.cur)
+may.bt.cur <- lm(data=may.dat.comp, Condition ~ BT.cur)
+summary(may.sst.last)
+summary(may.sst.cur)
+summary(may.bt.cur)
+
+may.sst.sum <- lm(data=may.dat.comp, Condition ~ SST.sum)
+may.sst.sum2 <- lm(data=may.dat.comp, Condition ~ SST.last + SST.cur)
+summary(may.sst.sum)
+summary(may.sst.sum2)
+
+may.sst.sum3 <- lm(data=may.dat.comp, Condition ~ SST.last + BT.cur)
+may.sst.sum4 <- lm(data=may.dat.comp, Condition ~ SST.cur + BT.cur)
+summary(may.sst.sum3)
+summary(may.sst.sum4)
+
+may.sst.int <- lm(data=may.dat.comp, Condition ~ SST.last*SST.cur)
+may.sst.int2 <- lm(data=may.dat.comp, Condition ~ SST.last*SST.cur + BT.cur)
+summary(may.sst.int)
+summary(may.sst.int2)
+
+
+AICctab(may.sst.last, may.sst.cur, may.bt.cur, 
+        may.sst.sum, may.sst.sum2,
+        may.sst.sum3, may.sst.sum4,
+        may.sst.int, may.sst.int2)
+
+#sst.sum3 wins
+summary(may.sst.sum3)
+
+```
+
+
+# Autocorrelation within condition
+
+## Instructions...
+The next bit is doing the autocorrelation analysis, is there autocorrelation in condition time series (that is already in my code I'm 99% sure), but then also using the last 2,5,10 year (or X years) median condition to see if any of those are decent predictors of next years condition.  I suspect using last years condition is the best and that's the 'non-environmental' predictive model we'd use to compare with the environmental model. But this will be a useful exercise to see how well using a LTM of some sort to predict condition does so we can tell industry we did all this analysis and none of it helps.
+You can ignore the May stuff I think from here out, let's just dial in on August.
+After that we pick 2-3 models and do the biomass predictions with them.  Undecided if we drop bottom temperature at this stage given your results, or we toss in a bottom temperature model that we know isn't great just to have a couple of environmental models in there...
+
+### Original (one-year lag autocorrelation?)
+```{r, message=F, echo=F}
+# Now we can look at the acf of condition on GB for 1999 - 2018, issue here is the data may not be stationary so need to detrend the longer ts
+# gb.may.cf <- base.cond.ts$may[base.cond.ts$year %in% 1999:2015]
+gba.aug.cf <- base.cond.ts$aug[base.cond.ts$year %in% 1984:2018]
+# gb.detrend <- resid(lm(gb.may.cf~ seq(1,length(gb.may.cf)),na.action = na.exclude))
+gba.detrend <- resid(lm(gba.aug.cf~ seq(1,length(gba.aug.cf)),na.action = na.exclude))
+acfs <- acf(gba.detrend, plot = FALSE,na.action = na.pass)
+plot(acfs)
+acfs <- with(acfs, data.frame(lag, acf))
+# So a lag linear model...
+lag.aug.dat <- aug.dat[aug.dat$Year %in% 1984:2018,]
+lag.aug.dat$cond.covar <- c(NA,lag.aug.dat$Condition[1:(nrow(lag.aug.dat)-1)])
+lag.aug.mod <- lm(Condition ~ cond.covar,lag.aug.dat)
+summary(lag.aug.mod)
+# Finally make the NULL model
+null.aug.mod <- lm(Condition~1,aug.dat.comp)
+```
+
+### Long term median autocorrelation? 
+```{r, message=F, echo=F}
+# build a function to use any number of years
+lastNyears_med <- function(N){
+  lag <- NULL
+  for(i in (N+1):length(lag.aug.dat$Condition)){
+    lagged <- median(lag.aug.dat$Condition[(i-N):(i-1)])
+    lag <- c(lag, lagged)
+  }
+  lag <- c(rep(NA, N), lag)
+  lag.median <- cbind(lag.aug.dat, lag)
+  
+  mod <- lm(data=lag.median, Condition ~ lag)
+  
+  return(list(lag.median, mod))
+  
+}
+
+# I also tried rolling means, but that wasn't any better
+
+# try 2, 5, 10 years
+medyrs2 <- lastNyears_med(2)
+medyrs5 <- lastNyears_med(5)
+medyrs10 <- lastNyears_med(10)
+
+summary(medyrs2[[2]])
+summary(medyrs5[[2]])
+summary(medyrs10[[2]])
+
+mod2 <- lm(data=medyrs2[[1]][11:nrow(medyrs2[[1]]),], Condition ~ lag)
+mod5 <- lm(data=medyrs5[[1]][11:nrow(medyrs5[[1]]),], Condition ~ lag)
+mod10 <- lm(data=medyrs10[[1]][11:nrow(medyrs10[[1]]),], Condition ~ lag)
+
+AICctab(mod2, mod5, mod10)
+
+```
+
+
+# Model fit
+
+### Environmental model options
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
+p1 <- ggplot(aug.dat.comp,aes(x=I(SST.cur+SST.last),y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("SST (Previous Year + Current Year)") + ylab("Current Year SC (grams)")
+
+p2 <- ggplot(aug.dat.comp,aes(x=SST.last,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("SST Previous Year") + ylab("")
+aug.dat.comp$CF_off <- c(NA, aug.dat.comp$Condition[1:nrow(aug.dat.comp)-1])
+
+p3 <- ggplot(aug.dat.comp,aes(x=CF_off,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("Previous Year SC (grams)") + ylab("")
+
+p4 <- ggplot(aug.dat.comp,aes(x=BT.last,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("BT Previous Year") + ylab("Current Year SC (grams)")
+
+p5 <- ggplot(aug.dat.comp,aes(x=I(BT.last + SST.last),y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("SST Previous Year + BT Previous Year") + ylab("")
+
+p.sc <- plot_grid(p1,p2,p3,p4,p5,nrow=2)
+print(p.sc)
+#save_plot(plot= p.sc,filename = paste0(direct.proj,"Results/Figures/SC_models.png"),base_height = 5,base_width = 10)
+```
+
+### LTM options
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
+p6 <- ggplot(medyrs2[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("Previous 2-year median SC (grams)") + ylab("Current Year SC (grams)")
+
+p7 <- ggplot(medyrs5[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("Previous 5-year median SC (grams)") + ylab("")
+
+p8 <- ggplot(medyrs10[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("Previous 10-year median SC (grams)") + ylab("")
+
+p.sc2 <- plot_grid(p6,p7,p8,nrow=1)
+print(p.sc2)
+```
+
+### Range of best options
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
+p.sc3 <- plot_grid(p1,p2, p3, p4, p5, p6,nrow=2)
+print(p.sc3)
+```
+
+```{r, message=F, warning=F}
+# Get our predicted CF and compare to the Predicted condition we actually used
+aug.dat.comp$CF.all <- predict(aug.sst.sum2,aug.dat.comp)
+aug.dat.comp$CF.last <- predict(aug.sst.last,aug.dat.comp)
+aug.dat.comp$CF.BTSST <- predict(aug.sst.sum3,aug.dat.comp)
+aug.dat.comp$CF.BT <- predict(aug.bt.last,aug.dat.comp)
+#all.dat$CF.used <- c(all.dat$CF[2:(nrow(all.dat))],NA)
+
+names(aug.dat.comp)[which(names(aug.dat.comp)=="Year")] <- "year"
+names(aug.dat.comp)[which(names(aug.dat.comp)=="Condition")] <- "CF"
+
+# Now we need the SH data to get the the growth rates.
+all.dat <- dplyr::left_join(aug.dat.comp,sh.dat,by='year')
+
+
+# Now start the growth calculations.... Here's the 'known' weight in year X based on either the May or August survey
+all.dat$waa.tm1 <- all.dat$CF*(all.dat$l.fr/100)^3
+#all.dat$waa.tm1.aug <- all.dat$CF.aug*(all.dat$l.fr/100)^3
+
+# Using this years average shell height we can find the exptected shell height for the scallops in the next year
+# ht = (Linf * (1-exp(-K)) + exp(-K) * height(last year))
+# laa.t is the projected size of the current years scallops into next year.
+all.dat$laa.t <- vonB$Linf*(1-exp(-vonB$K)) + exp(-vonB$K) * all.dat$l.fr
+# The c() term in the below offsets the condition so that current year's condition slots into the previous year and repeats 
+# the condition for the final year), this effectively lines up "next year's condition" with "predictied shell height next year (laa.t)
+# This gets us the predicted weight of the current crop of scallops next year based on next years CF * laa.t^3
+# Of course we don't have next years condition thus th last condition is simply repeated
+# waa.t is using the condition from next year and the growth from next year to get next years weight
+all.dat$waa.t.used <- all.dat$CF*(all.dat$laa.t/100)^3
+#all.dat$waa.t.aug <-  all.dat$CF.aug*(all.dat$laa.t/100)^3 # Becuase we are assuming condition doesn't change, the Aug and May scenarios 
+# Actually turn out to be identical, because all you have is the growth term in there and the conditions cancel out!
+
+
+# But for the modelled data I want to use the following year data because it's the spring 1987 info 
+# that we use to predict 1987 condition right.  Hurting my head!! So 1987 condition by 1986 survey size data.
+all.dat$waa.t.all <- c(all.dat$CF.all[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
+all.dat$waa.t.last <- c(all.dat$CF_off[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
+all.dat$waa.t.BTSST <- c(all.dat$CF.BTSST[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
+all.dat$waa.t.BT <- c(all.dat$CF.BT[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
+
+
+# Here we use the current condition factor to calculate the weight next year (since we use laa.t)
+# That's really the only difference between waa.t and waa.t2, waa.t uses next years condition to project growth
+# what waa.t2 uses the current condition to project growth.  So that's really what we are comparing here with these
+# two growth metrics isn't it, this is really just comparing impact of using current vs. future condition factor on our growth estimates.
+
+all.dat$waa.t2 <- c(all.dat$CF[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3 # This is the 'realized' weight next year using May data, really just 
+#using the growth projection * CF for next year.
+#all.dat$waa.t2.aug <- c(all.dat$CF.aug[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
+# Now the growth, expected and realized.
+#Note everything in these growth in "1986" is actually used for projections in 1987.
+all.dat$g.used <- all.dat$waa.t.used/all.dat$waa.tm1 # This is the growth estimate that would have been used in the model
+all.dat$g.all <- all.dat$waa.t.all/all.dat$waa.tm1 # This is the growth estimate we'd use if we used the full SST predictive model
+all.dat$g.last <- all.dat$waa.t.last/all.dat$waa.tm1 # This is the growth estimate we'd use if we used the last year only SST predictive model
+all.dat$g.BT <- all.dat$waa.t.BT/all.dat$waa.tm1
+all.dat$g.BTSST <- all.dat$waa.t.BTSST/all.dat$waa.tm1
+all.dat$g.actual <- all.dat$waa.t2/all.dat$waa.tm1 # This is using the actual condition factor and growing the scallops by laa.t
+#all.dat$g.aug <- all.dat$waa.t2.aug/all.dat$waa.tm1.aug
+# Percent differences, using g.actual as our 'real' scenario. 
+all.dat$prec.g.used <- 100*(all.dat$g.used - all.dat$g.actual) / all.dat$g.actual
+all.dat$prec.g.all <- 100*(all.dat$g.all - all.dat$g.actual) / all.dat$g.actual
+all.dat$prec.g.last <- 100*(all.dat$g.last - all.dat$g.actual) / all.dat$g.actual
+all.dat$prec.g.BT <- 100*(all.dat$g.BT - all.dat$g.actual) / all.dat$g.actual
+all.dat$prec.g.BTSST <- 100*(all.dat$g.BTSST - all.dat$g.actual) / all.dat$g.actual
+
+
+summary(all.dat$prec.g.used)
+summary(all.dat$prec.g.all)
+summary(all.dat$prec.g.last)
+summary(all.dat$prec.g.BT)
+summary(all.dat$prec.g.BTSST)
+
+# Now do the same thing for the recruits.
+all.dat$wk.tm1 <- all.dat$CF*(all.dat$l.r/100)^3
+#all.dat$wk.tm1.aug <- all.dat$CF.aug*(all.dat$l.r/100)^3
+all.dat$lk.t <- vonB$Linf*(1-exp(-vonB$K))+exp(-vonB$K)*all.dat$l.r
+
+all.dat$wk.t.used <- all.dat$CF*(all.dat$lk.t/100)^3
+all.dat$wk.t.all <- c(all.dat$CF.all[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+all.dat$wk.t.last <-  c(all.dat$CF_off[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+all.dat$wk.t.BTSST <-  c(all.dat$CF.BTSST[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+all.dat$wk.t.BT <-  c(all.dat$CF.BT[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+#all.dat$wk.t2.aug <- c(all.dat$CF.aug[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+all.dat$wk.t2 <- c(all.dat$CF[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+
+
+all.dat$gr.used <- all.dat$wk.t.used/all.dat$wk.tm1 # This is the growth estimate that would have been used in the model
+all.dat$gr.all <- all.dat$wk.t.all/all.dat$wk.tm1 # This is the growth estimate we'd use if we used the full SST predictive model
+all.dat$gr.last <- all.dat$wk.t.last/all.dat$wk.tm1 # This is the growth estimate we'd use if we used the last year only SST predictive model
+all.dat$gr.BT <- all.dat$wk.t.BT/all.dat$wk.tm1 
+all.dat$gr.BTSST <- all.dat$wk.t.BTSST/all.dat$wk.tm1 
+all.dat$gr.actual <- all.dat$wk.t2/all.dat$wk.tm1 # This is using the actual condition factor and growing the scallops by laa.t
+#all.dat$gr.aug <- all.dat$wk.t2.aug/all.dat$wk.tm1.aug
+
+# Percent differences, using g.actual as our 'real' scenario
+all.dat$prec.gr.used <- 100*(all.dat$gr.used - all.dat$gr.actual) / all.dat$gr.actual
+all.dat$prec.gr.all <- 100*(all.dat$gr.all - all.dat$gr.actual) / all.dat$gr.actual
+all.dat$prec.gr.last <- 100*(all.dat$gr.last - all.dat$gr.actual) / all.dat$gr.actual
+all.dat$prec.gr.BT <- 100*(all.dat$gr.BT - all.dat$gr.actual) / all.dat$gr.actual
+all.dat$prec.gr.BTSST <- 100*(all.dat$gr.BTSST - all.dat$gr.actual) / all.dat$gr.actual
+#all.dat$prec.gr.aug <- 100*(all.dat$gr.aug - all.dat$gr.actual) / all.dat$gr.actual #  division.
+
+
+summary(all.dat$prec.gr.used)
+summary(all.dat$prec.gr.all)
+summary(all.dat$prec.gr.last)
+summary(all.dat$prec.gr.BT)
+summary(all.dat$prec.gr.BTSST)
+#summary(all.dat$prec.gr.aug)
+# Pivot to long form
+#all.dat.long <- all.dat %>% reshape2::melt(id.vars = 'year',value.name = 'response',variable.name = 'covar')
+```
+
+# Projections
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=10}
+# So what I need to do is replace the last g and gr value in this object with the predicted number and then see how much differences
+# that makes in the projection.  We can go back to like 2000 with this no problem I think.
+
+proj.B.yr <- NULL
+base.year <- 2018
+scenarios <- c("BM.Current","BM.All","BM.Last","BM.Realized","BM.BT", "BM.BTSST")
+for(y in 2000:2018)
+{
+  pick <- base.year - y+1
+  gb.out <- DD.out
+  gb.out$data$NY <- gb.out$data$NY-pick
+  proj.B <- data.frame("BM.Current"=rep(NA,30000),"BM.All"=rep(NA,30000),
+                       "BM.Last"=rep(NA,30000),"BM.Realized" = rep(NA,30000),
+                       #"BM.Aug" = rep(NA,30000),
+                       "BM.Actual" = rep(NA,30000),
+                       "BM.BT" = rep(NA,30000),
+                       "BM.BTSST" = rep(NA,30000),
+                       "Prop.Current"=rep(NA,30000),"Prop.All"=rep(NA,30000),
+                       "Prop.Last"=rep(NA,30000),"Prop.Realized"=rep(NA,30000),
+                       #"Prop.Aug"=rep(NA,30000),
+                       'year' = rep(y,30000))
+  # Now run through 4 scenarios
+  for(i in 1:(length(scenarios)))
+  {
+    # Note these are all y-1 because I put them in the year before in the above (i.e. 1986 g's are for the 1987 projection)
+    if(i == 2) 
+    {
+      gb.out$data$g[gb.out$data$NY] <- all.dat$g.all[all.dat$year == y-1]
+      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.all[all.dat$year == y-1]
+    }
+    if(i == 3) 
+    {
+      gb.out$data$g[gb.out$data$NY] <- all.dat$g.last[all.dat$year == y-1]
+      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.last[all.dat$year == y-1]
+    }
+    if(i == 4) 
+    {
+      gb.out$data$g[gb.out$data$NY] <- all.dat$g.actual[all.dat$year == y-1]
+      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.actual[all.dat$year == y-1]
+    }  
+    if(i == 5) 
+    {
+      gb.out$data$g[gb.out$data$NY] <- all.dat$g.BT[all.dat$year == y-1]
+      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.BT[all.dat$year == y-1]
+    }  
+    if(i == 6) 
+    {
+      gb.out$data$g[gb.out$data$NY] <- all.dat$g.BTSST[all.dat$year == y-1]
+      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.BTSST[all.dat$year == y-1]
+    }  
+    # if(i == 4) 
+  # {
+  #   gb.out$data$g[gb.out$data$NY] <- all.dat$g.aug[all.dat$year == y]
+  #   gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.aug[all.dat$year == y]
+  # }  
+  # Note that I don't need to include the projected catch here because the data for catches is for the survey
+  # years and so that is all nicely accounted for in this I checked and even 2019 looks to be correct, so no
+  # need to do anything here since we only run to 2019... if we had 2020 we'd probably need to get funky.
+    res <- projections(gb.out, C.p=(gb.fish.dat$GBa$catch[gb.fish.dat$GBa$year == y])) # C.p = potential catches in decision table
+    
+    proj.B[scenarios[i]] <- as.vector(res$sims.list$B.p)
+  } # end for(i in 1:4)
+  proj.B["BM.Actual"] <- as.vector(gb.out$sims.list$B[,gb.out$data$NY+1]) # I want next year's result because I'm projecting forward right!
+  proj.B["Prop.Current"] <- (proj.B["BM.Current"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  proj.B["Prop.All"] <- (proj.B["BM.All"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  proj.B["Prop.Last"] <- (proj.B["BM.Last"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  proj.B["Prop.Realized"] <- (proj.B["BM.Realized"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  proj.B["Prop.BT"] <- (proj.B["BM.BT"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  proj.B["Prop.BTSST"] <- (proj.B["BM.BTSST"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  #proj.B["Prop.Aug"] <- (proj.B["BM.Aug"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  # Difference
+  proj.B["Diff.Current"] <- (proj.B["BM.Current"] - proj.B["BM.Actual"]) 
+  proj.B["Diff.All"] <- (proj.B["BM.All"] - proj.B["BM.Actual"]) 
+  proj.B["Diff.Last"] <- (proj.B["BM.Last"] - proj.B["BM.Actual"]) 
+  proj.B["Diff.Realized"] <- (proj.B["BM.Realized"] - proj.B["BM.Actual"]) 
+  proj.B["Diff.BT"] <- (proj.B["BM.BT"] - proj.B["BM.Actual"]) 
+  proj.B["Diff.BTSST"] <- (proj.B["BM.BTSST"] - proj.B["BM.Actual"]) 
+  #proj.B["Diff.Aug"] <- (proj.B["BM.Aug"] - proj.B["BM.Actual"])
+  proj.B.yr[[as.character(y)]] <- proj.B
+  
+} # end for(y in 1987:2018)
+
+
+bm.res <- do.call('rbind',proj.B.yr)
+
+
+# Now switch the data to long
+all.res.long <- bm.res %>% reshape2::melt(id.var = "year")
+
+
+
+# I don't think I want the realized method on there, it is kinda relevant but makes story complicated.
+bm.res.long <-  all.res.long %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'BM'))
+prop.res.long <- all.res.long %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Prop'))
+diff.res.long <- all.res.long %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Diff'))
+#bm.res.long <-  all.res.long %>% dplyr::filter(str_detect(variable,'BM'))
+#prop.res.long <- all.res.long %>% dplyr::filter(str_detect(variable,'Prop'))
+#diff.res.long <- all.res.long %>% dplyr::filter(str_detect(variable,'Diff'))
+
+# SO we can model the raw data, not sure that's the best plan ever, but let's see!
+# So a model...
+bm.res.mod <- lm(value~variable,bm.res.long)
+summary(bm.res.mod)
+diff.res.mod <- lm(value~variable,diff.res.long)
+summary(diff.res.mod)
+#par(mfrow=c(2,2));plot(diff.res.mod)
+prop.res.mod <- lm(value~variable-1,prop.res.long)
+summary(prop.res.mod)
+#par(mfrow=c(2,2));plot(prop.res.mod)
+
+
+fit.summary <- all.res.long %>% dplyr::group_by(year,variable) %>% dplyr::summarise(median = median(value),
+                                                                                   mn = mean(value),
+                                                                                  uqr = quantile(value,probs=0.75,na.rm=T),
+                                                                                  lqr = quantile(value,probs=0.25,na.rm=T))
+
+
+# I don't think I want the realized method on there, it is kinda relevant but makes story complicated.
+# It also is just about identical to the "Last" model in terms of results, so really using
+# August or May data for the projection doesn't matter as it over-estimates biomass almost identically.
+bm.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'BM'))
+prop.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Prop'))
+diff.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Diff'))
+#bm.summary <- fit.summary %>% dplyr::filter(str_detect(variable,'BM'))
+#prop.summary <- fit.summary %>% dplyr::filter(str_detect(variable,'Prop'))
+#diff.summary <- fit.summary %>% dplyr::filter(str_detect(variable,'Diff'))
+
+
+diff.summary %>% group_by(variable) %>% dplyr::summarise(m = mean(median))
+
+# The labels for the levels...
+labs <- c("Full SST Model","Previous Year SST Model","Current Method","Actual", "BT", "BTSST")
+bm.summary$variable <- factor(bm.summary$variable,levels =c("BM.All","BM.Last","BM.Current","BM.Actual", "BM.BT", "BM.BTSST"),
+                              labels = labs[c(1,2,3,4,5,6)])
+prop.summary$variable <- factor(prop.summary$variable,levels =c("Prop.All","Prop.Last","Prop.Current", "Prop.BT", "Prop.BTSST"),#,"Prop.Aug"),
+                              labels = labs[c(1,2,3,5,6)])
+diff.summary$variable <- factor(diff.summary$variable,levels =c("Diff.All","Diff.Last","Diff.Current", "Diff.BT", "Diff.BTSST"),#,"Diff.Aug"),
+                                labels = labs[c(1,2,3,5,6)])
+
+cols <- addalpha(c("orange","darkgreen","grey20","darkblue",'red', "purple"))
+
+# Time series plots
+p.bm.ts <- ggplot(bm.summary#[bm.summary$variable %in% c("Current Method", "BT", "BTSST"),]
+                  , aes(x=year,y=median/1000,color = variable, group =variable)) + geom_line(lwd=1.5) +
+                #geom_ribbon(aes(x=year,ymin=lqr/1000,ymax=uqr/1000,fill=variable,group = variable),alpha = 0.5) +
+    geom_line() +              
+  xlab("") + ylab("Biomass (kilotonnes)") +
+                scale_fill_manual(values = cols) +
+                scale_color_manual(values=cols) + 
+                scale_x_continuous(breaks = seq(1987,2020,by=3),limits = c(1987,2020)) +
+                theme(legend.position = "top",axis.text.x=element_blank(),legend.title = element_blank())
+
+# Grab the legend then remove it from the figure....
+leg <- get_legend(p.bm.ts)
+p.bm.ts <- p.bm.ts + theme(legend.position = "none")
+#grobs <- ggplotGrob(p.bm.ts)$grobs
+#leg <- grobs[[which(sapply(grobs, function(x) x$name) == "guide-box")]]
+
+p.diff.ts <- ggplot(diff.summary#[diff.summary$variable %in% c("Current Method", "BT", "BTSST"),]
+                    , aes(x=year,y=median/1000,color = variable, group =variable)) + geom_line(lwd=1.5) +
+                #geom_ribbon(aes(x=year,ymin=lqr/1000,ymax=uqr/1000,fill=variable,group = variable),alpha = 0.5) +
+  geom_line() +
+                xlab("") + ylab("Difference from Actual Biomass (kilotonnes)") +
+                scale_fill_manual(values = cols[1:5]) +
+                scale_color_manual(values=cols[1:5]) + 
+                geom_hline(yintercept = 0)+ 
+                scale_x_continuous(breaks = seq(1987,2020,by=3),limits = c(1987,2020)) +
+                theme(legend.position = "none",axis.text.x=element_blank())
+
+p.prop.ts <- ggplot(prop.summary#[prop.summary$variable %in% c("Current Method", "BT", "BTSST"),]
+                    , aes(x=year,y=100*median,color = variable, group =variable)) + geom_line(lwd=1.5) +
+                #geom_ribbon(aes(x=year,ymin=100*lqr,ymax=100*uqr,fill=variable,group = variable),alpha = 0.5) +
+    geom_line() +              
+  xlab("") + ylab("Difference from Actual Biomass (%)") +
+                scale_fill_manual(values = cols[1:5]) +
+                scale_color_manual(values=cols[1:5]) + 
+                geom_hline(yintercept = 0)+
+                scale_x_continuous(breaks = seq(1987,2020,by=3),limits = c(1987,2020)) +
+                theme(legend.position = "none")
+              
+
+p.ts <- plot_grid(leg,p.bm.ts,p.diff.ts,p.prop.ts,ncol=1,rel_heights = c(0.2,1,1,1))
+print(p.ts)
+#save_plot(plot = p.ts, filename = "D:/Github/Paper_2_Cond_Env/Results/Figures/timeseries_bm_comparision.png", base_width = 6,base_height = 10)
+```
+
+```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=7}
+actual <- bm.summary %>%
+  filter(variable=="Actual") %>%
+  rename(Actual=median) %>%
+  dplyr::select(year, Actual)
+
+bm.summary <- dplyr::left_join(bm.summary, actual)
+
+ggplot() + geom_point(data=bm.summary[!bm.summary$variable == "Actual",], aes(median, Actual)) +
+  geom_smooth(data=bm.summary[!bm.summary$variable == "Actual",], aes(median, Actual), method = "lm") +
+  geom_abline(slope=1, intercept=0, lwd=1)+
+  facet_wrap(~variable) + theme_bw()
+
+## Now we can fit a model which should replace the below fun...
+
+
+# So a model...
+bm.mod <- lm(median~variable,bm.summary)
+summary(bm.mod)
+diff.mod <- lm(median~variable,diff.summary)
+summary(diff.mod)
+par(mfrow=c(2,2));plot(diff.mod)
+prop.mod <- lm(median~variable,prop.summary)
+summary(prop.mod)
+par(mfrow=c(2,2));plot(prop.mod)
+
+d.mod.pred <- data.frame(variable = unique(diff.summary$variable))
+d.mod.pred$est <- predict(diff.mod,d.mod.pred)
+d.mod.pred$se <- predict(diff.mod,d.mod.pred,se=T)$se.fit
+d.mod.pred$uci <- d.mod.pred$est + 2*d.mod.pred$se
+d.mod.pred$lci <- d.mod.pred$est - 2*d.mod.pred$se
+# Now the proportion model...
+p.mod.pred <- data.frame(variable = unique(prop.summary$variable))
+p.mod.pred$est <- predict(prop.mod,p.mod.pred)
+p.mod.pred$se <- predict(prop.mod,p.mod.pred,se=T)$se.fit
+p.mod.pred$uci <- p.mod.pred$est + 2*p.mod.pred$se
+p.mod.pred$lci <- p.mod.pred$est - 2*p.mod.pred$se
+
+
+p.diff <- ggplot(d.mod.pred,  aes(x=variable,y=est/1000)) + geom_point(lwd=2) +
+                                  geom_errorbar(aes(x=variable,ymin=lci/1000,ymax=uci/1000),width=0) +
+                                  xlab("") + ylab("Difference from Actual Biomass (kilotonnes)") +
+                                  scale_fill_manual(values = cols[1:3]) +
+                                  scale_color_manual(values=cols[1:3]) + 
+                                  geom_hline(yintercept = 0,linetype=2)+
+                                  scale_y_continuous(breaks = seq(-3,6,by=1)) +
+                                  theme(legend.title = element_blank())
+
+p.prop <- ggplot(p.mod.pred, aes(x=variable,y=100*est)) + geom_point(lwd=2) +
+                                  geom_errorbar(aes(x=variable,ymin=100*lci,ymax=100*uci),width=0) +
+                                  xlab("") + ylab("Difference from Actual Biomass (%)") +
+                                  scale_fill_manual(values = cols[1:3]) +
+                                  scale_color_manual(values=cols[1:3]) + 
+                                  geom_hline(yintercept = 0,linetype=2)+
+                                  scale_y_continuous(breaks = seq(-20,40,by=10)) +
+                                  theme(legend.title = element_blank())
+
+
+
+p <- plot_grid(p.diff,p.prop,ncol=1)
+print(p)
+#save_plot(plot = p, filename = "D:/Github/Paper_2_Cond_Env/Results/Figures/Overall_effect.png", base_width = 6,base_height =10 )
+
+```
+
