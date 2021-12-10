@@ -849,7 +849,7 @@ actual <- bm.summary %>%
   rename(Actual=median) %>%
   dplyr::select(year, Actual)
 
-bm.summary <- dplyr::left_join(bm.summary, actual)
+bm.summary <- dplyr::left_join(bm.summary, actual)===
 
 ggplot() + geom_point(data=bm.summary[!bm.summary$variable == "Actual",], aes(median, Actual)) +
   geom_smooth(data=bm.summary[!bm.summary$variable == "Actual",], aes(median, Actual), method = "lm") +

@@ -16,12 +16,13 @@ output:
   language: english
   classoption: twocolumn
 # End of options to set
-title: "Impact of the environmental drivers of condition on Biomass Prediction for sea scallop (*Placopecten magellanicus*) on Georges Bank, Canada"
+title: "The Scallop who wished for a King: How utilzing an environmental relationship can improve prediction of condition yet result in less accurate science advice."
 author: |
   David M. Keith^1^,
   Jessica A. Sameoto^1^,
   Xiaohan Liu^2^, 
-  Emmanuel Devred^1^, and
+  Emmanuel Devred^1^,
+  Freya A. Keyser, and 
   Catherine Johnson^1^
 address: |
   ^1^Bedford Institute of Oceanography\
@@ -34,7 +35,7 @@ report_number: nnn
 region: Maritimes Region
 author_list: "Keith, D.M., Sameoto, J.A., Keyser, F., Liu, X., Devred, E., Johnson, C."
 abstract: |
-  Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate how using a recently developed model to predict SC using winter sea surface temperature (SST) impacts the prediction of current year biomass. A retrospective analysis was undertaken in which the current year biomass estimates from the stock assessment model were compared using the currently implemented bioloigical-only model and two SC-SST models. The results of this retrospective analysis indicated that there is a small positive bias of approximately 2% in the model biomass predictions using the biological-only model.  The biological-only model tends to predict that SC will be lower than the SC-SST model, thus the use of the SC-SST model results in a slight statistically insignificant increase in the bias of the model biomass predictions.  The underestiamte of SC in the biological model helps to offset the tendency for the assessment model to overestimate biomass in the current fishing year. These results highlight the challenges of attempting to incorporate environmental information into existing stock assessment frameworks and suggests that the development of next generation integrated stock assessment frameworks are needed to quantiatively develop science advice that can operationlize EAFM into the science advice.
+  Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate the development of predictive models of scallop growth that incorporated environmental covariates.  The environmental covarites used were Sea Surface Temperature (SST), Bottom Temperature (BT), Chlorophyll-a (CHL), and Mixed Layer Depth (MLD). The preferred predictive models incorporated either SST or BT and generally lead to more accurate predictions of SC than the current biologicaly only model. A retrospective analysis was then undertaken in which the current year biomass estimates from the stock assessment model were compared using the currently implemented bioloigical-only model and the best performing environmental models. The results of this retrospective analysis indicated that there is a small positive bias of approximately 2% in the model biomass predictions.  The biological-only model tends to predict that SC will be lower than the predictive environmental models, thus the use of the environmental models results in a slight, statistically insignificant, increase in the bias of the model biomass predictions.  The underestiamte of SC in the biological model helps to offset the tendency for the assessment model to overestimate biomass in the current fishing year. These results highlight the challenges of attempting to incorporate environmental information into existing stock assessment frameworks.  The development of next generation integrated stock assessment frameworks that incorporate environmental considerations directly into the model structure may provide a more flexible means of developing science advice that can operationlize EAFM considerations.
   
 header: "Draft working paper --- Do not cite or circulate" # or "" to omit
 
@@ -69,12 +70,16 @@ library(pander)
 library(scales)
 library(R.matlab)
 library(cowplot)
-library(visreg)
-library(tidyverse)
-library(bbmle)
-library(effects)
+require(formatR)
+require(tidyverse)
+require(dplyr)
+require(tidyr)
 
-# Bring in our in house functions. First combine them all in a vector
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+
+direct2 <- "D:/Github/Paper_2_Cond_Env/"
+
+#Functions
 funs <- c("https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
           "https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/convert_inla_mesh_to_sf.R",
           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/centre_of_gravity.R",
@@ -87,6 +92,7 @@ for(fun in funs)
   source(paste0(getwd(),"/",basename(fun)))
   file.remove(paste0(getwd(),"/",basename(fun)))
 }
+source(paste0(direct2, "Scripts/correlation_table_function_revised.r"))
 
 # A couple custom functions I may or may not use
 factor.2.number <- function(x) {as.numeric(levels(x))[x]} # My friend factor.2.number
@@ -96,26 +102,6 @@ beta.transform <- function(dat,s=0.5)  (dat*(length(dat)-1) + s) / length(dat)
 direct.proj <- "D:/Github/Paper_2_Cond_Env/"
 # The prediction prop function
 
-```
-
-```{r data-load, echo=FALSE, cache=T, message=FALSE, results='hide', warning=FALSE}
-
-
-#####  Data Load....
-# Load the data, most of these were made in teh script "trim_down_survey_and_model_data.R"
-dat <- read_xlsx(paste0(direct.proj,"Data/GB_satellite_1985_2019.xlsx"))
-vonB <- readRDS(paste0(direct.proj,"Data/vonb_dat.RDS"))
-gb.proj.catch <- readRDS(paste0(direct.proj,"Data/gb_proj_catch.RDS"))
-gb.fish.dat <- readRDS(paste0(direct.proj,"Data/gb_fish_dat.RDS"))
-DD.out <- readRDS(paste0(direct.proj,"Data/gb_model_output.RDS"))
-sh.dat <- readRDS(paste0(direct.proj,"Data/sh_dat.RDS"))
-survey.obj <- readRDS(paste0(direct.proj,"Data/survey_obj.RDS"))
-
-vonB <- readRDS(paste0(direct.proj,"Data/vonb_dat.RDS"))
-dat <- read_xlsx(paste0(direct.proj,"Data/GB_satellite_1985_2019.xlsx"))
-cond.dat <- read.csv(paste0(direct.proj,"Data/CF_data_May_GB_for_revisions_1986_2019.csv"))
-
-##### Done with data loading... Set some variables for the rest of the show..
 
 if (is_latex_output()) {
   knitr_figs_dir <- "knitr-figs-pdf/"
@@ -157,22 +143,166 @@ options(kableExtra.latex.load_packages = FALSE)
 
 # Don't use scientific notation please!!
 options(scipen=999)
-# Set a nice theme for the ggplots unless I override
 
-# For examplorary purposes I've kept the option to translate to French, and to ID if we are making a word or pdf docnot needed otherwise.
-# `french` is extracted from the YAML header metadata, also later we use metadata to make sure the tables are formatted correctly for word/pdf
-meta <- rmarkdown::metadata$output
+```
 
-if(meta$language == 'french'){ french = T} else {french = F}
-print(french)
-# if(length(grep("pdf", names(meta)))){
-#   #french <- meta$`bookdown::pdf_document2`$french
-#   prepub <- meta$`bookdown::pdf_document2`$prepub
-# }else if(length(grep("word", names(meta)))){
-#   #french <- meta$`bookdown::word_document2`$french
-#   prepub <- meta$`bookdown::word_document2`$prepub
-# }
-if(french) options(OutDec =  ",")
+```{r data-load, echo=FALSE, cache=T, message=FALSE, results='hide', warning=FALSE}
+
+
+#####  Data Load....
+sh.dat<- readRDS("Data/sh_dat.RDS")
+vonB <- readRDS("Data/vonb_dat.RDS")
+gb.proj.catch <- readRDS("Data/gb_proj_catch.RDS")
+gb.fish.dat <- readRDS("Data/gb_fish_dat.RDS")
+DD.out <- readRDS("Data/gb_model_output.RDS")
+base.cond.ts <- read.csv(paste0(direct2, "Data/Full_may_aug_condition_ts.csv"))
+# Here we load in the raw data and get everything ready for further analyses.
+#----------------------------------------------------------------------------------
+# RAW Data Section
+# Bring in the raw data.
+chl.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/chl_gb.mat"))$chl.gb)
+mic.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/mic_gb.mat"))$mic.gb)
+mld.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/mld_gb.mat"))$mld.gb)
+sst.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/sst_gb_adj.mat"))$gb)
+bt.raw.dat <- dplyr::select(read.csv(paste0(direct2, "Data/bt_gb.csv")), -X, -monthnum)
+
+##### Done with data loading... Set some variables for the rest of the show..
+
+### Now some basic data prep for the next stage of fun
+
+names(chl.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(mic.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(mld.raw.dat) <- c("Year","Month","covar","mystery.covar")
+names(sst.raw.dat) <- c("Year","Month","covar")
+names(bt.raw.dat) <- c("Year", "Month", "covar")
+
+bt.raw.dat$Month <- match(bt.raw.dat$Month, month.abb)
+
+# dat.aug <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "Aug",col_types = "numeric")
+# dat.may <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "May",col_types = "numeric")
+
+# We want a month-Year combo field for these
+sst.raw.dat$date <- dmy(paste(01,sst.raw.dat$Month,sst.raw.dat$Year, sep="/"))
+sst.raw.dat$Year <- year(sst.raw.dat$date)
+sst.raw.dat$Month <- month(sst.raw.dat$date)
+bt.raw.dat$date <- dmy(paste(01,bt.raw.dat$Month,bt.raw.dat$Year, sep="/"))
+bt.raw.dat$Year <- year(bt.raw.dat$date)
+bt.raw.dat$Month <- month(bt.raw.dat$date)
+chl.raw.dat$date <- dmy(paste(01,chl.raw.dat$Month,chl.raw.dat$Year, sep="/"))
+chl.raw.dat$Year <- year(chl.raw.dat$date)
+chl.raw.dat$Month <- month(chl.raw.dat$date)
+mic.raw.dat$date <- dmy(paste(01,mic.raw.dat$Month,mic.raw.dat$Year, sep="/"))
+mic.raw.dat$Year <- year(mic.raw.dat$date)
+mic.raw.dat$Month <- month(mic.raw.dat$date)
+mld.raw.dat$date <- dmy(paste(01,mld.raw.dat$Month,mld.raw.dat$Year, sep="/"))
+mld.raw.dat$Year <- year(mld.raw.dat$date)
+mld.raw.dat$Month <- month(mld.raw.dat$date)
+
+
+# now bring in the condition data of the whole time series.
+# This is used to get the acf for condition from the whole time series of condition we have
+
+# base.cond.ts from 1998 on matches dat.aug and dat.may
+# ggplot() + geom_point(data=base.cond.ts, aes(year, aug), colour="blue") +
+#   geom_point(data=base.cond.ts, aes(year, may), colour="red") + 
+#   geom_point(data=dat.aug, aes(Year, Condition), colour="lightblue") + 
+#   geom_point(data=dat.may, aes(Year, Condition), colour="pink")
+
+# Building these by hand because I don't know where the SST data in the XLSX files came from
+dat.aug <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], 
+                      Condition=base.cond.ts$aug[base.cond.ts$year>1997])
+dat.may <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], 
+                      Condition=base.cond.ts$may[base.cond.ts$year>1997])
+
+
+# Now we want these as anomolies from average, so starting with SST...
+sst.raw.dat$anom <- sst.raw.dat$covar - mean(sst.raw.dat$covar,na.rm=T)
+bt.raw.dat$anom <- bt.raw.dat$covar - mean(bt.raw.dat$covar,na.rm=T)
+chl.raw.dat$anom <- chl.raw.dat$covar - mean(chl.raw.dat$covar,na.rm=T)
+chl.raw.dat$myst.anom <- chl.raw.dat$mystery.covar - mean(chl.raw.dat$mystery.covar,na.rm=T)
+mic.raw.dat$anom <- mic.raw.dat$covar - mean(mic.raw.dat$covar,na.rm=T)
+mic.raw.dat$myst.anom <- mic.raw.dat$mystery.covar - mean(mic.raw.dat$mystery.covar,na.rm=T)
+mld.raw.dat$anom <- mld.raw.dat$covar - mean(mld.raw.dat$covar,na.rm=T)
+mld.raw.dat$myst.anom <- mld.raw.dat$mystery.covar - mean(mld.raw.dat$mystery.covar,na.rm=T)
+
+# Now we want to remove the "seasonal" signal, one way to do this would be to remove the 
+# mean temperature anomoly found for each month, so for January, subtract off the mean Jan temp anomoly...
+for(i in 1:12) 
+{  
+  # Sea surface temp
+  sst.raw.dat$anom.seasonal[sst.raw.dat$Month == i] <- 
+    sst.raw.dat$anom[sst.raw.dat$Month == i] - 
+    mean(sst.raw.dat$anom[sst.raw.dat$Month == i],na.rm=T)
+  # Bottom temp
+  bt.raw.dat$anom.seasonal[bt.raw.dat$Month == i] <- 
+    bt.raw.dat$anom[bt.raw.dat$Month == i] - 
+    mean(bt.raw.dat$anom[bt.raw.dat$Month == i],na.rm=T)
+  
+  # Chlorophyll
+  chl.raw.dat$anom.seasonal[chl.raw.dat$Month == i] <- 
+    chl.raw.dat$anom[chl.raw.dat$Month == i] -
+    mean(chl.raw.dat$anom[chl.raw.dat$Month == i],na.rm=T)
+  
+  chl.raw.dat$anom.sea.myst[chl.raw.dat$Month == i] <- 
+    chl.raw.dat$myst.anom[chl.raw.dat$Month == i] -
+    mean(chl.raw.dat$myst.anom[chl.raw.dat$Month == i],na.rm=T)
+  # Micro phyto
+  mic.raw.dat$anom.seasonal[mic.raw.dat$Month == i] <- 
+    mic.raw.dat$anom[mic.raw.dat$Month == i] -
+    mean(mic.raw.dat$anom[mic.raw.dat$Month == i],na.rm=T)
+  
+  mic.raw.dat$anom.sea.myst[mic.raw.dat$Month == i] <- 
+    mic.raw.dat$myst.anom[mic.raw.dat$Month == i] -
+    mean(mic.raw.dat$myst.anom[mic.raw.dat$Month == i],na.rm=T)
+  # MLD
+  mld.raw.dat$anom.seasonal[mld.raw.dat$Month == i] <- 
+    mld.raw.dat$anom[mld.raw.dat$Month == i] -
+    mean(mld.raw.dat$anom[mld.raw.dat$Month == i],na.rm=T)
+
+  mld.raw.dat$anom.sea.myst[mld.raw.dat$Month == i] <- 
+    mld.raw.dat$myst.anom[mld.raw.dat$Month == i] -
+    mean(mld.raw.dat$myst.anom[mld.raw.dat$Month == i],na.rm=T)
+}
+
+#Now we can get the monthly SST, CHla, and MLD estimates, this is used for the first figure in the paper.
+chl.mon <- aggregate(covar~ Month,data = chl.raw.dat,FUN=mean)
+chl.mon$sd <- aggregate(covar~ Month,data = chl.raw.dat,FUN=sd)[,2]
+chl.mon$variable <- "chl"
+sst.mon <- aggregate(covar~ Month,data = sst.raw.dat,FUN=mean)
+sst.mon$sd <- aggregate(covar~ Month,data = sst.raw.dat,FUN=sd)[,2]
+sst.mon$variable <- "sst"
+
+bt.mon <- aggregate(covar~ Month,data = bt.raw.dat,FUN=mean)
+bt.mon$sd <- aggregate(covar~ Month,data = bt.raw.dat,FUN=sd)[,2]
+bt.mon$variable <- "bt"
+
+mld.mon <- aggregate(covar~ Month,data = mld.raw.dat,FUN=mean)
+mld.mon$sd <- aggregate(covar~ Month,data = mld.raw.dat,FUN=sd)[,2]
+mld.mon$variable <- "mld"
+
+month.dat <- rbind(chl.mon,
+                   sst.mon,
+                   bt.mon,
+                   mld.mon
+                   )
+
+# Here we get the data we want for the correlation figures, making one
+# for August SST, Chl, MLD, and MIC not sure which ones we'll use yet...
+
+dat.list <- list(#chl = chl.raw.dat,mic = mic.raw.dat,mld = mld.raw.dat,
+  sst = sst.raw.dat,
+  bt = bt.raw.dat)
+cond.list <- list(aug = dat.aug,may = dat.may)
+res <- NULL
+for(i in 1:length(dat.list))
+{
+  for(j in 1:length(cond.list))
+  {
+    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- 
+      cor_dat(dat = dat.list[[i]], response = cond.list[[j]])
+  }  # end for(j in 1:length(cond.list))
+} # end for(i in 1:length(dat.list))
+
 
 
 ```
