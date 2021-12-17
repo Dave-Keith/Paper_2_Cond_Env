@@ -13,6 +13,8 @@ output:
       keep_tex: yes
       number_sections: false
       toc: no
+      # includes:
+      # in_header: "styling.sty"
   language: english
   classoption: twocolumn
 # End of options to set
@@ -46,10 +48,12 @@ csl: Y:/Zotero/styles/canadian-journal-of-fisheries-and-aquatic-sciences.csl
 # Any extra LaTeX code for the header:
 #  Note that if you need to include more than one package you will have to have them on the same line like this:
 header-includes: 
- - \usepackage{tikz} \usepackage{pdflscape}
- - \newcommand{\blandscape}{\begin{landscape}}
- - \newcommand{\elandscape}{\end{landscape}}
- - \newcommand{\beginsupplement}{\setcounter{table}{0}  \renewcommand{\thetable}{S\arabic{table}} \setcounter{figure}{0} \renewcommand{\thefigure}{S\arabic{figure}}}
+  - \usepackage{tikz} \usepackage{pdflscape} \usepackage{float}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
+#  - \newcommand{\be}{\begin{equation}}
+#  - \newcommand{\ee}{\end{equation}}
+  - \newcommand{\beginsupplement}{\setcounter{table}{0}  \renewcommand{\thetable}{S\arabic{table}} \setcounter{figure}{0} \renewcommand{\thefigure}{S\arabic{figure}}}
 
 ---
 
@@ -76,8 +80,9 @@ require(dplyr)
 require(tidyr)
 
 knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
-
-direct2 <- "D:/Github/Paper_2_Cond_Env/"
+# Set the Workding directory.
+direct.proj <- "D:/Github/Paper_2_Cond_Env/"
+n.boots =2 # Just temporary for testing, when you notice this later delete this.
 
 #Functions
 funs <- c("https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
@@ -92,14 +97,14 @@ for(fun in funs)
   source(paste0(getwd(),"/",basename(fun)))
   file.remove(paste0(getwd(),"/",basename(fun)))
 }
-source(paste0(direct2, "Scripts/correlation_table_function_revised.r"))
+source(paste0(direct.proj, "Scripts/correlation_table_function_revised.r"))
 
 # A couple custom functions I may or may not use
 factor.2.number <- function(x) {as.numeric(levels(x))[x]} # My friend factor.2.number
 # Function in case you need it for transforming propotion data to not have 0's and 1's.  
 beta.transform <- function(dat,s=0.5)  (dat*(length(dat)-1) + s) / length(dat)
 # Just so this code is easily portable over to our eventual Res Doc..
-direct.proj <- "D:/Github/Paper_2_Cond_Env/"
+
 # The prediction prop function
 
 

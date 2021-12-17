@@ -1,0 +1,321 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={The Scallop who wished for a King: How utilzing an environmental relationship can improve prediction of condition yet result in less accurate science advice.},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{tikz} \usepackage{pdflscape} \usepackage{float}
+\newcommand{\blandscape}{\begin{landscape}}
+\newcommand{\elandscape}{\end{landscape}}
+\newcommand{\beginsupplement}{\setcounter{table}{0}  \renewcommand{\thetable}{S\arabic{table}} \setcounter{figure}{0} \renewcommand{\thefigure}{S\arabic{figure}}}
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1 \everypar{\setlength{\hangindent}{\cslhangindent}}\ignorespaces\fi
+  % set entry spacing
+  \ifnum #2 > 0
+  \setlength{\parskip}{#2\baselineskip}
+  \fi
+ }%
+ {}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+\title{The Scallop who wished for a King: How utilzing an environmental relationship can improve prediction of condition yet result in less accurate science advice.}
+\author{David M. Keith\textsuperscript{1},
+Jessica A. Sameoto\textsuperscript{1},
+Xiaohan Liu\textsuperscript{2},
+Emmanuel Devred\textsuperscript{1},
+Freya A. Keyser, and
+Catherine Johnson\textsuperscript{1}}
+\date{}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world's largest wild scallop fisheries, the sea scallop (\emph{Placopecten magellanicus}) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield. Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate the development of predictive models of scallop growth that incorporated environmental covariates. The environmental covarites used were Sea Surface Temperature (SST), Bottom Temperature (BT), Chlorophyll-a (CHL), and Mixed Layer Depth (MLD). The preferred predictive models incorporated either SST or BT and generally lead to more accurate predictions of SC than the current biologicaly only model. A retrospective analysis was then undertaken in which the current year biomass estimates from the stock assessment model were compared using the currently implemented bioloigical-only model and the best performing environmental models. The results of this retrospective analysis indicated that there is a small positive bias of approximately 2\% in the model biomass predictions. The biological-only model tends to predict that SC will be lower than the predictive environmental models, thus the use of the environmental models results in a slight, statistically insignificant, increase in the bias of the model biomass predictions. The underestiamte of SC in the biological model helps to offset the tendency for the assessment model to overestimate biomass in the current fishing year. These results highlight the challenges of attempting to incorporate environmental information into existing stock assessment frameworks. The development of next generation integrated stock assessment frameworks that incorporate environmental considerations directly into the model structure may provide a more flexible means of developing science advice that can operationlize EAFM considerations.
+\end{abstract}
+
+\hypertarget{ref-intro}{%
+\section{INTRODUCTION}\label{ref-intro}}
+
+There is an urgent need to sustainably manage fish stocks due to pressures from over-fishing, pollution, habitat destruction, and climate change (\protect\hyperlink{ref-faoStateWorldFisheries2018}{FAO 2018}). While it is well known that oceanographic conditions influence natural fluctuations in fish stocks, disentangling environmental variability from fishing effects remains challenging, often due to the non-stationarity of the relationships and a lack of scientific resources (\protect\hyperlink{ref-myersWhenEnvironmentRecruitment1998}{Myers 1998}; \protect\hyperlink{ref-skern-mauritzenEcosystemProcessesAre2016}{Skern‐Mauritzen et al. 2016}). For this reason stock assessment methods historically only directly account for the effects of population demographics and fishing while ignoring environmental effects outright (\protect\hyperlink{ref-skern-mauritzenEcosystemProcessesAre2016}{Skern‐Mauritzen et al. 2016}). More recently, methods have been developed which indirectly account for environmental variability by allowing for model parameters to vary over time (\protect\hyperlink{ref-swainExtremeIncreasesNatural2015}{Swain and Benoît 2015}) but the integration of environmental data directly into traditional stock assessment models remains the exception (\protect\hyperlink{ref-cadrinStockAssessmentMethods2015}{Cadrin and Dickey-Collas 2015}). Improved understanding of the influence of environmental variation on fish populations dynamics would improve science advice within an ecosystem context and help operationalize an ecosystem approach to fisheries management (EAFM). Further, climate and environmental considerations are increasingly required in fisheries management decision making in order to mitigate, adapt, and respond to the impacts of climate change (\protect\hyperlink{ref-wilsonAdaptiveComanagementAchieve2018}{Wilson et al. 2018}; \protect\hyperlink{ref-dfoActAmendFisheries2019}{DFO 2019}).
+
+Fisheries management decisions often include setting removals limits in terms of biomass; however, these decision are complicated by fluctuations in stock size due to variable recruitment, growth, condition, and survival all of which are influenced by the environment. For the world's largest wild scallop fisheries, the sea scallop (\emph{Placopecten magellanicus}) found off the northeastern United States and eastern Canada, reliable indices of recruitment are available through fishery independent surveys; however, outside of major recruitment events, annual variations in growth underlie major fluctuations in catch rate and yield. In Canada, the scallop adductor muscle is the harvested part of the scallop, with landings reported and managed (e.g.~Total Allowable Catch (TAC)) in terms of the biomass (weight) of the adductor meat (muscle).
+
+Growth is an integrated response of energy acquisition and expenditure. For scallop, growth can be defined either in terms of an increase in some dimension of the shell or in terms of the change in the soft tissue (\protect\hyperlink{ref-macdonaldPhysiologyEnergyAcquisition2016}{MacDonald et al. 2016}). Shell growth continues as scallops age and generally the adductor muscle increases with shell size; however, the growth and size of the adductor muscle will also vary throughout the year (e.g.~resorption of somatic tissue: \protect\hyperlink{ref-vahlEnergyTransformationsIceland1981}{Vahl 1981}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985}{MacDonald and Thompson 1985a}). For \emph{P. magellanicus}, intra-annual changes in the meat weight for the same shell height are characterized by increases in weight in late winter and early spring and declines during spawning in the late summer and early fall (\protect\hyperlink{ref-naiduReproductionBreedingCycle1970}{Naidu 1970}; \protect\hyperlink{ref-robinsonSeasonalChangesSoftbody1981}{Robinson et al. 1981}; \protect\hyperlink{ref-thompsonIdentifyingSpawningEvents2014}{Thompson et al. 2014}). This seasonal pattern is attributed to gametogenesis and the buildup of energy reserves; however, the magnitude of this cycle has been observed to vary between years within season (\protect\hyperlink{ref-robinsonSeasonalChangesSoftbody1981}{Robinson et al. 1981}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985}{MacDonald and Thompson 1985a}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985a}{1985b}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1986}{1986}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1987}{MacDonald et al. 1987}; \protect\hyperlink{ref-schickAllometricRelationshipsGrowth1992a}{Schick et al. 1992}).
+
+Inter-annual differences in meat weight for the same shell height are likely due to environmental conditions. When seasonal patterns are controlled for, spatial and depth differences in meat weight for a given shell size are often observed; with larger meats found at shallow water depths where temperature and food availability are often more favorable (\protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985}{MacDonald and Thompson 1985a}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1986}{1986}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1987}{MacDonald et al. 1987}; \protect\hyperlink{ref-schickAllometricRelationshipsGrowth1992a}{Schick et al. 1992}). In sea scallops, food ration, consisting of suspended detrital material and phytoplankton, is a major factor in the regulation of growth and production (\protect\hyperlink{ref-shumwayFoodResourcesRelated1987}{Shumway et al. 1987}; \protect\hyperlink{ref-cranfordParticleClearanceAbsorption1990}{Cranford and Grant 1990}; \protect\hyperlink{ref-macdonaldPhysiologyEnergyAcquisition2016}{MacDonald et al. 2016}). Whereas temperature is positively correlated with metabolic rate, as measured by the rate of oxygen consumption (\protect\hyperlink{ref-shumwaySeasonalChangesOxygen1988}{Shumway et al. 1988}; \protect\hyperlink{ref-macdonaldPhysiologyEnergyAcquisition2016}{MacDonald et al. 2016}).
+
+The relationship between meat weight and shell height is usually defined using an allometric model (\protect\hyperlink{ref-laiLinearMixedeffectsModels2004}{Lai and Helser 2004}; \protect\hyperlink{ref-sarroSpatialTemporalVariation2009}{Sarro and Stokesbury 2009}; \protect\hyperlink{ref-hennenShellHeightToWeightRelationships2012}{Hennen and Hart 2012}) and in Canada's Maritimes Region an allometric relationship is used to determine the meat weight of a 100 mm shell height scallop -- hereafter referred to as Scallop Condition (SC). This index is used to track inter-annual change in meat condition and yearly fluctuations in SC have been observed to be as great as 30\% (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-sameotoScallopFishingArea2015}{Sameoto et al. 2015}; \protect\hyperlink{ref-nasmithScallopProductionAreas2016}{Nasmith et al. 2016}). Better understanding and prediction of inter-annual changes in SC will facilitate the sustainable management of scallop fisheries because SC is required to estimate biomass, growth rates, and future biomass projections which are used inform catch limits (\protect\hyperlink{ref-jonsenGeorgesBankScallop2009}{Jonsen et al. 2009}; \protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). The current study focuses on the Canadian portion of Georges Bank which supports one of Canada's most valuable commercial fisheries with approximately 75\% of Canadian scallop landings coming from this bank (\protect\hyperlink{ref-stewartEnvironmentalRequirementsSea1994}{Stewart and Arnold 1994}).
+
+Management decisions for the Canadian Georges Bank sea scallop fishery are based on annual scientific surveys, with estimates from these surveys used in a Bayesian state space assessment model (\protect\hyperlink{ref-smithImpactSurveyDesign2014}{Smith and Hubley 2014}) to provide 1-year projections of biomass (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). The fishery runs from January to December with decisions on an interim TAC made in December of the previous year and a final TAC is set after the science assessment is complete in the spring of the current year. The biomass projections for the current fishing year requires a prediction of SC; the current methodology assumes SC for the current year is unchanged from the the previous year (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). Implicitly this assumes that the best predictor of future SC is the past year SC (i.e.~it is an autoregressive process with a 1 year lag; AR(1)); this approach cannot account for environmental effects that may alter the condition of the scallop meat after the survey. Alternatively, a methodology that incorporates environmental effects could result in improved predictions of SC and in turn lead to more accurate biomass projections and science advice.
+
+The primary purpose of this study was to determine whether a recently developed model that relates SC to Winter SST can be integrated into the existing stock assessment process to improve biomass estimates for sea scallop on the Canadian portion of GB. Our objectives were a) incorporate predictive SC-SST models into the biomass estimates for Geroges Bank, b) undertake a retrospective analysis to compare the predictions from these models to the predictions using the current biological-only model, c) quantify the difference in the biomass predictions from each of these models to the realized biomass, and (d) discuss the implications of these results on the science advice provided to fisheries management.
+
+\hypertarget{ref-methods}{%
+\section{Methods}\label{ref-methods}}
+
+\hypertarget{study-area}{%
+\subsection{Study area}\label{study-area}}
+
+Georges Bank (GB) is a large elevated area of seafloor located in the Gulf of Maine between Massachusetts and Nova Scotia (Figure 1). It is one of the most physically energetic and biologically productive oceanic regions and has supported commercial fisheries for centuries (\protect\hyperlink{ref-townsendNitrogenLimitationSecondary1997}{Townsend and Pettigrew 1997}). The primary production cycle on GB is highly seasonal, and typically exhibits a pronounced late winter-early spring bloom (\protect\hyperlink{ref-townsendOceanographyNorthwestAtlantic2006}{Townsend et al. 2006}). GB is dominated by tidal mixing currents throughout most of its area, especially in the central shallow region on the top of the bank (inside the 60 m isobath), where the waters remain vertically homogeneous under the influence of tidal mixing throughout the year (\protect\hyperlink{ref-townsendNitrogenLimitationSecondary1997}{Townsend and Pettigrew 1997}; \protect\hyperlink{ref-townsendOceanographyNorthwestAtlantic2006}{Townsend et al. 2006}).
+
+\hypertarget{scallop-survey}{%
+\subsection{Scallop Survey}\label{scallop-survey}}
+
+Fisheries and Oceans Canada (DFO) has been conducting annual scallop surveys on the Canadian portion of Georges Bank since 1981. The annual dredge survey is conducted on GB every August; the survey uses a 2.44 m New Bedford style scallop dredge with a 38 mm polypropylene liner. The survey collects detailed meat weight and shell height data for an average of 2011 scallop each year (range from 539-6548 samples; note that the sampling intensity increased in 2010). Scallop condition (SC) is calculated using the weights of the sampled meat and the associated shell heights; SC is then used to develop a biomass index. Complete details of sampling design and modelling methodology can be found in \protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al.} (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{2014}).
+
+\hypertarget{satellite-observed-and-ocean-model-data}{%
+\subsection{Satellite Observed and Ocean Model Data}\label{satellite-observed-and-ocean-model-data}}
+
+The satellite remote sensed and model data was subset to the Canadian portion of Georges Bank with depths shallower than 120 m; this Georges Bank domain includes all of the primary scallop habitat on the Canadian portion of Georges Bank (Figure 1). The 120 m bathymetric contour was extracted from the ETOPO5 database (\protect\hyperlink{ref-noaaDataAnnouncement88MGG021988}{NOAA 1988 p. https://www.ngdc.noaa.gov/mgg/global/etopo5.HTML}). The total area within the Georges Bank domain was approximately 6,500 km\textsuperscript{2}.
+
+\hypertarget{sea-surface-temperature}{%
+\subsubsection{Sea surface temperature}\label{sea-surface-temperature}}
+
+Monthly sea-surface temperature (SST) estimates from the Moderate Resolution Imaging Spectroradiometer on the Aqua Earth-observing satellite (Aqua MODIS) were downloaded from the NASA ocean-color website (\url{https://oceancolor.gsfc.nasa.gov/}), from August 2002 to August 2018 with a 4 km resolution. SST data from the Advanced Very High Resolution Radiometer (AVHRR) pathfinder version 5.2 (PFV5.2) were downloaded from the NASA Jet Propulsion Laboratory archive (\url{http://podaac.jpl.nasa.gov}) for the time period of January 1998 to December 2009 with a 4 km resolution. The overlapping period between AVHRR pathfinder and MODIS SST data, from August 2002 to December 2009 was used to compare both data sets and revealed a difference of less than 0.2\(^{\circ}\)C. Given the consistency in SST estimates between these data sources the AVHRR pathfinder SST from January 1998-December 2008 was combined with the MODIS SST from January 2009-August 2018. The SST data were spatially averaged over the domain to provide one mean value per month, resulting in 248 monthly SST estimates.
+
+\hypertarget{chlorophyll-a-concentration}{%
+\subsubsection{Chlorophyll-a concentration}\label{chlorophyll-a-concentration}}
+
+Monthly chlorophyll-a (CHL) estimates (\(mg \times m^{-3}\)) were derived from the arithmetic average of daily CHL concentration obtained from the Ocean Color Climate Change Initiative (OC-CCI) v3.1 which were downloaded from the European Space Agency (ESA) ocean color website (\url{https://esa-oceancolour-cci.org/}), when extracted, data were available from 1998 to 2017. The CHL product is calculated using a blended merger of multiple sensor-depended band-ratio algorithms (e.g., OC3, OCI, OC5) using a weighted approach that depends on an optical-based water mass classification (\protect\hyperlink{ref-grantProductUserGuide2017}{Grant et al. 2017}). The data were projected on a 4-km resolution sinusoidal grid. This satellite product uses the following sensors: MERIS, Aqua-MODIS, SeaWiFS, VIIRS, and OLCI data, that have been reprocessed under the ESA Ocean Color CCI project to ensure climate-compatible ocean color observation between period and sensors at the global scale (\protect\hyperlink{ref-belocoutoIntercomparisonOCCCIChlorophylla2016}{Belo Couto et al. 2016}). The CHL data were spatially averaged over the region of interest to provide one mean value per month, resulting in a total of 240 monthly CHL estimates.
+
+\hypertarget{mixed-layer-depth}{%
+\subsubsection{Mixed layer depth}\label{mixed-layer-depth}}
+
+Monthly Mixed layer depth (MLD) estimates from version 7 of CMCC Global Ocean Reanalysis System (C-GLORS v7) were downloaded from the University Corporation for Atmospheric Research website (\url{https://climatedataguide.ucar.edu/variables/ocean/mixed-layer-depth}; \url{ftp://cglorsguest@downloads.cmcc.bo.it/p_cglors/C-GLORSV5/MONTHLY_0.5x0.5/}), when extracted, data were available from 1998 to 2015. The C-GLORS consists of a variational data assimilation system (OceanVar), capable of assimilating all in-situ observations along with altimetry data, and a forecast step performed by the ocean model NEMO (Nucleus for European Modelling of the Ocean) coupled with the LIM2 (Louvain-la-Neuve) sea-ice model (\protect\hyperlink{ref-madecNEMOOceanEngine2016}{Madec 2016}). The MLD product was obtained at half a degree resolution (\(\approx\) 50 km). The MLD data were spatially averaged over the domain for each month, resulting in a total of 216 monthly MLD estimates.
+
+\hypertarget{condition-environment-relationship}{%
+\subsection{Condition-Environment Relationship}\label{condition-environment-relationship}}
+
+The strength of the relationship between SC in August of a given year and each environmental covariate (i.e.~SST, CHL, and MLD) was assessed using the monthly environmental data. To investigate the influence of past environmental conditions on SC the relationship between SC and each environmental covariate was investigated at time lags of up to 32 months; for example the relationship between SC in 2015 was compared with each monthly SST estimate between January 2013 to July of 2015. Whereas, the cumulative effect of each environmental covariate on SC was assessed as the sum of the monthly estimates; for example, the SC in August of 2015 was compared to the sum of the monthly SST estimates between January 2013 and July 2015. For SST and CHL the sum of the monthly values were used for the cumulative effects comparison, while for MLD the average over each period was used. The strength of the relationship between the environmental covariate and SC was assessed using the coefficient of determination (\(R^2\)) from a simple linear model and the correlation using the non-parametric Kendall's \(\tau\)-value (\protect\hyperlink{ref-kendallNewMeasureRank1938}{Kendall 1938}). The result of these analyses are large matrices of \(R^2\) and \(\tau\) values for each of the environmental covariates. There was little effect of any environmental covariate at lags greater than 20 months (i.e.~SC in the current year is not correlated with any of the environmental covariates at lags longer than January of the previous year); therefore, only the results from January of the previous year to July of the current year are discussed. Additionally, the interpretation of the Kendall's \(\tau\) and \(R^2\) results were similar so only the \(R^2\) results are discussed further.
+
+\hypertarget{condition-modelling}{%
+\subsection{Condition Modelling}\label{condition-modelling}}
+
+The results of the correlation analysis and documented increase in scallop condition in the spring in this region (\protect\hyperlink{ref-thompsonIdentifyingSpawningEvents2014}{Thompson et al. 2014}) led to the decision to use cumulative SST from January to April of the previous year (\(SST_{last}\)) and cumulative SST and chlorophyll-a for January to March in the current year (\(SST_{cur}\) and \(CHL\) respectively). For the mixed layer depth (\(MLD\)) the average for January to March of the current year was used. The data were subset to the years in which the data were available for all covariates (1999-2015) which facilitates model comparison using AICc. Both forward and backward model selection were performed using a maximum model including all 2-way interactions between these covariates; when the AICc difference between models was less than 2, the more parsimonious model was selected. For all models the error (\(\epsilon_i\)) was assumed to be normally distributed with a variance of \(\sigma^2\). Both forward and backward model selection resulted in the same \(Base\) model (Equation 1) being selected:
+
+\begin{equation}  SC_{i} = SST_{last} + SST_{cur} + MLD + \epsilon_i    \end{equation}
+
+The \(Base\) model includes MLD which comes from an oceanographic model. Thee data are generally not available when the predictions of SC are required for stock assessment purposes, therefore, a \(SST\) model (Equation 2), which uses only remotely sensed data that are available in near real time, was evaluated.
+
+\begin{equation}  SC_{i} = SST_{last} + SST_{cur} + \epsilon_i    \end{equation}
+
+The currently adopted assessment methodology uses condition from the previous year to predict condition in the following year (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). This approach was formalized as a first order auto-regressive model (\(AR(1)\) model; Equation 3) in order to compare the current methodology with the other models.
+
+\begin{equation} SC_{i} = SC_{last} + \epsilon_i    \end{equation}
+
+The final model was a simple \(NULL\) model which includes only an intercept term representing the mean SC (\(SC_{mean}\)) for the time series (1999-2015; Equation 4); this model was used as a baseline to compare against the more complex models.
+
+\begin{equation} SC_{i} =  SC_{mean} + \epsilon_i    \end{equation}
+
+\hypertarget{condition-model-predictive-error}{%
+\subsection{Condition Model Predictive Error}\label{condition-model-predictive-error}}
+
+Cross validation was performed to assess the predictive ability of each model (i.e.~the model's ability to predict new observations). For each simulation 4 years of data were excluded and the models were fit using the remaining data. These models were then used to predict the condition for the 4 randomly selected years which were excluded from the model; for the \(AR(1)\) model the condition from the year before the excluded year was used to predict the condition. For each simulation the difference between the model predicted and the actual observed condition for the 4 years was calculated using the mean absolute predictive error (\(MAPE\); Equation 5). This procedure was repeated 2 times and provided a distribution of \(MAPE\) estimates for each of the models.
+
+\emph{Equation 5. The mean absolute predictive error, \(n\) is the number of observations}
+\[MAPE = \frac{100}{n}\sum_{i=1}^{n} \frac{\mid Obs_i - Pred_i \mid }{Obs_i} \]
+
+In addition to this simulation, the three additional years of data (2016-2018) which were available for SST and SC were used to compare the \(SST\), \(AR(1)\), and \(NULL\) models. These three models (using the model results obtained from fitting to the data from 1999-2015) were used to generate predictions of scallop condition from 2016-2018. The predictions for each of the models was compared with the observed SC during these three years using \(MAPE\) to quantify the ability of each model to predict future scallop condition.
+
+\newpage
+
+\hypertarget{references}{%
+\section*{REFERENCES}\label{references}}
+\addcontentsline{toc}{section}{REFERENCES}
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\hypertarget{ref-belocoutoIntercomparisonOCCCIChlorophylla2016}{}%
+Belo Couto, A., Brotas, V., Mélin, F., Groom, S., and Sathyendranath, S. 2016. Inter-comparison of {OC-CCI} chlorophyll-a estimates with precursor data sets. International Journal of Remote Sensing \textbf{37}(18): 4337--4355. doi:\href{https://doi.org/10.1080/01431161.2016.1209313}{10.1080/01431161.2016.1209313}.
+
+\leavevmode\hypertarget{ref-cadrinStockAssessmentMethods2015}{}%
+Cadrin, S.X., and Dickey-Collas, M. 2015. Stock assessment methods for sustainable fisheries. ICES J Mar Sci \textbf{72}(1): 1--6. doi:\href{https://doi.org/10.1093/icesjms/fsu228}{10.1093/icesjms/fsu228}.
+
+\leavevmode\hypertarget{ref-cranfordParticleClearanceAbsorption1990}{}%
+Cranford, P.J., and Grant, J. 1990. Particle clearance and absorption of phytoplankton and detritus by the sea scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{(}}}{\emph{\emph{Gmelin}}}{\emph{\emph{)}}}. Journal of Experimental Marine Biology and Ecology \textbf{137}(2): 105--121. doi:\href{https://doi.org/10.1016/0022-0981(90)90064-J}{10.1016/0022-0981(90)90064-J}.
+
+\leavevmode\hypertarget{ref-dfoStockStatusUpdate2018}{}%
+DFO. 2018. Stock {Status Update} of {Georges Bank} a {Scallops} ({\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{) in}} }{\emph{\emph{Scallop Fishing Area}}}{ \emph{\emph{27}}}. DFO Can. Sci. Advis. Sec. Sci. Resp. \textbf{2018/037}.
+
+\leavevmode\hypertarget{ref-dfoActAmendFisheries2019}{}%
+DFO. 2019. An {Act} to amend the {Fisheries Act} and other {Acts} in consequence. \emph{In} SC 2019 c 14.
+
+\leavevmode\hypertarget{ref-faoStateWorldFisheries2018}{}%
+FAO. 2018. The {State} of the {World Fisheries} and {Aquaculture}. {Food and Agriculture Organization of the United Nations}, {Rome, Italy}.
+
+\leavevmode\hypertarget{ref-grantProductUserGuide2017}{}%
+Grant, J., Bacher, C., Ferreira, J.G., Groom, S., Morales, J., Rodriguez-Benito, C., Saitoh, S.-I., Sathyendranath, S., and Stuart, V. 2017. Product user guide, {Ocean Color Climate Change Initiative} ({OC}\_{CCI}) {Phase} two. Technical Report, {European Space Agency}, {Frascati, Italy}.
+
+\leavevmode\hypertarget{ref-hennenShellHeightToWeightRelationships2012}{}%
+Hennen, D.R., and Hart, D.R. 2012. Shell {Height-To-Weight Relationships} for {Atlantic Sea Scallops} ({\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{) in}} }{\emph{\emph{Offshore U}}}{\emph{\emph{.}}}{\emph{\emph{S}}}{\emph{\emph{.}} }{\emph{\emph{Waters}}}. Journal of Shellfish Research \textbf{31}(4): 1133--1144. doi:\href{https://doi.org/10.2983/035.031.0424}{10.2983/035.031.0424}.
+
+\leavevmode\hypertarget{ref-hubleyGeorgesBankBrowns2014}{}%
+Hubley, P.B., Reeves, A., Smith, S.J., and Nasmith, L. 2014. Georges {Bank} 'a' and {Browns Bank} '{North}' {Scallop} ({\emph{Placopecten}}{ \emph{Magellanicus}}) {Stock Assessment}. DFO Can. Sci. Advis. Sec. Res. Doc. \textbf{2013/079}: vi + 58 p.
+
+\leavevmode\hypertarget{ref-jonsenGeorgesBankScallop2009}{}%
+Jonsen, I.D., Glass, A., Hubley, B., and Sameoto, J. 2009. Georges {Bank} 'a' {Scallop} ({\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{)}} }{\emph{\emph{Framework Assessment}}}{\emph{\emph{:}} }{\emph{\emph{Data Inputs}}}{ \emph{\emph{and}} }{\emph{\emph{Population Models}}}. DFO Can. Sci. Advis. Sec. Res. Doc. \textbf{2009/034}: iv + 76 p.
+
+\leavevmode\hypertarget{ref-kendallNewMeasureRank1938}{}%
+Kendall, M.G. 1938. A {New Measure} of {Rank Correlation}. Biometrika \textbf{30}(1/2): 81--93. doi:\href{https://doi.org/10.2307/2332226}{10.2307/2332226}.
+
+\leavevmode\hypertarget{ref-laiLinearMixedeffectsModels2004}{}%
+Lai, H.-L., and Helser, T. 2004. Linear mixed-effects models for weight--length relationships. Fisheries Research \textbf{70}(2): 377--387. doi:\href{https://doi.org/10.1016/j.fishres.2004.08.014}{10.1016/j.fishres.2004.08.014}.
+
+\leavevmode\hypertarget{ref-macdonaldPhysiologyEnergyAcquisition2016}{}%
+MacDonald, B.A., Bricelj, V.M., and Shumway, S.E. 2016. Physiology: {Energy Acquisition} and {Utilisation}. \emph{In} Developments in {Aquaculture} and {Fisheries Science}. {Scallops}: Biology, ecology and aquaculture. \emph{Edited by} S.E. Shumway and G.J. Parsons. {Elsevier}. pp. 301--353. doi:\href{https://doi.org/10.1016/B978-0-444-62710-0.00007-9}{10.1016/B978-0-444-62710-0.00007-9}.
+
+\leavevmode\hypertarget{ref-macdonaldInfluenceTemperatureFood1985}{}%
+MacDonald, B.A., and Thompson, R.J. 1985a. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{.}} }{\emph{\emph{II}}}{\emph{\emph{.}} }{\emph{\emph{Reproductive}}}{ \emph{\emph{Output and Total Production}}}. Marine Ecology Progress Series \textbf{25}(3): 295--303. Available from \url{http://www.jstor.org/stable/24817481}.
+
+\leavevmode\hypertarget{ref-macdonaldInfluenceTemperatureFood1985a}{}%
+MacDonald, B.A., and Thompson, R.J. 1985b. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{.}} }{\emph{\emph{I}}}{\emph{\emph{.}} }{\emph{\emph{Growth}}}{ \emph{\emph{Rates of Shell and Somatic Tissue}}}. Marine Ecology Progress Series \textbf{25}(3): 279--294.
+
+\leavevmode\hypertarget{ref-macdonaldInfluenceTemperatureFood1986}{}%
+MacDonald, B.A., and Thompson, R.J. 1986. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{}} }{\emph{\emph{III}}}{\emph{\emph{.}} }{\emph{\emph{Physiological}}}{ \emph{\emph{Ecology, the Gametogenic Cycle and Scope for Growth}}}. Marine Biology \textbf{93}(1): 37--48. doi:\href{https://doi.org/10.1007/BF00428653}{10.1007/BF00428653}.
+
+\leavevmode\hypertarget{ref-macdonaldInfluenceTemperatureFood1987}{}%
+MacDonald, B.A., Thompson, R.J., and Bayne, B.L. 1987. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{.}}} Oecologia \textbf{72}(4): 550--556. doi:\href{https://doi.org/10.1007/BF00378981}{10.1007/BF00378981}.
+
+\leavevmode\hypertarget{ref-madecNEMOOceanEngine2016}{}%
+Madec, G. 2016. {NEMO} ocean engine. {Note} du {Pole} de modélisation. {Note du Pole de modélisation de l'Institut Pierre-Simon Laplace No 27}, {France}.
+
+\leavevmode\hypertarget{ref-myersWhenEnvironmentRecruitment1998}{}%
+Myers, R.A. 1998. When {Do Environment}--recruitment {Correlations Work}? Reviews in Fish Biology and Fisheries \textbf{8}(3): 285--305. doi:\href{https://doi.org/10.1023/A:1008828730759}{10.1023/A:1008828730759}.
+
+\leavevmode\hypertarget{ref-naiduReproductionBreedingCycle1970}{}%
+Naidu, K.S. 1970. Reproduction and breeding cycle of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{(}}}{\emph{\emph{Gmelin}}}{\emph{\emph{) in}} }{\emph{\emph{Port}}}{ \emph{\emph{Au}} }{\emph{\emph{Port Bay}}}{\emph{\emph{,}} }{\emph{\emph{Newfoundland}}}. Can. J. Zool. \textbf{48}(5): 1003--1012. doi:\href{https://doi.org/10.1139/z70-176}{10.1139/z70-176}.
+
+\leavevmode\hypertarget{ref-nasmithScallopProductionAreas2016}{}%
+Nasmith, L., Sameoto, J.A., and Glass, A. 2016. Scallop {Production Areas} in the {Bay} of {Fundy}: {Stock Status} for 2015 and {Forecast} for 2016. {DFO Can. Sci. Advis. Sec. Res. Doc. 2016/021. vi + 140 p.} Available from \url{https://waves-vagues.dfo-mpo.gc.ca/Library/363979.pdf} {[}accessed 4 June 2019{]}.
+
+\leavevmode\hypertarget{ref-noaaDataAnnouncement88MGG021988}{}%
+NOAA. 1988. Data {Announcement} 88-{MGG-02}, {Digital} relief of the {Surface} of the {Earth}. {NOAA, National Geophysical Data Center}, {Boulder, Colorado}.
+
+\leavevmode\hypertarget{ref-robinsonSeasonalChangesSoftbody1981}{}%
+Robinson, W.E., Wehling, W.E., Morse, M.P., and McLeod, G.C. 1981. Seasonal changes in soft-body component indices and energy reserves in the {Atlantic} deep-sea scallop, {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{}}}. Fishery bulletin \textbf{79}(3): 449--458. Available from \url{http://agris.fao.org/agris-search/search.do?recordID=US8214557} {[}accessed 4 July 2019{]}.
+
+\leavevmode\hypertarget{ref-sameotoScallopFishingArea2015}{}%
+Sameoto, J.A., Smith, S.J., Nasmith, L.E., Glass, A., and Denton, C. 2015. Scallop {Fishing Area} 29: {Stock Status} and {Update} for 2015. DFO Can. Sci. Advis. Sec. Res. Doc. 2015/067.: v + 69 p.
+
+\leavevmode\hypertarget{ref-sarroSpatialTemporalVariation2009}{}%
+Sarro, C.L., and Stokesbury, K.D.E. 2009. Spatial and {Temporal Variation} in the {Shell Height}/{Meat Weight Relationship} of the {Sea Scallop} {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{in the}} }{\emph{\emph{Georges Bank Fishery}}}. shre \textbf{28}(3): 497--503. doi:\href{https://doi.org/10.2983/035.028.0311}{10.2983/035.028.0311}.
+
+\leavevmode\hypertarget{ref-schickAllometricRelationshipsGrowth1992a}{}%
+Schick, D.F., Shumway, S.E., and Hunter, M. 1992. Allometric relationships and growth in the sea scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{:}} }{\emph{\emph{The}}}{ \emph{\emph{Effects of Season and Depth}}}. \emph{In} Proc. {Ninth Int}. {Malac}. {Congress}. pp. 341--352.
+
+\leavevmode\hypertarget{ref-shumwayFoodResourcesRelated1987}{}%
+Shumway, S., D. F., S., and R, S. 1987. Food resources related to habitat in the scallop, {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{(}}}{\emph{\emph{Gmelin}}}{ \emph{\emph{1791):}} }{\emph{\emph{A}}}{ \emph{\emph{Qualitative Study}}}. Journal of Shellfish Research \textbf{6}: 89--95.
+
+\leavevmode\hypertarget{ref-shumwaySeasonalChangesOxygen1988}{}%
+Shumway, S.E., Barter, J., and Stahlnecker, J. 1988. Seasonal changes in oxygen consumption of the giant scallop, {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{(}}}{\emph{\emph{Gmelin}}}{\emph{\emph{)}}}. J Shellfish Res \textbf{7}(7): 77--82.
+
+\leavevmode\hypertarget{ref-skern-mauritzenEcosystemProcessesAre2016}{}%
+Skern‐Mauritzen, M., Ottersen, G., Handegard, N.O., Huse, G., Dingsør, G.E., Stenseth, N.C., and Kjesbu, O.S. 2016. Ecosystem processes are rarely included in tactical fisheries management. Fish and Fisheries \textbf{17}(1): 165--175. doi:\href{https://doi.org/10.1111/faf.12111}{10.1111/faf.12111}.
+
+\leavevmode\hypertarget{ref-smithImpactSurveyDesign2014}{}%
+Smith, S.J., and Hubley, B. 2014. Impact of survey design changes on stock assessment advice: Sea scallops. ICES J Mar Sci \textbf{71}: 320--327. Available from \url{https://academic.oup.com/icesjms/article/71/2/320/779846} {[}accessed 5 August 2019{]}.
+
+\leavevmode\hypertarget{ref-stewartEnvironmentalRequirementsSea1994}{}%
+Stewart, P.L., and Arnold, S.H. 1994. Environmental requirements of the sea scallop ( {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{) in Eastern}} }{\emph{\emph{Canada}}}{ \emph{\emph{and Its Response to Human Impacts}}}. Available from \url{http://publications.gc.ca/site/eng/460980/publication.html} {[}accessed 18 July 2019{]}.
+
+\leavevmode\hypertarget{ref-swainExtremeIncreasesNatural2015}{}%
+Swain, D.P., and Benoît, H.P. 2015. Extreme increases in natural mortality prevent recovery of collapsed fish populations in a {Northwest Atlantic} ecosystem. Mar Ecol Prog Ser \textbf{519}: 165--182. Available from \url{https://www.int-res.com/abstracts/meps/v519/p165-182/}.
+
+\leavevmode\hypertarget{ref-thompsonIdentifyingSpawningEvents2014}{}%
+Thompson, K.J., Inglis, S.D., and Stokesbury, K.D.E. 2014. Identifying {Spawning Events} of the {Sea Scallop} {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{on}} }{\emph{\emph{Georges Bank}}}. shre \textbf{33}(1): 77--87. doi:\href{https://doi.org/10.2983/035.033.0110}{10.2983/035.033.0110}.
+
+\leavevmode\hypertarget{ref-townsendNitrogenLimitationSecondary1997}{}%
+Townsend, D.W., and Pettigrew, N.R. 1997. Nitrogen limitation of secondary production on {Georges Bank}. J Plankton Res \textbf{19}(2): 221--235. doi:\href{https://doi.org/10.1093/plankt/19.2.221}{10.1093/plankt/19.2.221}.
+
+\leavevmode\hypertarget{ref-townsendOceanographyNorthwestAtlantic2006}{}%
+Townsend, D.W., Thomas, A.C., Mayer, L.M., Thomas, M.A., and Quinlan, J.A. 2006. Oceanography of the northwest {Atlantic} continental shelf (1, {W}). The sea: the global coastal ocean: interdisciplinary regional studies and syntheses \textbf{14}: 119--168.
+
+\leavevmode\hypertarget{ref-vahlEnergyTransformationsIceland1981}{}%
+Vahl, O. 1981. Energy transformations by the iceland scallop, {Chlamys} islandica ({O}.{F}. {Müller}), from 70°{N}. {II}. {The} population energy budget. Journal of Experimental Marine Biology and Ecology \textbf{53}(2): 297--303. doi:\href{https://doi.org/10.1016/0022-0981(81)90027-7}{10.1016/0022-0981(81)90027-7}.
+
+\leavevmode\hypertarget{ref-wilsonAdaptiveComanagementAchieve2018}{}%
+Wilson, J.R., Lomonico, S., Bradley, D., Sievanen, L., Dempsey, T., Bell, M., McAfee, S., Costello, C., Szuwalski, C., McGonigal, H., Fitzgerald, S., and Gleason, M. 2018. Adaptive comanagement to achieve climate-ready fisheries. Conservation Letters \textbf{11}(6): e12452. doi:\href{https://doi.org/10.1111/conl.12452}{10.1111/conl.12452}.
+
+\end{CSLReferences}
+
+\newpage
+
+\end{document}

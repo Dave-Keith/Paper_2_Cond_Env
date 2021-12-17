@@ -423,7 +423,6 @@ summary(may.sst.sum3)
 
 ```
 
-
 # Autocorrelation within condition
 
 ## Instructions...
