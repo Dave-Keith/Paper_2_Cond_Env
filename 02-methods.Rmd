@@ -1,6 +1,5 @@
 # Methods {#ref-methods}
 
-
 ## Study area
 
 Georges Bank (GB) is a large elevated area of seafloor located in the Gulf of Maine between Massachusetts and Nova Scotia (Figure 1).  It is one of the most physically energetic and biologically productive oceanic regions and has supported commercial fisheries for centuries [@townsendNitrogenLimitationSecondary1997]. The primary production cycle on GB is highly seasonal, and typically exhibits a pronounced late winter-early spring bloom [@townsendOceanographyNorthwestAtlantic2006]. GB is dominated by tidal mixing currents throughout most of its area, especially in the central shallow region on the top of the bank (inside the 60 m isobath), where the waters remain vertically homogeneous under the influence of tidal mixing throughout the year [@townsendNitrogenLimitationSecondary1997; @townsendOceanographyNorthwestAtlantic2006]. 
@@ -8,55 +7,66 @@ Georges Bank (GB) is a large elevated area of seafloor located in the Gulf of Ma
 ## Scallop Survey
 Fisheries and Oceans Canada (DFO) has been conducting annual scallop surveys on the Canadian portion of Georges Bank since 1981. The annual dredge survey is conducted on GB every August; the survey uses a 2.44 m New Bedford style scallop dredge with a 38 mm polypropylene liner. The survey collects detailed meat weight and shell height data for an average of 2011 scallop each year (range from 539-6548 samples; note that the sampling intensity increased in 2010).  Scallop condition (SC) is calculated using the weights of the sampled meat and the associated shell heights; SC is then used to develop a biomass index. Complete details of sampling design and modelling methodology can be found in @hubleyGeorgesBankBrowns2014.
 
-## Satellite Observed and Ocean Model Data
+## Satellite Sea Surface Temperature
+Semi-Monthly sea-surface temperature (SST) estimates were obtained from the DFO Operational Remote Sensing group (https://www.bio.gc.ca/science/newtech-technouvelles/sensing-teledetection/index-en.php). The satellite remote sensed data was subset to the Canadian portion of Georges Bank with depths shallower than 120 m; this Georges Bank domain includes all of the primary scallop habitat on the Canadian portion of Georges Bank (Figure 1). The 120 m bathymetric contour was extracted from the ETOPO5 database [@noaaDataAnnouncement88MGG021988, https://www.ngdc.noaa.gov/mgg/global/etopo5.HTML]. The total area within the Georges Bank domain was approximately 6,500 km^2^. The semi-monthly data were used to estimate the monthly median SST and these were used for subsequent analyses. 
 
-The satellite remote sensed and model data was subset to the Canadian portion of Georges Bank with depths shallower than 120 m; this Georges Bank domain includes all of the primary scallop habitat on the Canadian portion of Georges Bank (Figure 1). The 120 m bathymetric contour was extracted from the ETOPO5 database [@noaaDataAnnouncement88MGG021988, https://www.ngdc.noaa.gov/mgg/global/etopo5.HTML].  The total area within the Georges Bank domain was approximately 6,500 km^2^.
+<!-- ## Condition-Environment Correlation -->
 
-### Sea surface temperature
+<!-- The strength of the relationship between SC in May of a given year and SST were assessed using the monthly SST data.  To investigate the influence of past environmental conditions on SC we followed the framework developed by @liuUsingSatelliteRemote2021.  The relationship between SC and SST was investigated at time lags of up to 32 months; for example the relationship between SC in 2015 was compared with each monthly SST estimate between January 2013 to July of 2015.  Whereas, the cumulative effect of each environmental covariate on SC was assessed as the sum of the monthly estimates; for example, the SC in August of 2015 was compared to the sum of the monthly SST estimates between January 2013 and July 2015.  -->
 
-Monthly sea-surface temperature (SST) estimates from the Moderate Resolution Imaging Spectroradiometer on the Aqua Earth-observing satellite (Aqua MODIS) were downloaded from the NASA ocean-color website (https://oceancolor.gsfc.nasa.gov/), from August 2002 to August 2018 with a 4 km resolution. SST data from the Advanced Very High Resolution Radiometer (AVHRR) pathfinder version 5.2 (PFV5.2) were downloaded from the NASA Jet Propulsion Laboratory archive (http://podaac.jpl.nasa.gov) for the time period of January 1998 to December 2009 with a 4 km resolution. The overlapping period between AVHRR pathfinder and MODIS SST data, from August 2002 to December 2009 was used to compare both data sets and revealed a difference of less than 0.2$^{\circ}$C. Given the consistency in SST estimates between these data sources the AVHRR pathfinder SST from  January 1998-December 2008 was combined with the MODIS SST from January 2009-August 2018. The SST data were spatially averaged over the domain to provide one mean value per month, resulting in 248 monthly SST estimates.
+<!-- The strength of the relationship between the environmental covariate and SC was assessed using the coefficient of determination ($R^2$) from a simple linear model. The result of this analysis is a large matrix of $R^2$ values. There was little effect of SST at lags greater than 20 months (i.e. SC in the current year is not correlated with SST at lags longer than January of the previous year); therefore, only the results from January of the previous year to July of the current year are discussed.    -->
 
-### Ocean Bottom Temperatures
+## Stock Assessment Model
 
-Average monthly bottom temperatures (BT) were obtained from BNAM.  Get details of the BNAM data.
+The scallop stock on GB is assessed using a Bayesian State-space Delay difference stock assessment model [for complete details see, @jonsenGeorgesBankScallop2009; @hubleyGeorgesBankBrowns2014].  
 
 
-## Condition-Environment Correlation
+$$  B_{t} = e^{-m_{fr(t)}} g_{fr(t)} (B_{t-1} - C_{t}) + e^{-m_{r(t)}} g_{r(t)} R_{(t-1)}\mu_t  $$
+where *B* represents the biomass estimate for GB, *m* is the natural mortality of both the fully recruited (> 95 mm) and recruit size (85-94.9 mm) scallop, *g* is the expected proportional change in meat weight for both fully recruited and recruit sized scallop, *C* is the fishery removals, *R* is the biomass of the recruit sized scallop, and $\mu$ is the process error. 
 
-The strength of the relationship between SC in August of a given year and SST and BT were assessed using the monthly environmental data.  To investigate the influence of past environmental conditions on SC the relationship between SC and each environmental covariate was investigated at time lags of up to 32 months; for example the relationship between SC in 2015 was compared with each monthly SST estimate between January 2013 to July of 2015.  Whereas, the cumulative effect of each environmental covariate on SC was assessed as the sum of the monthly estimates; for example, the SC in August of 2015 was compared to the sum of the monthly SST estimates between January 2013 and July 2015. 
+For this stock the most recent survey occurs in year *t*, but a biomass projection, required for primary science advice that helps guide Fisheries Managers in setting the Total Allowable Catch (TAC), is needed for the upcoming year (*t+1*). Hereafter, the *current year* refers to the year the science advice is provided (*t+1*), while *previous year* refers to the year of the latest survey data (*t*). Using the 2020 assessment as an example, the biomass projections used by Fisheries Managers to help set the TAC for 2020 (year *t+1*) were for the *current year* while the biomass estimate from the latest survey (2019) was the *previous year* biomass estimate (year *t*). 
 
-The strength of the relationship between the environmental covariate and SC was assessed using the coefficient of determination ($R^2$) from a simple linear model and the correlation using the non-parametric Kendall's $\tau$-value [@kendallNewMeasureRank1938]. The result of these analyses are large matrices of $R^2$ and $\tau$ values for each of the environmental covariates.  There was little effect of any environmental covariate at lags greater than 20 months (i.e. SC in the current year is not correlated with any of the environmental covariates at lags longer than January of the previous year); therefore, only the results from January of the previous year to July of the current year are discussed.  Additionally,  the interpretation of the Kendall's $\tau$ and $R^2$ results were similar so only the $R^2$ results are discussed further. 
+The biomass projection for the current year ($B_{t+1}$) is calculated using Equation 1, but with the time indices for the parameters updated as appropriate.  To obtain ($B_{t+1}$) several model inputs must be predicted, including both of the growth terms in the model. The first step to calculate growth for fully recruited scallop ($g_fr$) in the current year is to obtain the average meat weight of fully recruited scallop in the previous year $w_{t}$; 
+
+$$ w_{t} = SC_{t} h^3_{t} $$
+This calculation uses the average shell height ($h_t$) of the fully recruited scallop and $SC_t$, both of these are estimated from the survey in the previous year (*t*). The predicted average height of the scallop in the current year is calculated using the von Bertalanffy parameters for this stock [@vonbertalanffyQuantitativeLawsMetabolism1957; @hubleyGeorgesBankBrowns2014];
+
+$$ h_{t+1} = L_\infty(1-e^{-K}) + e^{-K}h_t  $$
+
+The predicted meat weight in the current year is calculated next.
+
+$$ w_{t+1} = SC_{t+1} h^3_{t+1} $$
+
+The estimate of SC presently in use assumes that the SC in the current year is the same as the SC in the previous year. 
+
+$$SC_{t+1} = SC_t$$
+
+Finally, the growth ($g_{fr(t+1)}$) for the current year is predicted using the ratio of the current year predicted meat weight to the previous year estimated meat weight.
+
+
+$$ g_{fr(t+1)} = \frac{w_{t+1}}{w_{t}} $$
+
+An analogous calculation is used to predict the growth of recruit sized scallop in the model. The full details of these calculations can be found in @hubleyGeorgesBankBrowns2014. 
+
 
 ## Condition Modelling
 
-The results of the correlation analysis and documented increase in scallop condition in the spring in this region [@thompsonIdentifyingSpawningEvents2014] led to the decision to use cumulative SST from January to April of the previous year ($SST_{last}$).  The Bottom Temperature from BNAM was TAKEN FOR WHICH MONTHS
+The goal of the condition modelling is to develop and quantitatively assesses alternative methods to predict $SC_{t+1}$ in Equation 5. For this study, the approach presently being used was formalized to quantify the ability of this methodology to predict SC in the current year. A linear model was used to quantify the ability of *SC_t* to predict $SC_{t+1}$.
 
+\begin{equation} SC_{t+1} = SC_{t} + \epsilon \end{equation}
 
+In addition to this model, the relationship between $SC_{t+1}$ and SC at lags of 2, 5, and 10 years were modelled to determine if the prediction of $SC_{t+1}$ is better informed using SC at other time lags. 
 
-\begin{equation}  SC_{i} = SST_{last} + SST_{cur} + \epsilon_i    \end{equation}
+Following @liuUsingSatelliteRemote2021, the SST from January to March of the previous year (*SST_t*), and January to February of the current year ($SST_{t+1}$) were used as the predictors of SC in the current year.
 
-The $Base$ model includes MLD which comes from an oceanographic model.  Thee data are generally not available when the predictions of SC are required for stock assessment purposes, therefore, a $SST$ model (Equation 2), which uses only remotely sensed data that are available in near real time, was evaluated.
+\begin{equation}  SC_{t+1} = SST_{t} + SST_{t+1} + \epsilon \end{equation}
 
+An additional SST model in which only (*SST_t*) was used to predict SC was also used to predict $SC_{t+1}$.
 
-\begin{equation}  SC_{i} = SST_{last} + SST_{cur} + \epsilon_i    \end{equation}
+\begin{equation}  SC_{t+1} = SST_{t} + \epsilon  \end{equation}
 
-The currently adopted assessment methodology uses condition from the previous year to predict condition in the following year [@hubleyGeorgesBankBrowns2014; @dfoStockStatusUpdate2018]. This approach was formalized as a first order auto-regressive model ($AR(1)$ model; Equation 3) in order to compare the current methodology with the other models.
+Differences between models was quantified using AICc [@burnhamAICModelSelection2011], if the AICc difference between models was less than 2, the more parsimonious model was preferred.
 
+## Retrospective Analyses
 
-\begin{equation} SC_{i} = SC_{last} + \epsilon_i    \end{equation}
-
-The final model was a simple $NULL$ model which includes only an intercept term representing the mean SC ($SC_{mean}$) for the time series (1999-2015; Equation 4); this model was used as a baseline to compare against the more complex models.  
-
-
-\begin{equation} SC_{i} =  SC_{mean} + \epsilon_i    \end{equation}
-
-
-
-## Condition Model Predictive Error
-
-Cross validation was performed to assess the predictive ability of each model (i.e. the model's ability to predict new observations).  For each simulation 4 years of data were excluded and the models were fit using the remaining data.  These models were then used to predict the condition for the 4 randomly selected years which were excluded from the model; for the $AR(1)$ model the condition from the year before the excluded year was used to predict the condition.  For each simulation the difference between the model predicted and the actual observed condition for the 4 years was calculated using the mean absolute predictive error ($MAPE$; Equation 5).  This procedure was repeated `r n.boots` times and provided a distribution of $MAPE$ estimates for each of the models. 
-
-
-\begin{equation} MAPE = \frac{100}{n}\sum_{i=1}^{n} \frac{\mid Obs_i - Pred_i \mid }{Obs_i} \end{equation}
-
-In addition to this simulation, the three additional years of data (2016-2018) which were available for SST and SC were used to compare the $SST$, $AR(1)$, and $NULL$ models. These three models (using the model results obtained from fitting to the data from 1999-2015) were used to generate predictions of scallop condition from 2016-2018.  The predictions for each of the models was compared with the observed SC during these three years using $MAPE$ to quantify the ability of each model to predict future scallop condition.
+Retrospective analyses were undertaken using the assessment model (Equation 1) to compare the projected biomass in the current year, using the aforementioned methods of predicting SC, with the realized biomass for the GB scallop stock. This analysis used the model output in the previous year (year *t*) to project the biomass in the current year (*t+1*) using the predicted SC from each of the three condition models. This was repeated for each year from 2000-2019. The differences between the biomass projections for each of the three methods was quantified using both the absolute and proportional difference from the realized biomass. 

@@ -3,14 +3,20 @@
 theme_set(theme_few(base_size = 12))
 ```
 
+<!-- First up lets make a figure one of those whole area with zoom in on area of interest.  .  -->
 
+```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=5}
+
+
+
+```
 
 <!-- Starting the analysis.  -->
 
 ```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=5}
 dat.list <- list(sst = sst.raw.dat,#chl = chl.raw.dat,mld = mld.raw.dat, 
                  bt = bt.raw.dat)
-cond.list <- list(aug = dat.aug)
+cond.list <- list(may = dat.may)
 res <- NULL
 n.months <- 19
 for(i in 1:length(dat.list))
@@ -25,7 +31,7 @@ mods <- names(res)
 num.mods <- length(mods)
 str.names <- c(paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"),"last",sep=" "),
                paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul"),"cur",sep=" "))
-aug.mods <- grep(pattern="aug", mods)
+#may.mods <- grep(pattern="may", mods)
 p1<- NULL
 #pdf(file = "Figures/R2_and_correlation_for_covariates.pdf",onefile=T,width = 32, height = 8)
 for(i in 1:num.mods)
@@ -66,96 +72,92 @@ print(p1[[i]])
 ```
 
 
-# August correlation-informed aggregations
+# May condition correlation-informed aggregations
 ```{r, message=F, warning=F}
 #----------------------------------------------------------------------------------
-# AUGUST FIRST
-# Sub-Section where we create the aggregated time series.
-#Putting the indices together...
-# SO based on the above analyses, it is pretty clear that mld and chl 'a' really 
-# aren't doing anything on their own.  What
-# stands out is SST in the previous spring and the current spring.  
-# The previous spring SST is best represented by Jan-April, while this years is Jan-Mar.
-# So this decision is still somewhat arbitrary and I think we should all chat abou it at some point...
-# the most stats logical move is to use SST from Jan-April last year, and Jan-March this year
-# But from a consistency point of view, Jan-March of both years is very useful
-# And from an applied point of view, given the timing of the advice, seemingly
-# using Jan/Feb of the current year, but Jan-Mar is the better choice
-#  So after much consternation we go for...
 
-# For SST use Jan-April last year and Jan-March this year as the model of choice (makes sense and gives excellent model fit..)
+############DK REVISITED... GOing to use May and the same months as used in our Xiaohan paper for SST, going to do the condition thing for the Bottom Temperature
+# and what we will see is that APril BT of current year is best estimator of Condition in May, which makes lots of sense story wize
+# I moved away from August condition for a few reasons and I'm still not settled on it, but reasons are 
+#  1) let's just do what Xiaohan did for her paper because it is published we don't need to play around with the correlation 
+#      timings (which is super subjective) and the relationship she found
+#  2) May condition tends to be ever so slightly lower than August condition, so these results should be more favourable for projecting than using August condition
+#       given that we know the model seems to over-estimate biomass in the projections.
+#  3) The linear model we use to predict condition using the DFO sourced data is very similar to what we found with Xiaohan's data.
+#  4) Downside of course is we typically use August condition for our projections, but no reason for this we can't use may for projections, just need a one liner
+#       saying we'd usually use August condition for this, but use May b/c relationship is stronger... etc etc etc...
+
+# So here we use Xiaohan's choice for SST, and BT in the current year and compare to May condition.
+
+
 SST.last <- aggregate(covar ~ Year, 
-                      data=sst.raw.dat[sst.raw.dat$Month %in% 1:4,], FUN = sum)
+                      data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
 names(SST.last) <- c("Year","SST.last")
 
-BT.last <- aggregate(covar ~ Year, 
-                     data=bt.raw.dat[bt.raw.dat$Month %in% 4 & 
-                                       bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
-names(BT.last) <- c("Year","BT.last") 
-BT.last$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
+# BT.cur <- aggregate(covar ~ Year, 
+#                      data=bt.raw.dat[bt.raw.dat$Month %in% 4 & 
+#                                        bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
+# names(BT.cur) <- c("Year","BT.cur") 
+#BT.last$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
 
 dat <- aggregate(covar ~ Year, 
-                 data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
+                 data=sst.raw.dat[sst.raw.dat$Month %in% 1:2,], FUN = sum)
 names(dat) <- c("Year","SST.cur")
 
 dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
 
-dat <- dplyr::left_join(dat, BT.last, by="Year")
+dat <- dplyr::left_join(dat, BT.cur, by="Year")
+dat <- dat %>% dplyr::filter(Year < 2022)
 
-aug.dat <- dat
+may.dat <- dat
 
-aug.dat$Condition <- dat.aug$Condition
+may.dat$Condition <- dat.may$Condition
 # Also make an SST sum covar
-aug.dat$SST.sum <- aug.dat$SST.cur + aug.dat$SST.last
+may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
 
 ```
 
 
 
-# Model selection
+# Model selection here we've made the decision to drop BNAM from this, take Xiaohan's model, apply it to our model and let's see how it works
+# Then discuss why it didn't and the implication of that for EAFM...
 ```{r, message=F, warning=F}
 #----------------------------------------------------------------------------------
 # Now we run the analyses necessary for the paper.
 
 # Now we can omit the years we don't have data right off the top, a bit too harsh but good for model comparisons...
-aug.dat.comp <- na.omit(aug.dat)
-
+may.dat.comp <- na.omit(may.dat)
+# Just using data up to 2019, given we didn't have 2020 surveys that'll just confuse things I think... 
+may.dat.comp <- may.dat.comp %>% dplyr::filter(Year < 2020)
 # correlation between sst and bt
-cor.test(aug.dat.comp$SST.last, aug.dat.comp$BT.last)
+#cor.test(may.dat.comp$SST.last, may.dat.comp$BT.cur)
 
-aug.sst.last <- lm(data=aug.dat.comp, Condition ~ SST.last)
-aug.sst.cur <- lm(data=aug.dat.comp, Condition ~ SST.cur)
-aug.bt.last <- lm(data=aug.dat.comp, Condition ~ BT.last)
-summary(aug.sst.last)
-summary(aug.sst.cur)
-summary(aug.bt.last)
+may.sst.last <- lm(data=may.dat.comp, Condition ~ SST.last)
+may.sst.cur <- lm(data=may.dat.comp, Condition ~ SST.cur)
+#may.BT.cur <- lm(data=may.dat.comp, Condition ~ BT.cur)
+summary(may.sst.last)
+summary(may.sst.cur)
+#summary(may.BT.cur)
 
-aug.sst.sum <- lm(data=aug.dat.comp, Condition ~ SST.sum)
-aug.sst.sum2 <- lm(data=aug.dat.comp, Condition ~ SST.last + SST.cur)
-summary(aug.sst.sum)
-summary(aug.sst.sum2)
+may.sst.sum <- lm(data=may.dat.comp, Condition ~ SST.sum)
+may.sst.sum2 <- lm(data=may.dat.comp, Condition ~ SST.last + SST.cur)
+summary(may.sst.sum)
+summary(may.sst.sum2)
 
-aug.sst.sum3 <- lm(data=aug.dat.comp, Condition ~ SST.last + BT.last)
-aug.sst.sum4 <- lm(data=aug.dat.comp, Condition ~ SST.cur + BT.last)
-summary(aug.sst.sum3)
-summary(aug.sst.sum4)
+#may.sst.sum3 <- lm(data=may.dat.comp, Condition ~ SST.last + BT.cur)
+#may.sst.sum4 <- lm(data=may.dat.comp, Condition ~ SST.cur + BT.cur)
+summary(may.sst.sum3)
+summary(may.sst.sum4)
 
-aug.sst.int <- lm(data=aug.dat.comp, Condition ~ SST.last*SST.cur)
-aug.sst.int2 <- lm(data=aug.dat.comp, Condition ~ SST.last*SST.cur + BT.last)
-summary(aug.sst.int)
-summary(aug.sst.int2)
+may.sst.int <- lm(data=may.dat.comp, Condition ~ SST.last*SST.cur)
+#may.sst.int2 <- lm(data=may.dat.comp, Condition ~ SST.last*SST.cur + BT.cur)
+summary(may.sst.int)
+#summary(may.sst.int2)
 
+AICctab(may.sst.last, may.sst.cur,may.sst.sum, may.sst.sum2,may.sst.int)
 
-AICctab(aug.sst.last, aug.sst.cur, aug.bt.last, 
-        aug.sst.sum, aug.sst.sum2,
-        aug.sst.sum3, aug.sst.sum4,
-        aug.sst.int, aug.sst.int2)
-
-
-# SST sum wins for August, but it's better to use the explicit model so:
-summary(aug.sst.sum2)
-
-
+# SST sum wins for May so away we go...
+summary(may.sst.sum2)
 
 ```
 
@@ -164,26 +166,27 @@ summary(aug.sst.sum2)
 
 ## Instructions...
 The next bit is doing the autocorrelation analysis, is there autocorrelation in condition time series (that is already in my code I'm 99% sure), but then also using the last 2,5,10 year (or X years) median condition to see if any of those are decent predictors of next years condition.  I suspect using last years condition is the best and that's the 'non-environmental' predictive model we'd use to compare with the environmental model. But this will be a useful exercise to see how well using a LTM of some sort to predict condition does so we can tell industry we did all this analysis and none of it helps.
-You can ignore the May stuff I think from here out, let's just dial in on August.
-After that we pick 2-3 models and do the biomass predictions with them.  Undecided if we drop bottom temperature at this stage given your results, or we toss in a bottom temperature model that we know isn't great just to have a couple of environmental models in there...
+We will dial in on May. After that we pick 2-3 models and do the biomass predictions with them.  
+# Decided we drop bottom temperature from this analysis, idea again is see how well the cool SST model works in real world setting.
 
 ### Original (one-year lag autocorrelation?)
 ```{r, message=F, echo=F}
 # Now we can look at the acf of condition on GB for 1999 - 2018, issue here is the data may not be stationary so need to detrend the longer ts
 # gb.may.cf <- base.cond.ts$may[base.cond.ts$year %in% 1999:2015]
-gba.aug.cf <- base.cond.ts$aug[base.cond.ts$year %in% 1984:2018]
+gba.may.cf <- base.cond.ts$may[base.cond.ts$year %in% 1984:2019]
 # gb.detrend <- resid(lm(gb.may.cf~ seq(1,length(gb.may.cf)),na.action = na.exclude))
-gba.detrend <- resid(lm(gba.aug.cf~ seq(1,length(gba.aug.cf)),na.action = na.exclude))
+gba.detrend <- resid(lm(gba.may.cf~ seq(1,length(gba.may.cf)),na.action = na.exclude))
 acfs <- acf(gba.detrend, plot = FALSE,na.action = na.pass)
 plot(acfs)
 acfs <- with(acfs, data.frame(lag, acf))
 # So a lag linear model...
-lag.aug.dat <- aug.dat[aug.dat$Year %in% 1984:2018,]
-lag.aug.dat$cond.covar <- c(NA,lag.aug.dat$Condition[1:(nrow(lag.aug.dat)-1)])
-lag.aug.mod <- lm(Condition ~ cond.covar,lag.aug.dat)
-summary(lag.aug.mod)
+lag.may.dat <- data.frame(Condition = gba.may.cf,Year = 1984:2019)
+#lag.may.dat <- may.dat[may.dat$Year %in% 1984:2018,]
+lag.may.dat$cond.covar <- c(NA,lag.may.dat$Condition[1:(nrow(lag.may.dat)-1)])
+lag.may.mod <- lm(Condition ~ cond.covar,lag.may.dat)
+summary(lag.may.mod)
 # Finally make the NULL model
-null.aug.mod <- lm(Condition~1,aug.dat.comp)
+null.may.mod <- lm(Condition~1,may.dat.comp)
 ```
 
 ### Long term median autocorrelation? 
@@ -191,12 +194,12 @@ null.aug.mod <- lm(Condition~1,aug.dat.comp)
 # build a function to use any number of years
 lastNyears_med <- function(N){
   lag <- NULL
-  for(i in (N+1):length(lag.aug.dat$Condition)){
-    lagged <- median(lag.aug.dat$Condition[(i-N):(i-1)])
+  for(i in (N+1):length(lag.may.dat$Condition)){
+    lagged <- median(lag.may.dat$Condition[(i-N):(i-1)],na.rm=T)
     lag <- c(lag, lagged)
   }
   lag <- c(rep(NA, N), lag)
-  lag.median <- cbind(lag.aug.dat, lag)
+  lag.median <- cbind(lag.may.dat, lag)
   
   mod <- lm(data=lag.median, Condition ~ lag)
   
@@ -207,19 +210,23 @@ lastNyears_med <- function(N){
 # I also tried rolling means, but that wasn't any better
 
 # try 2, 5, 10 years
+medyrs1 <- lastNyears_med(1)
 medyrs2 <- lastNyears_med(2)
 medyrs5 <- lastNyears_med(5)
 medyrs10 <- lastNyears_med(10)
 
+summary(medyrs1[[2]])
 summary(medyrs2[[2]])
 summary(medyrs5[[2]])
 summary(medyrs10[[2]])
 
-mod2 <- lm(data=medyrs2[[1]][11:nrow(medyrs2[[1]]),], Condition ~ lag)
-mod5 <- lm(data=medyrs5[[1]][11:nrow(medyrs5[[1]]),], Condition ~ lag)
-mod10 <- lm(data=medyrs10[[1]][11:nrow(medyrs10[[1]]),], Condition ~ lag)
+# The NAs are fucking me up here.
+mod1 <- lm(data=medyrs1[[1]][c(11:32,34:36),], Condition ~ lag)
+mod2 <- lm(data=medyrs2[[1]][c(11:32,34:36),], Condition ~ lag)
+mod5 <- lm(data=medyrs5[[1]][c(11:32,34:36),], Condition ~ lag)
+mod10 <- lm(data=medyrs10[[1]][c(11:32,34:36),], Condition ~ lag)
 
-AICctab(mod2, mod5, mod10)
+AICctab(mod1,mod2, mod5, mod10)
 
 ```
 
@@ -228,69 +235,73 @@ AICctab(mod2, mod5, mod10)
 
 ### Environmental model options
 ```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
-p1 <- ggplot(aug.dat.comp,aes(x=I(SST.cur+SST.last),y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+p1 <- ggplot(may.dat.comp,aes(x=I(SST.cur+SST.last),y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
                           xlab("SST (Previous Year + Current Year)") + ylab("Current Year SC (grams)")
 
-p2 <- ggplot(aug.dat.comp,aes(x=SST.last,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+p2 <- ggplot(may.dat.comp,aes(x=SST.last,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
                           xlab("SST Previous Year") + ylab("")
-aug.dat.comp$CF_off <- c(NA, aug.dat.comp$Condition[1:nrow(aug.dat.comp)-1])
 
-p3 <- ggplot(aug.dat.comp,aes(x=CF_off,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
-                          stat_smooth(method = 'lm') + 
-                          xlab("Previous Year SC (grams)") + ylab("")
-
-p4 <- ggplot(aug.dat.comp,aes(x=BT.last,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
-                          stat_smooth(method = 'lm') + 
-                          xlab("BT Previous Year") + ylab("Current Year SC (grams)")
-
-p5 <- ggplot(aug.dat.comp,aes(x=I(BT.last + SST.last),y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
-                          stat_smooth(method = 'lm') + 
-                          xlab("SST Previous Year + BT Previous Year") + ylab("")
-
-p.sc <- plot_grid(p1,p2,p3,p4,p5,nrow=2)
+p.sc <- plot_grid(p1,p2,nrow=1)
 print(p.sc)
 #save_plot(plot= p.sc,filename = paste0(direct.proj,"Results/Figures/SC_models.png"),base_height = 5,base_width = 10)
+#save_plot(plot=p1,filename = paste0(direct.proj,"Results/Figures/SC_sum_model.png"),base_height = 5,base_width = 5)
 ```
 
 ### LTM options
 ```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
-p6 <- ggplot(medyrs2[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+
+p3 <- ggplot(medyrs1[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+                          stat_smooth(method = 'lm') + 
+                          xlab("Previous year median SC (grams)") + ylab("Current Year SC (grams)")
+
+
+p4 <- ggplot(medyrs2[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
                           xlab("Previous 2-year median SC (grams)") + ylab("Current Year SC (grams)")
 
-p7 <- ggplot(medyrs5[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+p5 <- ggplot(medyrs5[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
                           xlab("Previous 5-year median SC (grams)") + ylab("")
 
-p8 <- ggplot(medyrs10[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
+p6 <- ggplot(medyrs10[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
                           xlab("Previous 10-year median SC (grams)") + ylab("")
 
-p.sc2 <- plot_grid(p6,p7,p8,nrow=1)
+p.sc2 <- plot_grid(p3,p4,p5,p6,nrow=2)
 print(p.sc2)
 ```
 
-### Range of best options
+### Range of best options, so this is SST sum, SST last, and SST SC.
 ```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
-p.sc3 <- plot_grid(p1,p2, p3, p4, p5, p6,nrow=2)
+p.sc3 <- plot_grid(p1,p2, p3,nrow=1)
 print(p.sc3)
 ```
 
 ```{r, message=F, warning=F}
 # Get our predicted CF and compare to the Predicted condition we actually used
-aug.dat.comp$CF.all <- predict(aug.sst.sum2,aug.dat.comp)
-aug.dat.comp$CF.last <- predict(aug.sst.last,aug.dat.comp)
-aug.dat.comp$CF.BTSST <- predict(aug.sst.sum3,aug.dat.comp)
-aug.dat.comp$CF.BT <- predict(aug.bt.last,aug.dat.comp)
+may.dat.pred <- may.dat %>% dplyr::filter(Year %in% 1999:2019)
+# Now I need to predict Condition for 2015, I'm going to do that using the Condition relationship 
+# using the last yaer condtion model, because we can do that....
+may.dat.pred$Condition[may.dat.pred$Year == 2015] <- predict(medyrs1[[2]],newdata = data.frame(lag = may.dat.pred$Condition[may.dat.pred$Year == 2014]))
+# I think this is what we want for the condition offset, take last years condition and use it for this year... I think...
+# may.dat.pred$CF.off <- may.dat$Condition[may.dat$Year %in% 1998:2018]
+# may.dat.pred$CF.off[may.dat.pred$Year == 2016] <- may.dat.pred$Condition[may.dat.pred$Year == 2015]
+
+may.dat.pred$CF.all <- predict(may.sst.sum2,may.dat.pred)
+may.dat.pred$CF.last <- predict(may.sst.last,may.dat.pred)
+#may.dat.comp$CF.BTSST <- predict(may.sst.sum3,may.dat.comp)
+#may.dat.comp$CF.BT <- predict(may.BT.cur,may.dat.comp)
 #all.dat$CF.used <- c(all.dat$CF[2:(nrow(all.dat))],NA)
 
-names(aug.dat.comp)[which(names(aug.dat.comp)=="Year")] <- "year"
-names(aug.dat.comp)[which(names(aug.dat.comp)=="Condition")] <- "CF"
+names(may.dat.pred)[which(names(may.dat.pred)=="Year")] <- "year"
+names(may.dat.pred)[which(names(may.dat.pred)=="Condition")] <- "CF"
+
+
 
 # Now we need the SH data to get the the growth rates.
-all.dat <- dplyr::left_join(aug.dat.comp,sh.dat,by='year')
+all.dat <- dplyr::left_join(may.dat.pred,sh.dat,by='year')
 
 
 # Now start the growth calculations.... Here's the 'known' weight in year X based on either the May or August survey
@@ -314,9 +325,7 @@ all.dat$waa.t.used <- all.dat$CF*(all.dat$laa.t/100)^3
 # But for the modelled data I want to use the following year data because it's the spring 1987 info 
 # that we use to predict 1987 condition right.  Hurting my head!! So 1987 condition by 1986 survey size data.
 all.dat$waa.t.all <- c(all.dat$CF.all[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
-all.dat$waa.t.last <- c(all.dat$CF_off[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
-all.dat$waa.t.BTSST <- c(all.dat$CF.BTSST[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
-all.dat$waa.t.BT <- c(all.dat$CF.BT[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
+all.dat$waa.t.last <- c(all.dat$CF.last[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
 
 
 # Here we use the current condition factor to calculate the weight next year (since we use laa.t)
@@ -332,23 +341,23 @@ all.dat$waa.t2 <- c(all.dat$CF[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3 # This
 all.dat$g.used <- all.dat$waa.t.used/all.dat$waa.tm1 # This is the growth estimate that would have been used in the model
 all.dat$g.all <- all.dat$waa.t.all/all.dat$waa.tm1 # This is the growth estimate we'd use if we used the full SST predictive model
 all.dat$g.last <- all.dat$waa.t.last/all.dat$waa.tm1 # This is the growth estimate we'd use if we used the last year only SST predictive model
-all.dat$g.BT <- all.dat$waa.t.BT/all.dat$waa.tm1
-all.dat$g.BTSST <- all.dat$waa.t.BTSST/all.dat$waa.tm1
+#all.dat$g.BT <- all.dat$waa.t.BT/all.dat$waa.tm1
+#all.dat$g.BTSST <- all.dat$waa.t.BTSST/all.dat$waa.tm1
 all.dat$g.actual <- all.dat$waa.t2/all.dat$waa.tm1 # This is using the actual condition factor and growing the scallops by laa.t
 #all.dat$g.aug <- all.dat$waa.t2.aug/all.dat$waa.tm1.aug
 # Percent differences, using g.actual as our 'real' scenario. 
 all.dat$prec.g.used <- 100*(all.dat$g.used - all.dat$g.actual) / all.dat$g.actual
 all.dat$prec.g.all <- 100*(all.dat$g.all - all.dat$g.actual) / all.dat$g.actual
 all.dat$prec.g.last <- 100*(all.dat$g.last - all.dat$g.actual) / all.dat$g.actual
-all.dat$prec.g.BT <- 100*(all.dat$g.BT - all.dat$g.actual) / all.dat$g.actual
-all.dat$prec.g.BTSST <- 100*(all.dat$g.BTSST - all.dat$g.actual) / all.dat$g.actual
+#all.dat$prec.g.BT <- 100*(all.dat$g.BT - all.dat$g.actual) / all.dat$g.actual
+#all.dat$prec.g.BTSST <- 100*(all.dat$g.BTSST - all.dat$g.actual) / all.dat$g.actual
 
 
 summary(all.dat$prec.g.used)
 summary(all.dat$prec.g.all)
 summary(all.dat$prec.g.last)
-summary(all.dat$prec.g.BT)
-summary(all.dat$prec.g.BTSST)
+#summary(all.dat$prec.g.BT)
+#summary(all.dat$prec.g.BTSST)
 
 # Now do the same thing for the recruits.
 all.dat$wk.tm1 <- all.dat$CF*(all.dat$l.r/100)^3
@@ -357,9 +366,9 @@ all.dat$lk.t <- vonB$Linf*(1-exp(-vonB$K))+exp(-vonB$K)*all.dat$l.r
 
 all.dat$wk.t.used <- all.dat$CF*(all.dat$lk.t/100)^3
 all.dat$wk.t.all <- c(all.dat$CF.all[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
-all.dat$wk.t.last <-  c(all.dat$CF_off[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
-all.dat$wk.t.BTSST <-  c(all.dat$CF.BTSST[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
-all.dat$wk.t.BT <-  c(all.dat$CF.BT[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+all.dat$wk.t.last <-  c(all.dat$CF.last[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+#all.dat$wk.t.BTSST <-  c(all.dat$CF.BTSST[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+#all.dat$wk.t.BT <-  c(all.dat$CF.BT[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 #all.dat$wk.t2.aug <- c(all.dat$CF.aug[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 all.dat$wk.t2 <- c(all.dat$CF[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 
@@ -367,8 +376,8 @@ all.dat$wk.t2 <- c(all.dat$CF[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 all.dat$gr.used <- all.dat$wk.t.used/all.dat$wk.tm1 # This is the growth estimate that would have been used in the model
 all.dat$gr.all <- all.dat$wk.t.all/all.dat$wk.tm1 # This is the growth estimate we'd use if we used the full SST predictive model
 all.dat$gr.last <- all.dat$wk.t.last/all.dat$wk.tm1 # This is the growth estimate we'd use if we used the last year only SST predictive model
-all.dat$gr.BT <- all.dat$wk.t.BT/all.dat$wk.tm1 
-all.dat$gr.BTSST <- all.dat$wk.t.BTSST/all.dat$wk.tm1 
+#all.dat$gr.BT <- all.dat$wk.t.BT/all.dat$wk.tm1 
+#all.dat$gr.BTSST <- all.dat$wk.t.BTSST/all.dat$wk.tm1 
 all.dat$gr.actual <- all.dat$wk.t2/all.dat$wk.tm1 # This is using the actual condition factor and growing the scallops by laa.t
 #all.dat$gr.aug <- all.dat$wk.t2.aug/all.dat$wk.tm1.aug
 
@@ -376,16 +385,16 @@ all.dat$gr.actual <- all.dat$wk.t2/all.dat$wk.tm1 # This is using the actual con
 all.dat$prec.gr.used <- 100*(all.dat$gr.used - all.dat$gr.actual) / all.dat$gr.actual
 all.dat$prec.gr.all <- 100*(all.dat$gr.all - all.dat$gr.actual) / all.dat$gr.actual
 all.dat$prec.gr.last <- 100*(all.dat$gr.last - all.dat$gr.actual) / all.dat$gr.actual
-all.dat$prec.gr.BT <- 100*(all.dat$gr.BT - all.dat$gr.actual) / all.dat$gr.actual
-all.dat$prec.gr.BTSST <- 100*(all.dat$gr.BTSST - all.dat$gr.actual) / all.dat$gr.actual
+#all.dat$prec.gr.BT <- 100*(all.dat$gr.BT - all.dat$gr.actual) / all.dat$gr.actual
+#all.dat$prec.gr.BTSST <- 100*(all.dat$gr.BTSST - all.dat$gr.actual) / all.dat$gr.actual
 #all.dat$prec.gr.aug <- 100*(all.dat$gr.aug - all.dat$gr.actual) / all.dat$gr.actual #  division.
 
 
 summary(all.dat$prec.gr.used)
 summary(all.dat$prec.gr.all)
 summary(all.dat$prec.gr.last)
-summary(all.dat$prec.gr.BT)
-summary(all.dat$prec.gr.BTSST)
+#summary(all.dat$prec.gr.BT)
+#summary(all.dat$prec.gr.BTSST)
 #summary(all.dat$prec.gr.aug)
 # Pivot to long form
 #all.dat.long <- all.dat %>% reshape2::melt(id.vars = 'year',value.name = 'response',variable.name = 'covar')
@@ -396,10 +405,11 @@ summary(all.dat$prec.gr.BTSST)
 # So what I need to do is replace the last g and gr value in this object with the predicted number and then see how much differences
 # that makes in the projection.  We can go back to like 2000 with this no problem I think.
 
+
 proj.B.yr <- NULL
-base.year <- 2018
-scenarios <- c("BM.Current","BM.All","BM.Last","BM.Realized","BM.BT", "BM.BTSST")
-for(y in 2000:2018)
+base.year <- 2019
+scenarios <- c("BM.Current","BM.All","BM.Last","BM.Realized")
+for(y in 2000:2019)
 {
   pick <- base.year - y+1
   gb.out <- DD.out
@@ -407,9 +417,7 @@ for(y in 2000:2018)
   proj.B <- data.frame("BM.Current"=rep(NA,30000),"BM.All"=rep(NA,30000),
                        "BM.Last"=rep(NA,30000),"BM.Realized" = rep(NA,30000),
                        #"BM.Aug" = rep(NA,30000),
-                       "BM.Actual" = rep(NA,30000),
-                       "BM.BT" = rep(NA,30000),
-                       "BM.BTSST" = rep(NA,30000),
+                       "BM.Actual" = rep(NA,30000), 
                        "Prop.Current"=rep(NA,30000),"Prop.All"=rep(NA,30000),
                        "Prop.Last"=rep(NA,30000),"Prop.Realized"=rep(NA,30000),
                        #"Prop.Aug"=rep(NA,30000),
@@ -433,16 +441,7 @@ for(y in 2000:2018)
       gb.out$data$g[gb.out$data$NY] <- all.dat$g.actual[all.dat$year == y-1]
       gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.actual[all.dat$year == y-1]
     }  
-    if(i == 5) 
-    {
-      gb.out$data$g[gb.out$data$NY] <- all.dat$g.BT[all.dat$year == y-1]
-      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.BT[all.dat$year == y-1]
-    }  
-    if(i == 6) 
-    {
-      gb.out$data$g[gb.out$data$NY] <- all.dat$g.BTSST[all.dat$year == y-1]
-      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.BTSST[all.dat$year == y-1]
-    }  
+
     # if(i == 4) 
   # {
   #   gb.out$data$g[gb.out$data$NY] <- all.dat$g.aug[all.dat$year == y]
@@ -460,16 +459,14 @@ for(y in 2000:2018)
   proj.B["Prop.All"] <- (proj.B["BM.All"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
   proj.B["Prop.Last"] <- (proj.B["BM.Last"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
   proj.B["Prop.Realized"] <- (proj.B["BM.Realized"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
-  proj.B["Prop.BT"] <- (proj.B["BM.BT"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
-  proj.B["Prop.BTSST"] <- (proj.B["BM.BTSST"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+
   #proj.B["Prop.Aug"] <- (proj.B["BM.Aug"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
   # Difference
   proj.B["Diff.Current"] <- (proj.B["BM.Current"] - proj.B["BM.Actual"]) 
   proj.B["Diff.All"] <- (proj.B["BM.All"] - proj.B["BM.Actual"]) 
   proj.B["Diff.Last"] <- (proj.B["BM.Last"] - proj.B["BM.Actual"]) 
   proj.B["Diff.Realized"] <- (proj.B["BM.Realized"] - proj.B["BM.Actual"]) 
-  proj.B["Diff.BT"] <- (proj.B["BM.BT"] - proj.B["BM.Actual"]) 
-  proj.B["Diff.BTSST"] <- (proj.B["BM.BTSST"] - proj.B["BM.Actual"]) 
+
   #proj.B["Diff.Aug"] <- (proj.B["BM.Aug"] - proj.B["BM.Actual"])
   proj.B.yr[[as.character(y)]] <- proj.B
   
@@ -524,25 +521,25 @@ diff.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), 
 diff.summary %>% group_by(variable) %>% dplyr::summarise(m = mean(median))
 
 # The labels for the levels...
-labs <- c("Full SST Model","Previous Year SST Model","Current Method","Actual", "BT", "BTSST")
-bm.summary$variable <- factor(bm.summary$variable,levels =c("BM.All","BM.Last","BM.Current","BM.Actual", "BM.BT", "BM.BTSST"),
-                              labels = labs[c(1,2,3,4,5,6)])
-prop.summary$variable <- factor(prop.summary$variable,levels =c("Prop.All","Prop.Last","Prop.Current", "Prop.BT", "Prop.BTSST"),#,"Prop.Aug"),
-                              labels = labs[c(1,2,3,5,6)])
-diff.summary$variable <- factor(diff.summary$variable,levels =c("Diff.All","Diff.Last","Diff.Current", "Diff.BT", "Diff.BTSST"),#,"Diff.Aug"),
-                                labels = labs[c(1,2,3,5,6)])
+labs <- c("Full SST Model","Previous Year SST Model","Current Method","Actual")
+bm.summary$variable <- factor(bm.summary$variable,levels =c("BM.All","BM.Last","BM.Current","BM.Actual"),
+                              labels = labs[c(1,2,3,4)])
+prop.summary$variable <- factor(prop.summary$variable,levels =c("Prop.All","Prop.Last","Prop.Current"),#,"Prop.Aug"),
+                              labels = labs[c(1,2,3)])
+diff.summary$variable <- factor(diff.summary$variable,levels =c("Diff.All","Diff.Last","Diff.Current"),#,"Diff.Aug"),
+                                labels = labs[c(1,2,3)])
 
-cols <- addalpha(c("orange","darkgreen","grey20","darkblue",'red', "purple"))
+cols <- addalpha(c("orange","darkgreen","purple","darkblue"))
 
 # Time series plots
 p.bm.ts <- ggplot(bm.summary#[bm.summary$variable %in% c("Current Method", "BT", "BTSST"),]
                   , aes(x=year,y=median/1000,color = variable, group =variable)) + geom_line(lwd=1.5) +
                 #geom_ribbon(aes(x=year,ymin=lqr/1000,ymax=uqr/1000,fill=variable,group = variable),alpha = 0.5) +
-    geom_line() +              
-  xlab("") + ylab("Biomass (kilotonnes)") +
+                geom_line() +              
+                xlab("") + ylab("Biomass (kilotonnes)") +
                 scale_fill_manual(values = cols) +
                 scale_color_manual(values=cols) + 
-                scale_x_continuous(breaks = seq(1987,2020,by=3),limits = c(1987,2020)) +
+                scale_x_continuous(breaks = seq(2000,2020,by=3),limits = c(2000,2020)) +
                 theme(legend.position = "top",axis.text.x=element_blank(),legend.title = element_blank())
 
 # Grab the legend then remove it from the figure....
@@ -559,7 +556,7 @@ p.diff.ts <- ggplot(diff.summary#[diff.summary$variable %in% c("Current Method",
                 scale_fill_manual(values = cols[1:5]) +
                 scale_color_manual(values=cols[1:5]) + 
                 geom_hline(yintercept = 0)+ 
-                scale_x_continuous(breaks = seq(1987,2020,by=3),limits = c(1987,2020)) +
+                scale_x_continuous(breaks = seq(2000,2020,by=3),limits = c(2000,2020)) +
                 theme(legend.position = "none",axis.text.x=element_blank())
 
 p.prop.ts <- ggplot(prop.summary#[prop.summary$variable %in% c("Current Method", "BT", "BTSST"),]
@@ -570,7 +567,7 @@ p.prop.ts <- ggplot(prop.summary#[prop.summary$variable %in% c("Current Method",
                 scale_fill_manual(values = cols[1:5]) +
                 scale_color_manual(values=cols[1:5]) + 
                 geom_hline(yintercept = 0)+
-                scale_x_continuous(breaks = seq(1987,2020,by=3),limits = c(1987,2020)) +
+                scale_x_continuous(breaks = seq(2000,2020,by=3),limits = c(2000,2020)) +
                 theme(legend.position = "none")
               
 
@@ -608,16 +605,16 @@ par(mfrow=c(2,2));plot(prop.mod)
 d.mod.pred <- data.frame(variable = unique(diff.summary$variable))
 d.mod.pred$est <- predict(diff.mod,d.mod.pred)
 d.mod.pred$se <- predict(diff.mod,d.mod.pred,se=T)$se.fit
-d.mod.pred$uci <- d.mod.pred$est + 2*d.mod.pred$se
-d.mod.pred$lci <- d.mod.pred$est - 2*d.mod.pred$se
+d.mod.pred$uci <- d.mod.pred$est + d.mod.pred$se
+d.mod.pred$lci <- d.mod.pred$est - d.mod.pred$se
 # Now the proportion model...
 p.mod.pred <- data.frame(variable = unique(prop.summary$variable))
 p.mod.pred$est <- predict(prop.mod,p.mod.pred)
 p.mod.pred$se <- predict(prop.mod,p.mod.pred,se=T)$se.fit
-p.mod.pred$uci <- p.mod.pred$est + 2*p.mod.pred$se
-p.mod.pred$lci <- p.mod.pred$est - 2*p.mod.pred$se
+p.mod.pred$uci <- p.mod.pred$est + p.mod.pred$se
+p.mod.pred$lci <- p.mod.pred$est - p.mod.pred$se
 
-
+# Note the errorbars here are 1 SE, given how similar the results are this looks nicer with the 1 SE IMHO.
 p.diff <- ggplot(d.mod.pred,  aes(x=variable,y=est/1000)) + geom_point(lwd=2) +
                                   geom_errorbar(aes(x=variable,ymin=lci/1000,ymax=uci/1000),width=0) +
                                   xlab("") + ylab("Difference from Actual Biomass (kilotonnes)") +
@@ -633,7 +630,7 @@ p.prop <- ggplot(p.mod.pred, aes(x=variable,y=100*est)) + geom_point(lwd=2) +
                                   scale_fill_manual(values = cols[1:3]) +
                                   scale_color_manual(values=cols[1:3]) + 
                                   geom_hline(yintercept = 0,linetype=2)+
-                                  scale_y_continuous(breaks = seq(-20,40,by=10)) +
+                                  scale_y_continuous(breaks = seq(-20,40,by=5)) +
                                   theme(legend.title = element_blank())
 
 
@@ -645,5 +642,5 @@ print(p)
 ```
 
 ```{r plots,echo=F,include=F}
-over.plt <- paste0(direct.proj,"Results/Figures/Figure_1.png"
+over.plt <- paste0(direct.proj,"Results/Figures/overview_plot.png")
 ```
