@@ -154,7 +154,6 @@ options(scipen=999)
 
 ```{r data-load, echo=FALSE, cache=T, message=FALSE, results='hide', warning=FALSE}
 
-
 #####  Data Load....
 sh.dat<- readRDS("Data/sh_dat.RDS")
 vonB <- readRDS("Data/vonb_dat.RDS")
@@ -166,20 +165,16 @@ base.cond.ts <- read.csv(paste0(direct.proj, "Data/Full_may_aug_condition_ts.csv
 #----------------------------------------------------------------------------------
 # RAW Data Section
 # Bring in the raw data.
-#chl.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/chl_gb.mat"))$chl.gb)
-#mic.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/mic_gb.mat"))$mic.gb)
-#mld.raw.dat <- as.data.frame(readMat(paste0(direct2, "Data/mld_gb.mat"))$mld.gb)
 sst.raw.in <- read.csv(paste0(direct.proj,"Data/dfo_sst_ts.csv"))
-bt.raw.dat <- dplyr::select(read.csv(paste0(direct.proj, "Data/bt_gb.csv")), -X, -monthnum)
+
+# Bring in the GB and GBa polygons
+
 
 ##### Done with data loading... Set some variables for the rest of the show..
 
 ### Now some basic data prep for the next stage of fun
 sst.raw.dat <- sst.raw.in %>% dplyr::select(year,month,GBS_weighted_median)
 names(sst.raw.dat) <- c("Year","Month","covar")
-names(bt.raw.dat) <- c("Year", "Month", "covar")
-
-bt.raw.dat$Month <- match(bt.raw.dat$Month, month.abb)
 
 # dat.aug <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "Aug",col_types = "numeric")
 # dat.may <- read_xlsx("Data/Scallop_condition_with_same_SST_covariates.xlsx",sheet = "May",col_types = "numeric")
@@ -187,46 +182,14 @@ bt.raw.dat$Month <- match(bt.raw.dat$Month, month.abb)
 # We want a month-Year combo field for these
 sst.raw.dat$date <- dmy(paste(01,sst.raw.dat$Month,sst.raw.dat$Year, sep="/"))
 sst.raw.dat$Year <- year(sst.raw.dat$date)
-sst.raw.dat$Month <- month(sst.raw.dat$date)
-bt.raw.dat$date <- dmy(paste(01,bt.raw.dat$Month,bt.raw.dat$Year, sep="/"))
-bt.raw.dat$Year <- year(bt.raw.dat$date)
-bt.raw.dat$Month <- month(bt.raw.dat$date)
-# chl.raw.dat$date <- dmy(paste(01,chl.raw.dat$Month,chl.raw.dat$Year, sep="/"))
-# chl.raw.dat$Year <- year(chl.raw.dat$date)
-# chl.raw.dat$Month <- month(chl.raw.dat$date)
-# mic.raw.dat$date <- dmy(paste(01,mic.raw.dat$Month,mic.raw.dat$Year, sep="/"))
-# mic.raw.dat$Year <- year(mic.raw.dat$date)
-# mic.raw.dat$Month <- month(mic.raw.dat$date)
-# mld.raw.dat$date <- dmy(paste(01,mld.raw.dat$Month,mld.raw.dat$Year, sep="/"))
-# mld.raw.dat$Year <- year(mld.raw.dat$date)
-# mld.raw.dat$Month <- month(mld.raw.dat$date)
-
-
-# now bring in the condition data of the whole time series.
-# This is used to get the acf for condition from the whole time series of condition we have
-
-# base.cond.ts from 1998 on matches dat.aug and dat.may
-# ggplot() + geom_point(data=base.cond.ts, aes(year, aug), colour="blue") +
-#   geom_point(data=base.cond.ts, aes(year, may), colour="red") + 
-#   geom_point(data=dat.aug, aes(Year, Condition), colour="lightblue") + 
-#   geom_point(data=dat.may, aes(Year, Condition), colour="pink")
 
 # Building these by hand because I don't know where the SST data in the XLSX files came from
-dat.aug <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], 
-                      Condition=base.cond.ts$aug[base.cond.ts$year>1997])
 dat.may <- data.frame(Year=base.cond.ts$year[base.cond.ts$year>1997], 
                       Condition=base.cond.ts$may[base.cond.ts$year>1997])
 
 
 # Now we want these as anomolies from average, so starting with SST...
 sst.raw.dat$anom <- sst.raw.dat$covar - mean(sst.raw.dat$covar,na.rm=T)
-bt.raw.dat$anom <- bt.raw.dat$covar - mean(bt.raw.dat$covar,na.rm=T)
-# chl.raw.dat$anom <- chl.raw.dat$covar - mean(chl.raw.dat$covar,na.rm=T)
-# chl.raw.dat$myst.anom <- chl.raw.dat$mystery.covar - mean(chl.raw.dat$mystery.covar,na.rm=T)
-# mic.raw.dat$anom <- mic.raw.dat$covar - mean(mic.raw.dat$covar,na.rm=T)
-# mic.raw.dat$myst.anom <- mic.raw.dat$mystery.covar - mean(mic.raw.dat$mystery.covar,na.rm=T)
-# mld.raw.dat$anom <- mld.raw.dat$covar - mean(mld.raw.dat$covar,na.rm=T)
-# mld.raw.dat$myst.anom <- mld.raw.dat$mystery.covar - mean(mld.raw.dat$mystery.covar,na.rm=T)
 
 # Now we want to remove the "seasonal" signal, one way to do this would be to remove the 
 # mean temperature anomoly found for each month, so for January, subtract off the mean Jan temp anomoly...
@@ -234,68 +197,22 @@ for(i in 1:12)
 {  
   # Sea surface temp
   sst.raw.dat$anom.seasonal[sst.raw.dat$Month == i] <- 
-    sst.raw.dat$anom[sst.raw.dat$Month == i] - 
-    mean(sst.raw.dat$anom[sst.raw.dat$Month == i],na.rm=T)
-  # Bottom temp
-  bt.raw.dat$anom.seasonal[bt.raw.dat$Month == i] <- 
-    bt.raw.dat$anom[bt.raw.dat$Month == i] - 
-    mean(bt.raw.dat$anom[bt.raw.dat$Month == i],na.rm=T)
-  
-  # # Chlorophyll
-  # chl.raw.dat$anom.seasonal[chl.raw.dat$Month == i] <- 
-  #   chl.raw.dat$anom[chl.raw.dat$Month == i] -
-  #   mean(chl.raw.dat$anom[chl.raw.dat$Month == i],na.rm=T)
-  # 
-  # chl.raw.dat$anom.sea.myst[chl.raw.dat$Month == i] <- 
-  #   chl.raw.dat$myst.anom[chl.raw.dat$Month == i] -
-  #   mean(chl.raw.dat$myst.anom[chl.raw.dat$Month == i],na.rm=T)
-  # # Micro phyto
-  # mic.raw.dat$anom.seasonal[mic.raw.dat$Month == i] <- 
-  #   mic.raw.dat$anom[mic.raw.dat$Month == i] -
-  #   mean(mic.raw.dat$anom[mic.raw.dat$Month == i],na.rm=T)
-  # 
-  # mic.raw.dat$anom.sea.myst[mic.raw.dat$Month == i] <- 
-  #   mic.raw.dat$myst.anom[mic.raw.dat$Month == i] -
-  #   mean(mic.raw.dat$myst.anom[mic.raw.dat$Month == i],na.rm=T)
-  # # MLD
-  # mld.raw.dat$anom.seasonal[mld.raw.dat$Month == i] <- 
-  #   mld.raw.dat$anom[mld.raw.dat$Month == i] -
-  #   mean(mld.raw.dat$anom[mld.raw.dat$Month == i],na.rm=T)
-  # 
-  # mld.raw.dat$anom.sea.myst[mld.raw.dat$Month == i] <- 
-  #   mld.raw.dat$myst.anom[mld.raw.dat$Month == i] -
-  #   mean(mld.raw.dat$myst.anom[mld.raw.dat$Month == i],na.rm=T)
+    sst.raw.dat$anom[sst.raw.dat$Month == i] -  mean(sst.raw.dat$anom[sst.raw.dat$Month == i],na.rm=T)
 }
 
 #Now we can get the monthly SST, CHla, and MLD estimates, this is used for the first figure in the paper.
 # chl.mon <- aggregate(covar~ Month,data = chl.raw.dat,FUN=mean)
 # chl.mon$sd <- aggregate(covar~ Month,data = chl.raw.dat,FUN=sd)[,2]
 # chl.mon$variable <- "chl"
-sst.mon <- aggregate(covar~ Month,data = sst.raw.dat,FUN=mean)
-sst.mon$sd <- aggregate(covar~ Month,data = sst.raw.dat,FUN=sd)[,2]
-sst.mon$variable <- "sst"
+month.dat <- aggregate(covar~ Month,data = sst.raw.dat,FUN=mean)
+month.dat$sd <- aggregate(covar~ Month,data = sst.raw.dat,FUN=sd)[,2]
+month.dat$variable <- "sst"
 
-bt.mon <- aggregate(covar~ Month,data = bt.raw.dat,FUN=mean)
-bt.mon$sd <- aggregate(covar~ Month,data = bt.raw.dat,FUN=sd)[,2]
-bt.mon$variable <- "bt"
-# 
-# mld.mon <- aggregate(covar~ Month,data = mld.raw.dat,FUN=mean)
-# mld.mon$sd <- aggregate(covar~ Month,data = mld.raw.dat,FUN=sd)[,2]
-# mld.mon$variable <- "mld"
 
-month.dat <- rbind(#chl.mon,
-                   sst.mon,
-                   bt.mon
-                   #mld.mon
-                   )
 
-# Here we get the data we want for the correlation figures, making one
-# for August SST, Chl, MLD, and MIC not sure which ones we'll use yet...
-
-dat.list <- list(#chl = chl.raw.dat,mic = mic.raw.dat,mld = mld.raw.dat,
-  sst = sst.raw.dat,
-  bt = bt.raw.dat)
-cond.list <- list(aug = dat.aug,may = dat.may)
+# Here we get the data we want for the correlation figures, 
+dat.list <- list(sst = sst.raw.dat)
+cond.list <- list(may = dat.may)
 res <- NULL
 for(i in 1:length(dat.list))
 {
