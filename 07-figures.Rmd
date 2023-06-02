@@ -4,14 +4,66 @@
 
 <br>
 
-```{r Overview, echo=F, include=T,warning=F,message=F,out.width=10,fig.cap="(a) Location of the Georges Bank study area and (b) the bathymetry contour used to define Georges Bank (120 m)"}
+```{r Overview, echo=F, include=T,warning=F,message=F,out.width="100%",fig.cap="Location of the Georges Bank study area, the blue polygon is the bathymetry contour used to define Georges Bank (120 m), the black dashed polygon is the area covered by the stock assessment, and the red line indicates international boundaries"}
 knitr::include_graphics(over.plt)
 ```
 
 
 <!-- Make sure you have a couple lines of blank space after the figure calls or the captions don't print because that's what Rmarkdown does... --->
 \clearpage
-```{r Mesh, echo=FALSE,out.width="100%",dpi=200,fig.cap = "Delaunay triangular mesh used for the spatial fields mesh. The mesh contains 6610 vertices."}
+```{r sc-sst-ts-plt, echo=FALSE,out.width="70%",dpi=200,fig.cap = "(a) Scallop condition (SC) on Georges Bank estimated from the May survey. (b) Cumulative monthly SST from January to March on the Canadian portion of Georges Bank as estimated from Satellite Remote Sensing."}
 # Note that out.width and out.height and dpi don't do anything for word document output in the chunck control above, they wil impact html and pdf output
-knitr::include_graphics(mesh.plt)
+knitr::include_graphics(sc.sst.ts.plt)
 ```
+
+
+<!-- Make sure you have a couple lines of blank space after the figure calls or the captions don't print because that's what Rmarkdown does... --->
+\clearpage
+```{r sc-sst-mod-plt, echo=FALSE,out.width="100%",dpi=200,fig.cap = "Relationship between SC and (a) the sum of the cumulative monthly SST in the previous year between January and March, and the cumulative monthly SST in the current year in January and February, (b) the cumulative monthly SST in the previous year between January and March. The blue line is the slope estimate from the linear model with the grey band indicating the 95\\% confidence interval. The labels on the plot indicate the year SC was estimated."}
+# Note that out.width and out.height and dpi don't do anything for word document output in the chunck control above, they wil impact html and pdf output
+knitr::include_graphics(sc.sst.plt)
+```
+
+
+<!-- Make sure you have a couple lines of blank space after the figure calls or the captions don't print because that's what Rmarkdown does... --->
+\clearpage
+```{r sc-cor-mod-plt, echo=FALSE,out.width="70%",dpi=200,fig.cap = "Relationship between SC and (a) SC in the previous year, (b) median SC in the previous 2 years, (c) median SC in the previous 5 years, and (d) median SC in the previous 10 years. The labels on the plot indicate the year SC was estimated, the black line is the 1:1 line."}
+# Note that out.width and out.height and dpi don't do anything for word document output in the chunck control above, they wil impact html and pdf output
+knitr::include_graphics(sc.cor.plt)
+```
+
+
+<!-- Make sure you have a couple lines of blank space after the figure calls or the captions don't print because that's what Rmarkdown does... --->
+<!-- I don't see any reason to keep this figure around -->
+<!-- \clearpage -->
+<!-- ```{r sc-best-mod-plt, echo=FALSE,out.width="100%",dpi=200,fig.cap = "Relationship between SC and (a) The sum of the cumulative monthly SST in the previous year between January and March, and the cumulative monthly SST in the current year in January and February, (b) the cumulative monthly SST in the previous year between January and March, (c) SC in the previous year. The blue line is the slope estimate from the linear model with the grey band indicating the 95\\% confidence interval and the black line is the 1:1 line. The labels on the plot indicate the year SC was estimated."} -->
+<!-- # Note that out.width and out.height and dpi don't do anything for word document output in the chunck control above, they wil impact html and pdf output -->
+<!-- knitr::include_graphics(best.mod.plt) -->
+<!-- ``` -->
+
+
+<!-- Make sure you have a couple lines of blank space after the figure calls or the captions don't print because that's what Rmarkdown does... --->
+\clearpage
+```{r bm-ts-plt, echo=FALSE,out.width="60%",dpi=200,fig.cap = "Results of the retrospective analyses from 2000-2019 comparing the realized biomass (dark blue line) with the biomass projections using the three SC prediction metods. (a) Biomass projections and realized biomass (in kilotonnes), (b) the difference (in kilotonnes) between the realized biomass and the biomass projections using each of the biomass SC prediction methods, and (c) the proportional difference between the realized biomass and the biomass projections using each of the biomass SC prediction methods.  The Full SST method is the orange line, the Previous Year SST method is the darkgreen line, and the Correlation method is the purple line."}
+# Note that out.width and out.height and dpi don't do anything for word document output in the chunck control above, they wil impact html and pdf output
+knitr::include_graphics(over.effect.ts.plt)
+```
+
+
+<!-- Make sure you have a couple lines of blank space after the figure calls or the captions don't print because that's what Rmarkdown does... --->
+\clearpage
+```{r bm-effect-plt, echo=FALSE,out.width="70%",dpi=200,fig.cap = "Results of the retrospective analyses from 2000-2019 comparing the realized biomass (dark blue line) with the biomass projections using the three SC prediction metods. (a) Biomass projections and realized biomass (in kilotonnes), (b) the difference (in kilotonnes) between the realized biomass and the biomass projections using each of the biomass SC prediction methods, and (c) the proportional difference between the realized biomass and the biomass projections using each of the biomass SC prediction methods.  The Full SST method is the orange line, the Previous Year SST method is the dark green line, and the Correlation method is the purple line."}
+# Note that out.width and out.height and dpi don't do anything for word document output in the chunck control above, they wil impact html and pdf output
+knitr::include_graphics(over.effect.plt)
+```
+
+
+<!-- Make sure you have a couple lines of blank space after the figure calls or the captions don't print because that's what Rmarkdown does... --->
+\clearpage
+```{r bm-effect-drop09-14-plt, echo=FALSE,out.width="60%",dpi=200,fig.cap = "Results of the retrospective analyses from 2000-2019 comparing the realized biomass (dark blue line) with the biomass projections using the three SC prediction metods. (a) Biomass projections and realized biomass (in kilotonnes), (b) the difference (in kilotonnes) between the realized biomass and the biomass projections using each of the biomass SC prediction methods, and (c) the proportional difference between the realized biomass and the biomass projections using each of the biomass SC prediction methods.  The Full SST method is the orange line, the Previous Year SST method is the dark green line, and the Correlation method is the purple line."}
+# Note that out.width and out.height and dpi don't do anything for word document output in the chunck control above, they wil impact html and pdf output
+knitr::include_graphics(over.effect.no.2009.2014.plt)
+```
+
+
+\clearpage

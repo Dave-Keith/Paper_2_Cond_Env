@@ -5,75 +5,42 @@ theme_set(theme_few(base_size = 12))
 
 <!-- First up lets make a figure one of those whole area with zoom in on area of interest.  .  -->
 
-```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=5}
+```{r base-maps, echo=F, include=F,warning=F,echo=F,message=F,fig.width=12,fig.height=5,cache=T}
 
-
-
+base.zoom <- pecjector(area= "GBa",crs = 32619,plot=F,add_layer = list(bathy= c(10,'s'),eez=T)) + theme_map() 
+base.over <- pecjector(area= "NL",crs = 32619,plot=F,add_layer = list(bathy= c(50,'s'),eez=T)) + xlab("") + ylab("")
 ```
 
-<!-- Starting the analysis.  -->
+```{r overview-map, echo=F, include=F,warning=F,echo=F,message=F,fig.width=12,fig.height=5,cache=T}
 
-```{r correlation, echo=F, include=T,warning=F,echo=F,message=F,fig.width=12,fig.height=5}
-dat.list <- list(sst = sst.raw.dat,#chl = chl.raw.dat,mld = mld.raw.dat, 
-                 bt = bt.raw.dat)
-cond.list <- list(may = dat.may)
-res <- NULL
-n.months <- 19
-for(i in 1:length(dat.list))
-{
-  for(j in 1:length(cond.list))
-  {
-    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- cor_dat(dat = dat.list[[i]], response = cond.list[[j]],n.months = n.months,last.month =7)
-  }  # end for(j in 1:length(cond.list))
-} # end for(i in 1:length(dat.list))
+# Add the polygons to the base plots...
+low.line <- st_linestring(rbind(c(-66.4,41.25),c(-59,40.15)))
+high.line <- st_linestring(rbind(c(-67.2,42.2),c(-59,45)))
 
-mods <- names(res)
-num.mods <- length(mods)
-str.names <- c(paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"),"last",sep=" "),
-               paste(c("Jan","Feb","Mar","Apr","May","Jun","Jul"),"cur",sep=" "))
-#may.mods <- grep(pattern="may", mods)
-p1<- NULL
-#pdf(file = "Figures/R2_and_correlation_for_covariates.pdf",onefile=T,width = 32, height = 8)
-for(i in 1:num.mods)
-{
-tmp <- res[[i]]
-#print(paste("R2 range=" , range(tmp$resp$r2,na.rm=T)))
-#print(paste("Pearson range=" , range(tmp$resp$pearson,na.rm=T)))
-#print(paste("Kendall range=" , range(tmp$resp$kendall,na.rm=T)))
-print(mods[i])
-print("Last year:")
-LY <- res[[i]]$resp[res[[i]]$resp$start.num<13 & res[[i]]$resp$end.num < 13 & !is.na(res[[i]]$resp$p.r2.lev),]
-print(LY[which(LY$r2 == max(LY$r2)),])
-print("Current year:")
-CY <- res[[i]]$resp[res[[i]]$resp$start.num>12 & res[[i]]$resp$end.num > 12 & !is.na(res[[i]]$resp$p.r2.lev),]
-print(CY[which(CY$r2 == max(CY$r2)),])
+da.line <- st_sfc(low.line,high.line)
+st_crs(da.line) <- 4326
 
 
-p <- ggplot(tmp$resp, aes(end.num,start.num)) + scale_x_continuous(name= "End month", breaks=1:n.months, labels = str.names) +
-     scale_y_continuous(name= "Start month", breaks=1:n.months,labels = str.names) +
-     theme_classic() + theme(text = element_text(size=20),axis.text.x = element_text(angle = -30, hjust=0)) 
+poly.over <- base.over + geom_sf(data = gb.iso,fill= NA, color = 'blue',size =1) + 
+                         geom_sf(data = da.line)+
+                         coord_sf(expand=F)
+poly.zoom <- base.zoom + geom_sf(data = gb.iso,fill= NA, color = 'blue',size =1) + 
+                         geom_sf(data=gba.shape, fill= NA, size = 0.5,color='black',linetype = 'dashed')  + coord_sf(expand=F)
 
-p1[[i]] <- p + geom_raster(aes(fill = r2)) +  scale_fill_gradientn(limits = c(0,0.7),colours=c("blue","white","red")) +
-          geom_text(aes(label= p.r2.lev, angle=0,hjust=0.5,vjust=1),colour="black")+ annotate("text",x=1,y=n.months,label=mods[i])
+plt.over <- ggdraw() + draw_plot(poly.over) + 
+                       draw_plot(poly.zoom,x=0.5925,y=0.1487,width=0.43,height = 0.43)
 
-print(p1[[i]])
-# p2 <- p+ geom_raster(aes(fill = kendall)) + scale_fill_gradientn(limits = c(-0.4,0.8),colours=c("blue","white","red"))+
-#          geom_text(aes(label= p.kend.lev, angle=0,hjust=0.5,vjust=1),colour="black") +  ggtitle(mods[i])
 
-} # end for(i in 1:num.mods)
-# 
-# plot_grid(p1[[aug.mods[1]]], p1[[aug.mods[2]]], 
-#           #p1[[aug.mods[3]]], p1[[aug.mods[4]]], 
-#           align="v", nrow=length(aug.mods), rel_widths=1.5)
-# plot_grid(p1[[may.mods[1]]], p1[[may.mods[2]]], 
-#           #p1[[may.mods[3]]], p1[[may.mods[4]]], 
-#           align="v", nrow=length(may.mods), rel_widths=1.5)
+# Oddly cowplots save function doesn't work here even though ggdraw is a cowplot thing...
+ggsave(plot = plt.over, filename = paste0(direct.proj,"Results/Figures/Overview_plot.png"),width = 8.5,height = 8.5)
 
 ```
 
 
-# May condition correlation-informed aggregations
-```{r, message=F, warning=F}
+
+<!-- # May condition correlation-informed aggregations -->
+
+```{r tidy-data, message=F, include=F,echo=F,cache=T}
 #----------------------------------------------------------------------------------
 
 ############DK REVISITED... GOing to use May and the same months as used in our Xiaohan paper for SST, going to do the condition thing for the Bottom Temperature
@@ -87,18 +54,10 @@ print(p1[[i]])
 #  4) Downside of course is we typically use August condition for our projections, but no reason for this we can't use may for projections, just need a one liner
 #       saying we'd usually use August condition for this, but use May b/c relationship is stronger... etc etc etc...
 
-# So here we use Xiaohan's choice for SST, and BT in the current year and compare to May condition.
-
-
+# So here we use Xiaohan's choice for SST
 SST.last <- aggregate(covar ~ Year, 
                       data=sst.raw.dat[sst.raw.dat$Month %in% 1:3,], FUN = sum)
 names(SST.last) <- c("Year","SST.last")
-
-# BT.cur <- aggregate(covar ~ Year, 
-#                      data=bt.raw.dat[bt.raw.dat$Month %in% 4 & 
-#                                        bt.raw.dat$Year %in% sst.raw.dat$Year,], FUN = sum)
-# names(BT.cur) <- c("Year","BT.cur") 
-#BT.last$BT.last <-  c(NA,BT.last$BT.last[-nrow(BT.last)])
 
 dat <- aggregate(covar ~ Year, 
                  data=sst.raw.dat[sst.raw.dat$Month %in% 1:2,], FUN = sum)
@@ -106,7 +65,6 @@ names(dat) <- c("Year","SST.cur")
 
 dat$SST.last <-  c(NA,SST.last$SST.last[-nrow(SST.last)])
 
-dat <- dplyr::left_join(dat, BT.cur, by="Year")
 dat <- dat %>% dplyr::filter(Year < 2022)
 
 may.dat <- dat
@@ -118,61 +76,67 @@ may.dat$SST.sum <- may.dat$SST.cur + may.dat$SST.last
 ```
 
 
+<!-- Make a plot of the SC and SST time series.... -->
 
-# Model selection here we've made the decision to drop BNAM from this, take Xiaohan's model, apply it to our model and let's see how it works
-# Then discuss why it didn't and the implication of that for EAFM...
-```{r, message=F, warning=F}
+```{r sc-sst-ts, message=F, warning=F, include=F,echo=F,cache=T}
+#ylab(expression(paste("Condition","(",g~dm^-3   ,")")))
+p.cond.ts <- ggplot(base.cond.ts) + geom_line(aes(y = may,x=year)) + ylab(expression(paste("Condition","(",g%*%dm^-3   ,")"))) + xlab("") +
+                                    geom_hline(yintercept = mean(base.cond.ts$may,na.rm=T),linetype = 'dashed',color = 'blue') +
+                                    scale_x_continuous(labels = NULL,limits=c(1985,2020),breaks = seq(1985,2020,by=5))+
+                                    scale_y_continuous(limits=c(10,20),breaks = seq(10,20,by=2))
+
+p.may.ts <- ggplot(may.dat) + geom_line(aes(y = SST.cur,x=Year)) + ylab("Cumulative SST (Jan-Mar: °C)") + xlab("") + 
+                              geom_hline(yintercept = mean(may.dat$SST.cur,na.rm=T),linetype = 'dashed',color = 'blue') +
+                              scale_x_continuous(limits=c(1985,2020),breaks = seq(1985,2020,by=5))
+
+p.sc.sst.ts <- plot_grid(p.cond.ts,p.may.ts,nrow=2)
+save_plot(plot = p.sc.sst.ts,filename = paste0(direct.proj,"Results/Figures/SST_SC_ts.png"),base_height = 10,base_width = 6)
+
+```
+<!-- Model selection here we've made the decision to drop BNAM from this, take Xiaohan's model, apply it to our model and let's see how it workk. Then discuss why it didn't and the implication of that for EAFM... -->
+
+```{r sc-sst-mods, message=F, warning=F, include=F,echo=F,cache=T}
 #----------------------------------------------------------------------------------
 # Now we run the analyses necessary for the paper.
 
 # Now we can omit the years we don't have data right off the top, a bit too harsh but good for model comparisons...
 may.dat.comp <- na.omit(may.dat)
+
+
 # Just using data up to 2019, given we didn't have 2020 surveys that'll just confuse things I think... 
 may.dat.comp <- may.dat.comp %>% dplyr::filter(Year < 2020)
-# correlation between sst and bt
-#cor.test(may.dat.comp$SST.last, may.dat.comp$BT.cur)
 
+# Make a NULL model
+null.may.mod <- lm(Condition~1,may.dat.comp)
+# Single year SST models
 may.sst.last <- lm(data=may.dat.comp, Condition ~ SST.last)
 may.sst.cur <- lm(data=may.dat.comp, Condition ~ SST.cur)
 #may.BT.cur <- lm(data=may.dat.comp, Condition ~ BT.cur)
-summary(may.sst.last)
-summary(may.sst.cur)
+#summary(may.sst.last)
+#summary(may.sst.cur)
 #summary(may.BT.cur)
-
+# Multiyear SST models.
 may.sst.sum <- lm(data=may.dat.comp, Condition ~ SST.sum)
-may.sst.sum2 <- lm(data=may.dat.comp, Condition ~ SST.last + SST.cur)
-summary(may.sst.sum)
-summary(may.sst.sum2)
-
-#may.sst.sum3 <- lm(data=may.dat.comp, Condition ~ SST.last + BT.cur)
-#may.sst.sum4 <- lm(data=may.dat.comp, Condition ~ SST.cur + BT.cur)
-summary(may.sst.sum3)
-summary(may.sst.sum4)
-
+# Just using this model to get the effect of SST current and SST previous for the text.
+#may.sst.sum2 <- lm(data=may.dat.comp, Condition ~ SST.last+SST.cur)
 may.sst.int <- lm(data=may.dat.comp, Condition ~ SST.last*SST.cur)
 #may.sst.int2 <- lm(data=may.dat.comp, Condition ~ SST.last*SST.cur + BT.cur)
 summary(may.sst.int)
 #summary(may.sst.int2)
 
-AICctab(may.sst.last, may.sst.cur,may.sst.sum, may.sst.sum2,may.sst.int)
+sst.aic.tab <- AICctab(may.sst.last, may.sst.cur,may.sst.sum, may.sst.int,null.may.mod,base=T,
+                       mnames = c("SST Previous", "SST Current","SST Full","SST Interaction", "Null Model"))
 
-# SST sum wins for May so away we go...
-summary(may.sst.sum2)
 
 ```
 
+<!-- ## Instructions... -->
+<!-- The next bit is doing the autocorrelation analysis, is there autocorrelation in condition time series (that is already in my code I'm 99% sure), but then also using the last 2,5,10 year (or X years) median condition to see if any of those are decent predictors of next years condition.  I suspect using last years condition is the best and that's the 'non-environmental' predictive model we'd use to compare with the environmental model. But this will be a useful exercise to see how well using a LTM of some sort to predict condition does so we can tell industry we did all this analysis and none of it helps. -->
+<!-- We will dial in on May. After that we pick 2-3 models and do the biomass predictions with them.   -->
+<!-- # Decided we drop bottom temperature from this analysis, idea again is see how well the cool SST model works in real world setting. -->
 
-# Autocorrelation within condition
-
-## Instructions...
-The next bit is doing the autocorrelation analysis, is there autocorrelation in condition time series (that is already in my code I'm 99% sure), but then also using the last 2,5,10 year (or X years) median condition to see if any of those are decent predictors of next years condition.  I suspect using last years condition is the best and that's the 'non-environmental' predictive model we'd use to compare with the environmental model. But this will be a useful exercise to see how well using a LTM of some sort to predict condition does so we can tell industry we did all this analysis and none of it helps.
-We will dial in on May. After that we pick 2-3 models and do the biomass predictions with them.  
-# Decided we drop bottom temperature from this analysis, idea again is see how well the cool SST model works in real world setting.
-
-### Original (one-year lag autocorrelation?)
-```{r, message=F, echo=F}
+```{r cor-mods, message=F, echo=F,include=F,cache=T}
 # Now we can look at the acf of condition on GB for 1999 - 2018, issue here is the data may not be stationary so need to detrend the longer ts
-# gb.may.cf <- base.cond.ts$may[base.cond.ts$year %in% 1999:2015]
 gba.may.cf <- base.cond.ts$may[base.cond.ts$year %in% 1984:2019]
 # gb.detrend <- resid(lm(gb.may.cf~ seq(1,length(gb.may.cf)),na.action = na.exclude))
 gba.detrend <- resid(lm(gba.may.cf~ seq(1,length(gba.may.cf)),na.action = na.exclude))
@@ -185,12 +149,7 @@ lag.may.dat <- data.frame(Condition = gba.may.cf,Year = 1984:2019)
 lag.may.dat$cond.covar <- c(NA,lag.may.dat$Condition[1:(nrow(lag.may.dat)-1)])
 lag.may.mod <- lm(Condition ~ cond.covar,lag.may.dat)
 summary(lag.may.mod)
-# Finally make the NULL model
-null.may.mod <- lm(Condition~1,may.dat.comp)
-```
 
-### Long term median autocorrelation? 
-```{r, message=F, echo=F}
 # build a function to use any number of years
 lastNyears_med <- function(N){
   lag <- NULL
@@ -201,40 +160,30 @@ lastNyears_med <- function(N){
   lag <- c(rep(NA, N), lag)
   lag.median <- cbind(lag.may.dat, lag)
   
-  mod <- lm(data=lag.median, Condition ~ lag)
+  mod <- cor.test(lag.median$lag, lag.median$Condition,na.action=na.pass)
   
   return(list(lag.median, mod))
   
 }
 
-# I also tried rolling means, but that wasn't any better
-
-# try 2, 5, 10 years
+# So we can compare the correlation using 1 year median, 2 year median, 5 year median, and 10 year median
 medyrs1 <- lastNyears_med(1)
 medyrs2 <- lastNyears_med(2)
 medyrs5 <- lastNyears_med(5)
 medyrs10 <- lastNyears_med(10)
 
-summary(medyrs1[[2]])
-summary(medyrs2[[2]])
-summary(medyrs5[[2]])
-summary(medyrs10[[2]])
-
-# The NAs are fucking me up here.
-mod1 <- lm(data=medyrs1[[1]][c(11:32,34:36),], Condition ~ lag)
-mod2 <- lm(data=medyrs2[[1]][c(11:32,34:36),], Condition ~ lag)
-mod5 <- lm(data=medyrs5[[1]][c(11:32,34:36),], Condition ~ lag)
-mod10 <- lm(data=medyrs10[[1]][c(11:32,34:36),], Condition ~ lag)
-
-AICctab(mod1,mod2, mod5, mod10)
+# Make a correlation table
+cor.tab <- data.frame(Model = c("Previous Year SC", "2 Year Median SC","5 Year Median SC", "10 Year Median SC"),
+                      Correlation = c(signif(medyrs1[[2]]$estimate,digits = 2),signif(medyrs2[[2]]$estimate,digits = 2),
+                                      signif(medyrs5[[2]]$estimate,digits = 2),signif(medyrs10[[2]]$estimate,digits = 2)),
+                      `p` =   c(signif(medyrs1[[2]]$p.value,digits = 1),signif(medyrs2[[2]]$p.value,digits = 1),
+                                      signif(medyrs5[[2]]$p.value,digits = 1),signif(medyrs10[[2]]$p.value,digits = 1))
+                      )
 
 ```
 
 
-# Model fit
-
-### Environmental model options
-```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
+```{r plt-sst, message=F, echo=F, warning=F, fig.width=12,fig.height=5, include=F,cache=T}
 p1 <- ggplot(may.dat.comp,aes(x=I(SST.cur+SST.last),y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
                           stat_smooth(method = 'lm') + 
                           xlab("SST (Previous Year + Current Year)") + ylab("Current Year SC (grams)")
@@ -244,61 +193,65 @@ p2 <- ggplot(may.dat.comp,aes(x=SST.last,y = Condition)) + geom_text(aes(label=s
                           xlab("SST Previous Year") + ylab("")
 
 p.sc <- plot_grid(p1,p2,nrow=1)
-print(p.sc)
-#save_plot(plot= p.sc,filename = paste0(direct.proj,"Results/Figures/SC_models.png"),base_height = 5,base_width = 10)
-#save_plot(plot=p1,filename = paste0(direct.proj,"Results/Figures/SC_sum_model.png"),base_height = 5,base_width = 5)
+save_plot(plot = p.sc,filename = paste0(direct.proj,"Results/Figures/SST_model_fits.png"),base_height = 4,base_width = 8)
 ```
 
-### LTM options
-```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
 
-p3 <- ggplot(medyrs1[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
-                          stat_smooth(method = 'lm') + 
-                          xlab("Previous year median SC (grams)") + ylab("Current Year SC (grams)")
+```{r plt-cora, message=F, echo=F, warning=F, fig.width=12,fig.height=5 , include=F,cache=T}
+
+p3 <- ggplot(medyrs1[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + scale_x_continuous(limits= c(10,20))+
+                          geom_abline(slope=1,intercept = 0) + geom_label(aes(x=12,y=20,label = paste("Correlation =",cor.tab$Correlation[1]))) +
+                          xlab("Previous year SC (grams)") + ylab("Current Year SC (grams)") 
 
 
-p4 <- ggplot(medyrs2[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
-                          stat_smooth(method = 'lm') + 
-                          xlab("Previous 2-year median SC (grams)") + ylab("Current Year SC (grams)")
+p4 <- ggplot(medyrs2[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + scale_x_continuous(limits= c(10,20))+
+                          geom_abline(slope=1,intercept = 0) + geom_label(aes(x=12,y=20,label = paste("Correlation =",cor.tab$Correlation[2]))) +
+                          xlab("2-year median SC (grams)")  + ylab("")
 
-p5 <- ggplot(medyrs5[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
-                          stat_smooth(method = 'lm') + 
-                          xlab("Previous 5-year median SC (grams)") + ylab("")
+p5 <- ggplot(medyrs5[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + scale_x_continuous(limits= c(10,20))+
+                          geom_abline(slope=1,intercept = 0) + geom_label(aes(x=12,y=20,label = paste("Correlation =",cor.tab$Correlation[3]))) +
+                          xlab("5-year median SC (grams)") + ylab("Current Year SC (grams)") 
 
-p6 <- ggplot(medyrs10[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + 
-                          stat_smooth(method = 'lm') + 
-                          xlab("Previous 10-year median SC (grams)") + ylab("")
+p6 <- ggplot(medyrs10[[1]], aes(x=lag,y = Condition)) + geom_text(aes(label=substr(Year,3,4))) + scale_x_continuous(limits= c(10,20))+
+                          geom_abline(slope=1,intercept = 0) + geom_label(aes(x=12,y=20,label = paste("Correlation =",cor.tab$Correlation[4]))) +
+                          xlab("10-year median SC (grams)") + ylab("")
 
 p.sc2 <- plot_grid(p3,p4,p5,p6,nrow=2)
-print(p.sc2)
+save_plot(plot = p.sc2,filename = paste0(direct.proj,"Results/Figures/Correlation_fits.png"),base_height = 8,base_width = 8)
 ```
 
-### Range of best options, so this is SST sum, SST last, and SST SC.
-```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=5}
-p.sc3 <- plot_grid(p1,p2, p3,nrow=1)
-print(p.sc3)
+```{r plt-besties, message=F, echo=F, warning=F, fig.width=12,fig.height=5,, include=F,cache=T}
+p.3 <- p3 + ylab("") + scale_y_continuous(limits = c(10,20),labels = NULL)  + geom_abline(slope = 1,intercept=0,linetype = 'dashed')
+p.1 <- p1 + scale_y_continuous(limits = c(10,20)) 
+p.2 <- p2 + scale_y_continuous(limits = c(10,20),labels = NULL) 
+p.sc3 <- plot_grid(p.1,p.2, p.3,nrow=1)
+save_plot(plot = p.sc3,filename = paste0(direct.proj,"Results/Figures/Best_model_fits.png"),base_height = 4,base_width = 11)
 ```
 
-```{r, message=F, warning=F}
+```{r growth-preds, message=F, warning=F, include=F,echo=F,cache=T}
 # Get our predicted CF and compare to the Predicted condition we actually used
 may.dat.pred <- may.dat %>% dplyr::filter(Year %in% 1999:2019)
 # Now I need to predict Condition for 2015, I'm going to do that using the Condition relationship 
-# using the last yaer condtion model, because we can do that....
-may.dat.pred$Condition[may.dat.pred$Year == 2015] <- predict(medyrs1[[2]],newdata = data.frame(lag = may.dat.pred$Condition[may.dat.pred$Year == 2014]))
+# using the condition from the previous year (i.e. 2014) as the 2015 estimate.
+may.dat.pred$Condition[may.dat.pred$Year == 2015] <- base.cond.ts$aug[base.cond.ts$year == 2015]
+# In case I want it... the correlation and lm between condition...
+may.vs.aug <- cor.test(base.cond.ts$aug,base.cond.ts$may)
+may.vs.aug.lm <- lm(may~aug,data=base.cond.ts)
 # I think this is what we want for the condition offset, take last years condition and use it for this year... I think...
 # may.dat.pred$CF.off <- may.dat$Condition[may.dat$Year %in% 1998:2018]
 # may.dat.pred$CF.off[may.dat.pred$Year == 2016] <- may.dat.pred$Condition[may.dat.pred$Year == 2015]
 
-may.dat.pred$CF.all <- predict(may.sst.sum2,may.dat.pred)
+may.dat.pred$CF.all <- predict(may.sst.sum,may.dat.pred)
 may.dat.pred$CF.last <- predict(may.sst.last,may.dat.pred)
+may.dat.pred$CF.median <- median(may.dat.pred$Condition)
+may.dat.pred$CF.max <- max(may.dat.pred$Condition)
+may.dat.pred$CF.min <- min(may.dat.pred$Condition)
 #may.dat.comp$CF.BTSST <- predict(may.sst.sum3,may.dat.comp)
 #may.dat.comp$CF.BT <- predict(may.BT.cur,may.dat.comp)
 #all.dat$CF.used <- c(all.dat$CF[2:(nrow(all.dat))],NA)
 
 names(may.dat.pred)[which(names(may.dat.pred)=="Year")] <- "year"
 names(may.dat.pred)[which(names(may.dat.pred)=="Condition")] <- "CF"
-
-
 
 # Now we need the SH data to get the the growth rates.
 all.dat <- dplyr::left_join(may.dat.pred,sh.dat,by='year')
@@ -326,7 +279,10 @@ all.dat$waa.t.used <- all.dat$CF*(all.dat$laa.t/100)^3
 # that we use to predict 1987 condition right.  Hurting my head!! So 1987 condition by 1986 survey size data.
 all.dat$waa.t.all <- c(all.dat$CF.all[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
 all.dat$waa.t.last <- c(all.dat$CF.last[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
-
+# Adding in median, minimum and maximum to see how well/poorly these perform
+all.dat$waa.t.median <- c(all.dat$CF.median[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
+all.dat$waa.t.min <- c(all.dat$CF.min[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
+all.dat$waa.t.max <- c(all.dat$CF.max[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3
 
 # Here we use the current condition factor to calculate the weight next year (since we use laa.t)
 # That's really the only difference between waa.t and waa.t2, waa.t uses next years condition to project growth
@@ -341,6 +297,10 @@ all.dat$waa.t2 <- c(all.dat$CF[2:nrow(all.dat)],NA)*(all.dat$laa.t/100)^3 # This
 all.dat$g.used <- all.dat$waa.t.used/all.dat$waa.tm1 # This is the growth estimate that would have been used in the model
 all.dat$g.all <- all.dat$waa.t.all/all.dat$waa.tm1 # This is the growth estimate we'd use if we used the full SST predictive model
 all.dat$g.last <- all.dat$waa.t.last/all.dat$waa.tm1 # This is the growth estimate we'd use if we used the last year only SST predictive model
+# The 'simulation' experiment stuff
+all.dat$g.median <- all.dat$waa.t.median/all.dat$waa.tm1
+all.dat$g.min <- all.dat$waa.t.min/all.dat$waa.tm1
+all.dat$g.max <- all.dat$waa.t.max/all.dat$waa.tm1
 #all.dat$g.BT <- all.dat$waa.t.BT/all.dat$waa.tm1
 #all.dat$g.BTSST <- all.dat$waa.t.BTSST/all.dat$waa.tm1
 all.dat$g.actual <- all.dat$waa.t2/all.dat$waa.tm1 # This is using the actual condition factor and growing the scallops by laa.t
@@ -349,13 +309,24 @@ all.dat$g.actual <- all.dat$waa.t2/all.dat$waa.tm1 # This is using the actual co
 all.dat$prec.g.used <- 100*(all.dat$g.used - all.dat$g.actual) / all.dat$g.actual
 all.dat$prec.g.all <- 100*(all.dat$g.all - all.dat$g.actual) / all.dat$g.actual
 all.dat$prec.g.last <- 100*(all.dat$g.last - all.dat$g.actual) / all.dat$g.actual
-#all.dat$prec.g.BT <- 100*(all.dat$g.BT - all.dat$g.actual) / all.dat$g.actual
+all.dat$prec.g.median <- 100*(all.dat$g.median - all.dat$g.actual) / all.dat$g.actual
+all.dat$prec.g.min <- 100*(all.dat$g.max - all.dat$g.actual) / all.dat$g.actual
+all.dat$prec.g.max <- 100*(all.dat$g.min - all.dat$g.actual) / all.dat$g.actual
 #all.dat$prec.g.BTSST <- 100*(all.dat$g.BTSST - all.dat$g.actual) / all.dat$g.actual
 
 
-summary(all.dat$prec.g.used)
-summary(all.dat$prec.g.all)
-summary(all.dat$prec.g.last)
+# CF differences between methods
+cf.diff <- data.frame(year = all.dat$year,
+                      CF.all = all.dat$CF.all-all.dat$CF,
+                      CF.last = all.dat$CF.last- all.dat$CF,
+                      CF.median = all.dat$CF.median- all.dat$CF,
+                      CF.max = all.dat$CF.max- all.dat$CF,
+                      CF.min = all.dat$CF.min- all.dat$CF)
+# This of course is just one number...
+cf.diff$CF_max_min_diff <- cf.diff$CF.max-cf.diff$CF.min
+#summary(all.dat$prec.g.used)
+#summary(all.dat$prec.g.all)
+#summary(all.dat$prec.g.last)
 #summary(all.dat$prec.g.BT)
 #summary(all.dat$prec.g.BTSST)
 
@@ -367,6 +338,9 @@ all.dat$lk.t <- vonB$Linf*(1-exp(-vonB$K))+exp(-vonB$K)*all.dat$l.r
 all.dat$wk.t.used <- all.dat$CF*(all.dat$lk.t/100)^3
 all.dat$wk.t.all <- c(all.dat$CF.all[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 all.dat$wk.t.last <-  c(all.dat$CF.last[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+all.dat$wk.t.median <-  c(all.dat$CF.median[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+all.dat$wk.t.min <-  c(all.dat$CF.min[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
+all.dat$wk.t.max <-  c(all.dat$CF.max[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 #all.dat$wk.t.BTSST <-  c(all.dat$CF.BTSST[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 #all.dat$wk.t.BT <-  c(all.dat$CF.BT[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 #all.dat$wk.t2.aug <- c(all.dat$CF.aug[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
@@ -376,6 +350,9 @@ all.dat$wk.t2 <- c(all.dat$CF[2:nrow(all.dat)],NA)*(all.dat$lk.t/100)^3
 all.dat$gr.used <- all.dat$wk.t.used/all.dat$wk.tm1 # This is the growth estimate that would have been used in the model
 all.dat$gr.all <- all.dat$wk.t.all/all.dat$wk.tm1 # This is the growth estimate we'd use if we used the full SST predictive model
 all.dat$gr.last <- all.dat$wk.t.last/all.dat$wk.tm1 # This is the growth estimate we'd use if we used the last year only SST predictive model
+all.dat$gr.median <- all.dat$wk.t.median/all.dat$wk.tm1
+all.dat$gr.min <- all.dat$wk.t.min/all.dat$wk.tm1
+all.dat$gr.max <- all.dat$wk.t.max/all.dat$wk.tm1
 #all.dat$gr.BT <- all.dat$wk.t.BT/all.dat$wk.tm1 
 #all.dat$gr.BTSST <- all.dat$wk.t.BTSST/all.dat$wk.tm1 
 all.dat$gr.actual <- all.dat$wk.t2/all.dat$wk.tm1 # This is using the actual condition factor and growing the scallops by laa.t
@@ -385,43 +362,48 @@ all.dat$gr.actual <- all.dat$wk.t2/all.dat$wk.tm1 # This is using the actual con
 all.dat$prec.gr.used <- 100*(all.dat$gr.used - all.dat$gr.actual) / all.dat$gr.actual
 all.dat$prec.gr.all <- 100*(all.dat$gr.all - all.dat$gr.actual) / all.dat$gr.actual
 all.dat$prec.gr.last <- 100*(all.dat$gr.last - all.dat$gr.actual) / all.dat$gr.actual
+all.dat$prec.gr.median <- 100*(all.dat$gr.median - all.dat$gr.actual) / all.dat$gr.actual
+all.dat$prec.gr.min <- 100*(all.dat$gr.min - all.dat$gr.actual) / all.dat$gr.actual
+all.dat$prec.gr.max <- 100*(all.dat$gr.max - all.dat$gr.actual) / all.dat$gr.actual
+
 #all.dat$prec.gr.BT <- 100*(all.dat$gr.BT - all.dat$gr.actual) / all.dat$gr.actual
 #all.dat$prec.gr.BTSST <- 100*(all.dat$gr.BTSST - all.dat$gr.actual) / all.dat$gr.actual
 #all.dat$prec.gr.aug <- 100*(all.dat$gr.aug - all.dat$gr.actual) / all.dat$gr.actual #  division.
 
 
-summary(all.dat$prec.gr.used)
-summary(all.dat$prec.gr.all)
-summary(all.dat$prec.gr.last)
-#summary(all.dat$prec.gr.BT)
-#summary(all.dat$prec.gr.BTSST)
-#summary(all.dat$prec.gr.aug)
+# summary(all.dat$prec.gr.used)
+# summary(all.dat$prec.gr.all)
+# summary(all.dat$prec.gr.last)
+#summary(all.dat$prec.gr.median)
+#summary(all.dat$prec.gr.min)
+#summary(all.dat$prec.gr.max)
 # Pivot to long form
 #all.dat.long <- all.dat %>% reshape2::melt(id.vars = 'year',value.name = 'response',variable.name = 'covar')
 ```
 
-# Projections
-```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=10}
+
+```{r projections, message=F, echo=F, warning=F, fig.width=12,fig.height=10, include=F,cache=T}
 # So what I need to do is replace the last g and gr value in this object with the predicted number and then see how much differences
 # that makes in the projection.  We can go back to like 2000 with this no problem I think.
 
 
 proj.B.yr <- NULL
+proj.Bmed <- NULL
+#proj.Bmed.yr <- NULL
 base.year <- 2019
-scenarios <- c("BM.Current","BM.All","BM.Last","BM.Realized")
+scenarios <- c("BM.Correlation","BM.Full","BM.Previous","BM.Realized","BM.Median","BM.Max","BM.Min")
 for(y in 2000:2019)
 {
   pick <- base.year - y+1
   gb.out <- DD.out
   gb.out$data$NY <- gb.out$data$NY-pick
-  proj.B <- data.frame("BM.Current"=rep(NA,30000),"BM.All"=rep(NA,30000),
-                       "BM.Last"=rep(NA,30000),"BM.Realized" = rep(NA,30000),
-                       #"BM.Aug" = rep(NA,30000),
-                       "BM.Actual" = rep(NA,30000), 
-                       "Prop.Current"=rep(NA,30000),"Prop.All"=rep(NA,30000),
-                       "Prop.Last"=rep(NA,30000),"Prop.Realized"=rep(NA,30000),
-                       #"Prop.Aug"=rep(NA,30000),
-                       'year' = rep(y,30000))
+  proj.B <- data.frame("BM.Correlation"=rep(NA,30000),"BM.Full"=rep(NA,30000),
+                                    "BM.Previous"=rep(NA,30000),"BM.Realized" = rep(NA,30000),
+                                    "BM.Median"=rep(NA,30000),"BM.Max"=rep(NA,30000),"BM.Min"=rep(NA,30000),
+                                    "Prop.Correlation"=rep(NA,30000),"Prop.Full"=rep(NA,30000),
+                                    "Prop.Previous"=rep(NA,30000),"Prop.Realized"=rep(NA,30000),
+                                    "Prop.Median"=rep(NA,30000),"Prop.Max"=rep(NA,30000),"Prop.Min"=rep(NA,30000),
+                                    'year' = rep(y,30000))
   # Now run through 4 scenarios
   for(i in 1:(length(scenarios)))
   {
@@ -441,6 +423,21 @@ for(y in 2000:2019)
       gb.out$data$g[gb.out$data$NY] <- all.dat$g.actual[all.dat$year == y-1]
       gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.actual[all.dat$year == y-1]
     }  
+    if(i == 5) 
+    {
+      gb.out$data$g[gb.out$data$NY] <- all.dat$g.median[all.dat$year == y-1]
+      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.median[all.dat$year == y-1]
+    }  
+    if(i == 6) 
+    {
+      gb.out$data$g[gb.out$data$NY] <- all.dat$g.max[all.dat$year == y-1]
+      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.max[all.dat$year == y-1]
+    }  
+    if(i == 7) 
+    {
+      gb.out$data$g[gb.out$data$NY] <- all.dat$g.min[all.dat$year == y-1]
+      gb.out$data$gR[gb.out$data$NY] <- all.dat$gr.min[all.dat$year == y-1]
+    }  
 
     # if(i == 4) 
   # {
@@ -450,44 +447,50 @@ for(y in 2000:2019)
   # Note that I don't need to include the projected catch here because the data for catches is for the survey
   # years and so that is all nicely accounted for in this I checked and even 2019 looks to be correct, so no
   # need to do anything here since we only run to 2019... if we had 2020 we'd probably need to get funky.
+    source("D:/Github/Assessment_fns/Model/projections.r")
     res <- projections(gb.out, C.p=(gb.fish.dat$GBa$catch[gb.fish.dat$GBa$year == y])) # C.p = potential catches in decision table
     
     proj.B[scenarios[i]] <- as.vector(res$sims.list$B.p)
+    proj.Bmed[scenarios[i]] <- as.vector(res$sims.list$Bmed.p)
   } # end for(i in 1:4)
-  proj.B["BM.Actual"] <- as.vector(gb.out$sims.list$B[,gb.out$data$NY+1]) # I want next year's result because I'm projecting forward right!
-  proj.B["Prop.Current"] <- (proj.B["BM.Current"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
-  proj.B["Prop.All"] <- (proj.B["BM.All"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
-  proj.B["Prop.Last"] <- (proj.B["BM.Last"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
-  proj.B["Prop.Realized"] <- (proj.B["BM.Realized"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  proj.B["BM.Realized"] <- as.vector(gb.out$sims.list$B[,gb.out$data$NY+1]) # I want next year's result because I'm projecting forward right!
+  proj.B["Prop.Correlation"] <- (proj.B["BM.Correlation"] - proj.B["BM.Realized"]) /  proj.B["BM.Realized"]
+  proj.B["Prop.Full"] <- (proj.B["BM.Full"] - proj.B["BM.Realized"]) /  proj.B["BM.Realized"]
+  proj.B["Prop.Previous"] <- (proj.B["BM.Previous"] - proj.B["BM.Realized"]) /  proj.B["BM.Realized"]
+  proj.B["Prop.Median"] <- (proj.B["BM.Median"] - proj.B["BM.Realized"]) /  proj.B["BM.Realized"]
+  proj.B["Prop.Min"] <- (proj.B["BM.Min"] - proj.B["BM.Realized"]) /  proj.B["BM.Realized"]
+  proj.B["Prop.Max"] <- (proj.B["BM.Max"] - proj.B["BM.Realized"]) /  proj.B["BM.Realized"]
+  proj.B["Prop.Max.Min"] <- (proj.B["BM.Max"] - proj.B["BM.Min"]) /  proj.B["BM.Max"]
+  #proj.B["Prop.Realized"] <- (proj.B["BM.Realized"] - proj.B["BM.Realized"]) /  proj.B["BM.Realized"]
 
-  #proj.B["Prop.Aug"] <- (proj.B["BM.Aug"] - proj.B["BM.Actual"]) /  proj.B["BM.Actual"]
+  #proj.B["Prop.Aug"] <- (proj.B["BM.Aug"] - proj.B["BM.Realized"]) /  proj.B["BM.Realized"]
   # Difference
-  proj.B["Diff.Current"] <- (proj.B["BM.Current"] - proj.B["BM.Actual"]) 
-  proj.B["Diff.All"] <- (proj.B["BM.All"] - proj.B["BM.Actual"]) 
-  proj.B["Diff.Last"] <- (proj.B["BM.Last"] - proj.B["BM.Actual"]) 
-  proj.B["Diff.Realized"] <- (proj.B["BM.Realized"] - proj.B["BM.Actual"]) 
+  proj.B["Diff.Correlation"] <- (proj.B["BM.Correlation"] - proj.B["BM.Realized"]) 
+  proj.B["Diff.Full"] <- (proj.B["BM.Full"] - proj.B["BM.Realized"]) 
+  proj.B["Diff.Previous"] <- (proj.B["BM.Previous"] - proj.B["BM.Realized"]) 
+  proj.B["Diff.Median"] <- (proj.B["BM.Median"] - proj.B["BM.Realized"]) 
+  proj.B["Diff.Min"] <- (proj.B["BM.Min"] - proj.B["BM.Realized"]) 
+  proj.B["Diff.Max"] <- (proj.B["BM.Max"] - proj.B["BM.Realized"]) 
+  proj.B["Diff.Max.Min"] <- (proj.B["BM.Max"] - proj.B["BM.Min"]) 
+  #proj.B["Diff.Realized"] <- (proj.B["BM.Realized"] - proj.B["BM.Realized"]) 
 
-  #proj.B["Diff.Aug"] <- (proj.B["BM.Aug"] - proj.B["BM.Actual"])
   proj.B.yr[[as.character(y)]] <- proj.B
-  
-} # end for(y in 1987:2018)
+
+} # end for(y in 2000:2019)
 
 
 bm.res <- do.call('rbind',proj.B.yr)
-
+#bmed.res <- do.call('rbind',proj.Bmed)
 
 # Now switch the data to long
 all.res.long <- bm.res %>% reshape2::melt(id.var = "year")
-
+#all.bmed.res <- bmed.res %>% reshape2::melt(id.var = "year")
 
 
 # I don't think I want the realized method on there, it is kinda relevant but makes story complicated.
-bm.res.long <-  all.res.long %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'BM'))
+bm.res.long <-  all.res.long %>% dplyr::filter(str_detect(variable,'BM'))
 prop.res.long <- all.res.long %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Prop'))
 diff.res.long <- all.res.long %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Diff'))
-#bm.res.long <-  all.res.long %>% dplyr::filter(str_detect(variable,'BM'))
-#prop.res.long <- all.res.long %>% dplyr::filter(str_detect(variable,'Prop'))
-#diff.res.long <- all.res.long %>% dplyr::filter(str_detect(variable,'Diff'))
 
 # SO we can model the raw data, not sure that's the best plan ever, but let's see!
 # So a model...
@@ -506,27 +509,41 @@ fit.summary <- all.res.long %>% dplyr::group_by(year,variable) %>% dplyr::summar
                                                                                   uqr = quantile(value,probs=0.75,na.rm=T),
                                                                                   lqr = quantile(value,probs=0.25,na.rm=T))
 
-
 # I don't think I want the realized method on there, it is kinda relevant but makes story complicated.
 # It also is just about identical to the "Last" model in terms of results, so really using
 # August or May data for the projection doesn't matter as it over-estimates biomass almost identically.
-bm.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'BM'))
-prop.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Prop'))
-diff.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Diff'))
+bm.all.summary <- fit.summary %>% dplyr::filter( str_detect(variable,'BM'))
+bm.summary <- bm.all.summary %>% dplyr::filter(!str_detect(variable,'Min'), !str_detect(variable,'Max'), !str_detect(variable,'Median'))
+bm.mmm.summary <- bm.all.summary %>% dplyr::filter(str_detect(variable,'Min') | str_detect(variable,'Max')| 
+                                                   str_detect(variable,'Median') | str_detect(variable,'Realized'))
+prop.all.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Prop'))
+prop.summary <- prop.all.summary %>% dplyr::filter(!str_detect(variable,'Min'), !str_detect(variable,'Max'), !str_detect(variable,'Median'))
+prop.mmm.summary <- prop.all.summary %>% dplyr::filter(str_detect(variable,'Min') | str_detect(variable,'Max')| 
+                                                   str_detect(variable,'Median') | str_detect(variable,'Realized'))
+diff.all.summary <- fit.summary %>% dplyr::filter(!str_detect(variable,'Realized'), str_detect(variable,'Diff'))
+diff.summary <- diff.all.summary %>% dplyr::filter(!str_detect(variable,'Min'), !str_detect(variable,'Max'), !str_detect(variable,'Median'))
+diff.mmm.summary <- diff.all.summary %>% dplyr::filter(str_detect(variable,'Min') | str_detect(variable,'Max')| 
+                                                   str_detect(variable,'Median') | str_detect(variable,'Realized'))
+diff.min.max <- diff.mmm.summary %>% dplyr::filter(variable == "Diff.Max.Min")
+
+# Now I can combine this with the cf difference object and get an estimate of effect size per CF change.
+cf.eff.on.bm <- merge(diff.min.max,cf.diff,by='year')
+cf.eff.on.bm$eff.size <- cf.eff.on.bm$median/cf.eff.on.bm$CF_max_min_diff
+
+#summary(diff.min.max)
 #bm.summary <- fit.summary %>% dplyr::filter(str_detect(variable,'BM'))
 #prop.summary <- fit.summary %>% dplyr::filter(str_detect(variable,'Prop'))
 #diff.summary <- fit.summary %>% dplyr::filter(str_detect(variable,'Diff'))
 
-
 diff.summary %>% group_by(variable) %>% dplyr::summarise(m = mean(median))
 
 # The labels for the levels...
-labs <- c("Full SST Model","Previous Year SST Model","Current Method","Actual")
-bm.summary$variable <- factor(bm.summary$variable,levels =c("BM.All","BM.Last","BM.Current","BM.Actual"),
+labs <- c("Full SST Model","Previous Year SST Model","Correlation Method","Realized")
+bm.summary$variable <- factor(bm.summary$variable,levels =c("BM.Full","BM.Previous","BM.Correlation","BM.Realized"),
                               labels = labs[c(1,2,3,4)])
-prop.summary$variable <- factor(prop.summary$variable,levels =c("Prop.All","Prop.Last","Prop.Current"),#,"Prop.Aug"),
+prop.summary$variable <- factor(prop.summary$variable,levels =c("Prop.Full","Prop.Previous","Prop.Correlation"),#,"Prop.Aug"),
                               labels = labs[c(1,2,3)])
-diff.summary$variable <- factor(diff.summary$variable,levels =c("Diff.All","Diff.Last","Diff.Current"),#,"Diff.Aug"),
+diff.summary$variable <- factor(diff.summary$variable,levels =c("Diff.Full","Diff.Previous","Diff.Correlation"),#,"Diff.Aug"),
                                 labels = labs[c(1,2,3)])
 
 cols <- addalpha(c("orange","darkgreen","purple","darkblue"))
@@ -542,17 +559,29 @@ p.bm.ts <- ggplot(bm.summary#[bm.summary$variable %in% c("Current Method", "BT",
                 scale_x_continuous(breaks = seq(2000,2020,by=3),limits = c(2000,2020)) +
                 theme(legend.position = "top",axis.text.x=element_blank(),legend.title = element_blank())
 
+
 # Grab the legend then remove it from the figure....
 leg <- get_legend(p.bm.ts)
 p.bm.ts <- p.bm.ts + theme(legend.position = "none")
 #grobs <- ggplotGrob(p.bm.ts)$grobs
 #leg <- grobs[[which(sapply(grobs, function(x) x$name) == "guide-box")]]
+# Same plot using the min-max-median 
+p.bm.mmm.ts <- ggplot(bm.mmm.summary#[bm.summary$variable %in% c("Current Method", "BT", "BTSST"),]
+                  , aes(x=year,y=median/1000,color = variable, group =variable)) + geom_line(lwd=1.5) +
+                #geom_ribbon(aes(x=year,ymin=lqr/1000,ymax=uqr/1000,fill=variable,group = variable),alpha = 0.5) +
+                geom_line() +              
+                xlab("") + ylab("Biomass (kilotonnes)") +
+                scale_fill_manual(values = cols) +
+                scale_color_manual(values=cols) + 
+                scale_x_continuous(breaks = seq(2000,2020,by=3),limits = c(2000,2020)) +
+                theme(legend.position = "top",axis.text.x=element_blank(),legend.title = element_blank())
+
 
 p.diff.ts <- ggplot(diff.summary#[diff.summary$variable %in% c("Current Method", "BT", "BTSST"),]
                     , aes(x=year,y=median/1000,color = variable, group =variable)) + geom_line(lwd=1.5) +
                 #geom_ribbon(aes(x=year,ymin=lqr/1000,ymax=uqr/1000,fill=variable,group = variable),alpha = 0.5) +
   geom_line() +
-                xlab("") + ylab("Difference from Actual Biomass (kilotonnes)") +
+                xlab("") + ylab("Difference from Realized Biomass (kilotonnes)") +
                 scale_fill_manual(values = cols[1:5]) +
                 scale_color_manual(values=cols[1:5]) + 
                 geom_hline(yintercept = 0)+ 
@@ -562,8 +591,8 @@ p.diff.ts <- ggplot(diff.summary#[diff.summary$variable %in% c("Current Method",
 p.prop.ts <- ggplot(prop.summary#[prop.summary$variable %in% c("Current Method", "BT", "BTSST"),]
                     , aes(x=year,y=100*median,color = variable, group =variable)) + geom_line(lwd=1.5) +
                 #geom_ribbon(aes(x=year,ymin=100*lqr,ymax=100*uqr,fill=variable,group = variable),alpha = 0.5) +
-    geom_line() +              
-  xlab("") + ylab("Difference from Actual Biomass (%)") +
+                geom_line() +              
+                xlab("") + ylab("Difference from Realized Biomass (%)") +
                 scale_fill_manual(values = cols[1:5]) +
                 scale_color_manual(values=cols[1:5]) + 
                 geom_hline(yintercept = 0)+
@@ -573,23 +602,24 @@ p.prop.ts <- ggplot(prop.summary#[prop.summary$variable %in% c("Current Method",
 
 p.ts <- plot_grid(leg,p.bm.ts,p.diff.ts,p.prop.ts,ncol=1,rel_heights = c(0.2,1,1,1))
 print(p.ts)
-#save_plot(plot = p.ts, filename = "D:/Github/Paper_2_Cond_Env/Results/Figures/timeseries_bm_comparision.png", base_width = 6,base_height = 10)
+save_plot(plot = p.ts, filename = paste0(direct.proj,"Results/Figures/timeseries_bm_comparision.png"), base_width = 6,base_height = 12)
 ```
 
-```{r, message=F, echo=F, warning=F, fig.width=12,fig.height=7}
+
+```{r plt-no-ts, message=F, echo=F, warning=F, fig.width=12,fig.height=7,include=F,cache=T}
 actual <- bm.summary %>%
-  filter(variable=="Actual") %>%
-  rename(Actual=median) %>%
-  dplyr::select(year, Actual)
+  filter(variable=="Realized") %>%
+  rename(Realized=median) %>%
+  dplyr::select(year, Realized)
 
 bm.summary <- dplyr::left_join(bm.summary, actual)
+bm.mmm.summary <- dplyr::left_join(bm.mmm.summary, actual)
+# ggplot() + geom_point(data=bm.summary[!bm.summary$variable == "Realized",], aes(median, Realized)) +
+#   geom_smooth(data=bm.summary[!bm.summary$variable == "Realized",], aes(median, Realized), method = "lm") +
+#   geom_abline(slope=1, intercept=0, lwd=1)+
+#   facet_wrap(~variable) + theme_bw()
 
-ggplot() + geom_point(data=bm.summary[!bm.summary$variable == "Actual",], aes(median, Actual)) +
-  geom_smooth(data=bm.summary[!bm.summary$variable == "Actual",], aes(median, Actual), method = "lm") +
-  geom_abline(slope=1, intercept=0, lwd=1)+
-  facet_wrap(~variable) + theme_bw()
-
-## Now we can fit a model which should replace the below fun...
+## Now we can fit a model to give estimates of how good/bad the models are
 
 
 # So a model...
@@ -601,6 +631,10 @@ par(mfrow=c(2,2));plot(diff.mod)
 prop.mod <- lm(median~variable,prop.summary)
 summary(prop.mod)
 par(mfrow=c(2,2));plot(prop.mod)
+
+#  The min/med/max summary
+bm.mmm.mod <- lm(median~variable,bm.mmm.summary)
+summary(bm.mmm.mod)
 
 d.mod.pred <- data.frame(variable = unique(diff.summary$variable))
 d.mod.pred$est <- predict(diff.mod,d.mod.pred)
@@ -617,7 +651,7 @@ p.mod.pred$lci <- p.mod.pred$est - p.mod.pred$se
 # Note the errorbars here are 1 SE, given how similar the results are this looks nicer with the 1 SE IMHO.
 p.diff <- ggplot(d.mod.pred,  aes(x=variable,y=est/1000)) + geom_point(lwd=2) +
                                   geom_errorbar(aes(x=variable,ymin=lci/1000,ymax=uci/1000),width=0) +
-                                  xlab("") + ylab("Difference from Actual Biomass (kilotonnes)") +
+                                  xlab("") + ylab("Difference from Realized Biomass (kilotonnes)") +
                                   scale_fill_manual(values = cols[1:3]) +
                                   scale_color_manual(values=cols[1:3]) + 
                                   geom_hline(yintercept = 0,linetype=2)+
@@ -626,7 +660,7 @@ p.diff <- ggplot(d.mod.pred,  aes(x=variable,y=est/1000)) + geom_point(lwd=2) +
 
 p.prop <- ggplot(p.mod.pred, aes(x=variable,y=100*est)) + geom_point(lwd=2) +
                                   geom_errorbar(aes(x=variable,ymin=100*lci,ymax=100*uci),width=0) +
-                                  xlab("") + ylab("Difference from Actual Biomass (%)") +
+                                  xlab("") + ylab("Difference from Realized Biomass (%)") +
                                   scale_fill_manual(values = cols[1:3]) +
                                   scale_color_manual(values=cols[1:3]) + 
                                   geom_hline(yintercept = 0,linetype=2)+
@@ -637,10 +671,126 @@ p.prop <- ggplot(p.mod.pred, aes(x=variable,y=100*est)) + geom_point(lwd=2) +
 
 p <- plot_grid(p.diff,p.prop,ncol=1)
 print(p)
-#save_plot(plot = p, filename = "D:/Github/Paper_2_Cond_Env/Results/Figures/Overall_effect.png", base_width = 6,base_height =10 )
+save_plot(plot = p, filename = paste0(direct.proj,"Results/Figures/Overall_effect.png"), base_width = 6,base_height =10 )
+
+# Now I'm going to repeat this, but with 2009-2014 removed to see how well the model did outside that weird stretch where the projections just sucked...
+# So a model...
+bm.summary.sub <- bm.summary %>% dplyr::filter(!year %in% 2009:2014)
+diff.summary.sub <- diff.summary %>% dplyr::filter(!year %in% 2009:2014)
+prop.summary.sub <- prop.summary %>% dplyr::filter(!year %in% 2009:2014)
+
+bm.mod.sub <- lm(median~variable,bm.summary.sub)
+#summary(bm.mod.sub)
+diff.mod.sub <- lm(median~variable,diff.summary.sub)
+#summary(diff.mod.sub)
+#par(mfrow=c(2,2));plot(diff.mod.sub)
+prop.mod.sub <- lm(median~variable,prop.summary.sub)
+#summary(prop.mod.sub)
+#par(mfrow=c(2,2));plot(prop.mod.sub)
+
+d.mod.pred.sub <- data.frame(variable = unique(diff.summary.sub$variable))
+d.mod.pred.sub$est <- predict(diff.mod.sub,d.mod.pred.sub)
+d.mod.pred.sub$se <- predict(diff.mod.sub,d.mod.pred.sub,se=T)$se.fit
+d.mod.pred.sub$uci <- d.mod.pred.sub$est + d.mod.pred.sub$se
+d.mod.pred.sub$lci <- d.mod.pred.sub$est - d.mod.pred.sub$se
+# Now the proportion model...
+p.mod.pred.sub <- data.frame(variable = unique(prop.summary.sub$variable))
+p.mod.pred.sub$est <- predict(prop.mod.sub,p.mod.pred.sub)
+p.mod.pred.sub$se <- predict(prop.mod.sub,p.mod.pred.sub,se=T)$se.fit
+p.mod.pred.sub$uci <- p.mod.pred.sub$est + p.mod.pred.sub$se
+p.mod.pred.sub$lci <- p.mod.pred.sub$est - p.mod.pred.sub$se
+
+# Note the errorbars here are 1 SE, given how similar the results are this looks nicer with the 1 SE IMHO.
+p.diff.sub <- ggplot(d.mod.pred.sub,  aes(x=variable,y=est/1000)) + geom_point(lwd=2) +
+                                  geom_errorbar(aes(x=variable,ymin=lci/1000,ymax=uci/1000),width=0) +
+                                  xlab("") + ylab("Difference from Realized Biomass (kilotonnes)") +
+                                  scale_fill_manual(values = cols[1:3]) +
+                                  scale_color_manual(values=cols[1:3]) + 
+                                  geom_hline(yintercept = 0,linetype=2)+
+                                  scale_y_continuous(breaks = seq(-3,6,by=1)) +
+                                  theme(legend.title = element_blank())
+
+p.prop.sub <- ggplot(p.mod.pred.sub, aes(x=variable,y=100*est)) + geom_point(lwd=2) +
+                                  geom_errorbar(aes(x=variable,ymin=100*lci,ymax=100*uci),width=0) +
+                                  xlab("") + ylab("Difference from Realized Biomass (%)") +
+                                  scale_fill_manual(values = cols[1:3]) +
+                                  scale_color_manual(values=cols[1:3]) + 
+                                  geom_hline(yintercept = 0,linetype=2)+
+                                  scale_y_continuous(breaks = seq(-20,40,by=5)) +
+                                  theme(legend.title = element_blank())
+
+
+
+p.sub <- plot_grid(p.diff.sub,p.prop.sub,ncol=1)
+print(p.sub)
+save_plot(plot = p.sub, filename = paste0(direct.proj,"Results/Figures/Overall_effect_without_2009-2014.png"), base_width = 6,base_height =10 )
 
 ```
 
-```{r plots,echo=F,include=F}
+```{r nums-for-paper,echo=F,include=F,cache=T}
+min.cond <- signif(min(base.cond.ts$may,na.rm=T),digits=3)
+max.cond <- signif(max(base.cond.ts$may,na.rm=T),digits=3)
+previous.effect <- paste0(signif(may.sst.last$coefficients[2],digits=2), "(se =", signif(summary(may.sst.last)$coefficients[2,2],digits=2),")")
+cur.effect <- paste0(signif(may.sst.cur$coefficients[2],digits=2), "(se =", signif(summary(may.sst.cur)$coefficients[2,2],digits=2),")")
+previous.r2 <- 100*signif(summary(may.sst.last)$r.squared,digits=2)
+cur.r2 <- 100*signif(summary(may.sst.cur)$r.squared,digits=2)
+
+# Not these are the output of a simple ANOVA comparing the models, so the CI's are not Bayesian they are confidence intervals
+cor.bm.dif.est <- paste0(signif(d.mod.pred$est[d.mod.pred$variable == "Correlation Method"],digits=4), " (95% CI: ",
+                         signif(d.mod.pred$lci[d.mod.pred$variable == "Correlation Method"],digits=4), "-",
+                         signif(d.mod.pred$uci[d.mod.pred$variable == "Correlation Method"],digits=4), ")"
+                         )
+
+cor.bm.prop.est <- paste0(100*signif(p.mod.pred$est[p.mod.pred$variable == "Correlation Method"],digits=3), " (95% CI: ",
+                         100*signif(p.mod.pred$lci[p.mod.pred$variable == "Correlation Method"],digits=2), "-",
+                         100*signif(p.mod.pred$uci[p.mod.pred$variable == "Correlation Method"],digits=3), ")"
+                         )
+
+full.bm.dif.est <- paste0(signif(d.mod.pred$est[d.mod.pred$variable == "Full SST Model"],digits=4), " (95% CI: ",
+                          signif(d.mod.pred$lci[d.mod.pred$variable == "Full SST Model"],digits=4), "-",
+                          signif(d.mod.pred$uci[d.mod.pred$variable == "Full SST Model"],digits=4), ")"
+                         )
+
+full.bm.prop.est <- paste0(100*signif(p.mod.pred$est[p.mod.pred$variable == "Full SST Model"],digits=3), " (95% CI: ",
+                         100*signif(p.mod.pred$lci[p.mod.pred$variable == "Full SST Model"],digits=2), "-",
+                         100*signif(p.mod.pred$uci[p.mod.pred$variable == "Full SST Model"],digits=3), ")"
+                         )
+
+previous.bm.dif.est <- paste0(signif(d.mod.pred$est[d.mod.pred$variable == "Previous Year SST Model"],digits=4), " (95% CI: ",
+                              signif(d.mod.pred$lci[d.mod.pred$variable == "Previous Year SST Model"],digits=4), "-",
+                              signif(d.mod.pred$uci[d.mod.pred$variable == "Previous Year SST Model"],digits=4), ")"
+                         )
+
+previous.bm.prop.est <- paste0(100*signif(p.mod.pred$est[p.mod.pred$variable == "Previous Year SST Model"],digits=3), " (95% CI: ",
+                         100*signif(p.mod.pred$lci[p.mod.pred$variable == "Previous Year SST Model"],digits=2), "-",
+                         100*signif(p.mod.pred$uci[p.mod.pred$variable == "Previous Year SST Model"],digits=3), ")"
+
+                                                  )    
+# The effect size from the Max-Min 'simulation'
+mn.cf.eff.size <- signif(mean(cf.eff.on.bm$eff.size),digits = 3)
+min.cf.eff.size <- signif(min(cf.eff.on.bm$eff.size),digits = 3)
+max.cf.eff.size <- signif(max(cf.eff.on.bm$eff.size),digits = 3)
+
+CF.abs.vary <- signif(max(abs(base.cond.ts$may[2:nrow(base.cond.ts)] - base.cond.ts$may[1:(nrow(base.cond.ts)-1)]),na.rm=T),digits=2)
+CF.prop.vary <- max(100*signif(abs(base.cond.ts$may[2:nrow(base.cond.ts)] - base.cond.ts$may[1:(nrow(base.cond.ts)-1)])/base.cond.ts$may[1:(nrow(base.cond.ts)-1)],digits=2),na.rm=T)
+CF.range <- signif(diff(range(base.cond.ts$may,na.rm=T)),digits=2)
+
+```
+
+```{r plots,echo=F,include=F,cache=T}
 over.plt <- paste0(direct.proj,"Results/Figures/overview_plot.png")
+sc.sst.ts.plt <- paste0(direct.proj,"Results/Figures/SST_SC_ts.png")
+sc.sst.plt <- paste0(direct.proj,"Results/Figures/SST_model_fits.png")
+sc.cor.plt <-  paste0(direct.proj,"Results/Figures/Correlation_fits.png")
+best.mod.plt <- paste0(direct.proj,"Results/Figures/Best_model_fits.png")
+over.effect.ts.plt <- paste0(direct.proj,"Results/Figures/timeseries_bm_comparision.png")
+over.effect.plt <- paste0(direct.proj,"Results/Figures/Overall_effect.png")
+over.effect.no.2009.2014.plt <- paste0(direct.proj,"Results/Figures/Overall_effect_without_2009-2014.png")
+
 ```
+
+
+<!-- # ```{r fake} -->
+<!-- # lazyLoad('D:/Github/Paper_2_Cond_Env/knitr-cache-pdf/projections_3786c47f99956dfe37993863be5ad0bc') -->
+<!-- #  -->
+<!-- # ``` -->

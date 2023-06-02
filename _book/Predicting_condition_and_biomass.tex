@@ -36,7 +36,7 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
 \hypersetup{
-  pdftitle={The Scallop who wished for a King: How utilzing an environmental relationship can improve prediction of condition yet result in less accurate science advice.},
+  pdftitle={An environmental paradox: How a strong environmental relationship increased the uncertainty of science advice.},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 \urlstyle{same} % disable monospaced font for URLs
@@ -99,37 +99,45 @@
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
 
-\title{The Scallop who wished for a King: How utilzing an environmental relationship can improve prediction of condition yet result in less accurate science advice.}
+\title{An environmental paradox: How a strong environmental relationship increased the uncertainty of science advice.}
 \author{David M. Keith\textsuperscript{1},
 Jessica A. Sameoto\textsuperscript{1},
-Xiaohan Liu\textsuperscript{2},
+Xiaohan Liu\textsuperscript{2},\\
 Emmanuel Devred\textsuperscript{1},
-Freya A. Keyser, and
+Freya Keyser, and
 Catherine Johnson\textsuperscript{1}}
 \date{}
 
 \begin{document}
 \maketitle
 \begin{abstract}
-Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world's largest wild scallop fisheries, the sea scallop (\emph{Placopecten magellanicus}) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield. Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate the development of predictive models of scallop growth that incorporated environmental covariates. The environmental covarites used were Sea Surface Temperature (SST), Bottom Temperature (BT), Chlorophyll-a (CHL), and Mixed Layer Depth (MLD). The preferred predictive models incorporated either SST or BT and generally lead to more accurate predictions of SC than the current biologicaly only model. A retrospective analysis was then undertaken in which the current year biomass estimates from the stock assessment model were compared using the currently implemented bioloigical-only model and the best performing environmental models. The results of this retrospective analysis indicated that there is a small positive bias of approximately 2\% in the model biomass predictions. The biological-only model tends to predict that SC will be lower than the predictive environmental models, thus the use of the environmental models results in a slight, statistically insignificant, increase in the bias of the model biomass predictions. The underestiamte of SC in the biological model helps to offset the tendency for the assessment model to overestimate biomass in the current fishing year. These results highlight the challenges of attempting to incorporate environmental information into existing stock assessment frameworks. The development of next generation integrated stock assessment frameworks that incorporate environmental considerations directly into the model structure may provide a more flexible means of developing science advice that can operationlize EAFM considerations.
+Oceanographic conditions are known to influence natural fluctuations in fish productivity. Despite significant efforts to improve tactical science advice through an ecosystem approach to fisheries management (EAFM), disentangling environmental variability from fishing effects remains challenging . For the world's largest wild scallop fishery, the sea scallop (\emph{Placopecten magellanicus}) fishery off the northeastern United States and eastern Canada, inter-annual variations in growth underlie major fluctuations in catch rate and yield. The relative size of the harvested meat is measured using scallop condition (SC), which is predicted using an allometric relationship between scallop meat-weight and shell height. In the sea scallop stock assessment model, the SC prediction for a given year is used to convert population abundance estimates to population biomass. The purpose of this study was to evaluate the effect of incorporating Sea Surface Temperature (SST) into predictive models of SC on tactical science advice. The preferred predictive models generally lead to more accurate predictions of SC than the current biology-only model. A retrospective analysis was then undertaken to compare the annual biomass estimates from the stock assessment model using the biology-only model to the corresponding estimates from the best performing environmental models. The results of this retrospective analysis indicated that there was a small positive bias of approximately 2\% in the model biomass predictions using each of the predictive SC models. The biology-only model tended to predict a lower SC than the predictive environmental models, thus the use of the environmental models resulted in a small (statistically insignificant) increase in the bias of the model biomass predictions. These results highlight the challenges of attempting to incorporate environmental relationships into tactical science advice using traditional stock assessment frameworks. The relevance of the environmental variables, potential for impact, and the environmental data availability should be considered when attempting to develop EAFM tools. The development of next-generation integrated stock assessment frameworks that incorporate environmental considerations directly into the model structure may provide a more flexible and robust means of developing tactical science advice that can operationalize EAFM considerations.
 \end{abstract}
 
 \hypertarget{ref-intro}{%
 \section{INTRODUCTION}\label{ref-intro}}
 
-There is an urgent need to sustainably manage fish stocks due to pressures from over-fishing, pollution, habitat destruction, and climate change (\protect\hyperlink{ref-faoStateWorldFisheries2018}{FAO 2018}). While it is well known that oceanographic conditions influence natural fluctuations in fish stocks, disentangling environmental variability from fishing effects remains challenging, often due to the non-stationarity of the relationships and a lack of scientific resources (\protect\hyperlink{ref-myersWhenEnvironmentRecruitment1998}{Myers 1998}; \protect\hyperlink{ref-skern-mauritzenEcosystemProcessesAre2016}{Skern‐Mauritzen et al. 2016}). For this reason stock assessment methods historically only directly account for the effects of population demographics and fishing while ignoring environmental effects outright (\protect\hyperlink{ref-skern-mauritzenEcosystemProcessesAre2016}{Skern‐Mauritzen et al. 2016}). More recently, methods have been developed which indirectly account for environmental variability by allowing for model parameters to vary over time (\protect\hyperlink{ref-swainExtremeIncreasesNatural2015}{Swain and Benoît 2015}) but the integration of environmental data directly into traditional stock assessment models remains the exception (\protect\hyperlink{ref-cadrinStockAssessmentMethods2015}{Cadrin and Dickey-Collas 2015}). Improved understanding of the influence of environmental variation on fish populations dynamics would improve science advice within an ecosystem context and help operationalize an ecosystem approach to fisheries management (EAFM). Further, climate and environmental considerations are increasingly required in fisheries management decision making in order to mitigate, adapt, and respond to the impacts of climate change (\protect\hyperlink{ref-wilsonAdaptiveComanagementAchieve2018}{Wilson et al. 2018}; \protect\hyperlink{ref-dfoActAmendFisheries2019}{DFO 2019}).
+Stock assessment is a critical tool in supporting the sustainable management of fisheries. Although single species stock assessments provide the primary advisory product for many fisheries management decisions, they are often based solely on biological (e.g.~survey) and fishery data. However, it's long been recognized that the underlying population dynamics of fish stocks are the result of complex interactions between fish productivity metrics (e.g.~recruitment, natural mortality, growth), fishing activity, and environmental drivers (\protect\hyperlink{ref-waltersResearchEnvironmentalFactors1988}{Walters and Collie 1988}; \protect\hyperlink{ref-hilbornQuantitativeFisheriesStock1992}{Hilborn and Walters 1992}). Although the effect of fishing is pivotal to, and accounted for, in most stock assessments, the effects of environmental factors are rarely considered. In a review of more than 1250 stocks world-wide, (\protect\hyperlink{ref-skern-mauritzenEcosystemProcessesAre2016}{Skern‐Mauritzen et al. 2016}) found that only 2\% included environmental considerations, quantitatively or qualitatively. In US stock assessments ecosystem considerations were considered more frequently {[}25\% (\protect\hyperlink{ref-marshallInclusionEcosystemInformation2019}{\textbf{marshallInclusionEcosystemInformation2019?}}). Whereas in Canada, 27\% of stock assessments provided advice that included climate, oceanographic, or ecological considerations, and 21\% included environmental variables quantitatively either in the population model or by using time-varying biological parameters thought to be related to environmental drivers (\protect\hyperlink{ref-pepinIncorporatingKnowledgeChanges2022}{\textbf{pepinIncorporatingKnowledgeChanges2022?}}).{]}. For \emph{P. magellanicus}, intra-annual changes in the meat weight for the same shell height are characterized by increases in weight in late winter and early spring and declines during spawning in the late summer and early fall (\protect\hyperlink{ref-naiduReproductionBreedingCycle1970}{Naidu 1970}; \protect\hyperlink{ref-robinsonSeasonalChangesSoftbody1981}{Robinson et al. 1981}; \protect\hyperlink{ref-thompsonIdentifyingSpawningEvents2014}{Thompson et al. 2014}) . This seasonal pattern is attributed to gametogenesis and the buildup of energy reserves; however, the magnitude of this cycle has been observed to vary between years within season (\protect\hyperlink{ref-robinsonSeasonalChangesSoftbody1981}{Robinson et al. 1981}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985a}{MacDonald and Thompson 1985a}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985}{1985b}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1986}{1986}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1986}{1986}; \protect\hyperlink{ref-schickAllometricRelationshipsGrowth1992}{Schick et al. 1992}).
 
-Fisheries management decisions often include setting removals limits in terms of biomass; however, these decision are complicated by fluctuations in stock size due to variable recruitment, growth, condition, and survival all of which are influenced by the environment. For the world's largest wild scallop fisheries, the sea scallop (\emph{Placopecten magellanicus}) found off the northeastern United States and eastern Canada, reliable indices of recruitment are available through fishery independent surveys; however, outside of major recruitment events, annual variations in growth underlie major fluctuations in catch rate and yield. In Canada, the scallop adductor muscle is the harvested part of the scallop, with landings reported and managed (e.g.~Total Allowable Catch (TAC)) in terms of the biomass (weight) of the adductor meat (muscle).
+In Canada, the scallop adductor muscle is the harvested part of the scallop, with landings reported and managed (e.g.~catch limits) in terms of the biomass (weight) of the adductor meat (muscle). Sea scallops reach a harvestable size of about 100 mm shell height {[}average age of 4 to 5 years; Stewart and Arnold (\protect\hyperlink{ref-stewartEnvironmentalRequirementsSea1994}{1994}){]}. From annual monitoring survey data, an allometric relationship between the weight of the adductor muscle and shell height is calculated and referred to as ``scallop condition'' (SC) (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}). one year ahead for quota setting, and this projection requires an assumption of SC (DFO, 2018). Currently, the stock assessment model's one-year projection to inform fisheries management decision making assumes SC is unchanged from the previous year. The environment-condition relationship identified in Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}). Therefore, for the same catch level, more scallops will be harvested when SC is low than when SC is high.
 
-Growth is an integrated response of energy acquisition and expenditure. For scallop, growth can be defined either in terms of an increase in some dimension of the shell or in terms of the change in the soft tissue (\protect\hyperlink{ref-macdonaldPhysiologyEnergyAcquisition2016}{MacDonald et al. 2016}). Shell growth continues as scallops age and generally the adductor muscle increases with shell size; however, the growth and size of the adductor muscle will also vary throughout the year (e.g.~resorption of somatic tissue: \protect\hyperlink{ref-vahlEnergyTransformationsIceland1981}{Vahl 1981}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985}{MacDonald and Thompson 1985a}). For \emph{P. magellanicus}, intra-annual changes in the meat weight for the same shell height are characterized by increases in weight in late winter and early spring and declines during spawning in the late summer and early fall (\protect\hyperlink{ref-naiduReproductionBreedingCycle1970}{Naidu 1970}; \protect\hyperlink{ref-robinsonSeasonalChangesSoftbody1981}{Robinson et al. 1981}; \protect\hyperlink{ref-thompsonIdentifyingSpawningEvents2014}{Thompson et al. 2014}). This seasonal pattern is attributed to gametogenesis and the buildup of energy reserves; however, the magnitude of this cycle has been observed to vary between years within season (\protect\hyperlink{ref-robinsonSeasonalChangesSoftbody1981}{Robinson et al. 1981}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985}{MacDonald and Thompson 1985a}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985a}{1985b}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1986}{1986}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1987}{MacDonald et al. 1987}; \protect\hyperlink{ref-schickAllometricRelationshipsGrowth1992a}{Schick et al. 1992}).
+Satellite remote sensing data has been found to predict the condition of Sea Scallop up to 18 months into the future on the Canadian portion of Georges Bank (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{Liu et al. 2021}). SC was found to be highly correlated with Sea Surface Temperature (SST) in the winter of the previous year (January-March) and the winter of the current year (January-February). The science advice for this scallop stock is based on projecting a population dynamics model (\protect\hyperlink{ref-smithImpactSurveyDesign2014}{Smith and Hubley 2014}). The current assessment uses the SC from the previous year as the predicted SC for the model projections of future year's (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). This approach cannot account for environmental effects that may alter SC after the previous years survey estimate of SC is obtained. While this SC-SST model provides a novel means of predicting inter-annual changes in SC, it has yet to be compared to the current method used to predict SC nor has the quantitative impact of incorporating this predictive model into the tactical assessment framework been assessed.
 
-Inter-annual differences in meat weight for the same shell height are likely due to environmental conditions. When seasonal patterns are controlled for, spatial and depth differences in meat weight for a given shell size are often observed; with larger meats found at shallow water depths where temperature and food availability are often more favorable (\protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985}{MacDonald and Thompson 1985a}, \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1986}{1986}; \protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1987}{MacDonald et al. 1987}; \protect\hyperlink{ref-schickAllometricRelationshipsGrowth1992a}{Schick et al. 1992}). In sea scallops, food ration, consisting of suspended detrital material and phytoplankton, is a major factor in the regulation of growth and production (\protect\hyperlink{ref-shumwayFoodResourcesRelated1987}{Shumway et al. 1987}; \protect\hyperlink{ref-cranfordParticleClearanceAbsorption1990}{Cranford and Grant 1990}; \protect\hyperlink{ref-macdonaldPhysiologyEnergyAcquisition2016}{MacDonald et al. 2016}). Whereas temperature is positively correlated with metabolic rate, as measured by the rate of oxygen consumption (\protect\hyperlink{ref-shumwaySeasonalChangesOxygen1988}{Shumway et al. 1988}; \protect\hyperlink{ref-macdonaldPhysiologyEnergyAcquisition2016}{MacDonald et al. 2016}).
+The purpose of this study was to quantify the potential impact of a SST-informed condition model within the existing stock assessment modelling framework, and to assess if this environmentally-informed approach improved one-year projections of fishable biomass for sea scallop on the Canadian portion of Georges Bank. We evaluate the SST-informed condition model developed by Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}), as well as other SST-informed condition model formulations and discuss the results in the context of best practices related to incorporating environmental information into single-species stock assessment frameworks.
 
-The relationship between meat weight and shell height is usually defined using an allometric model (\protect\hyperlink{ref-laiLinearMixedeffectsModels2004}{Lai and Helser 2004}; \protect\hyperlink{ref-sarroSpatialTemporalVariation2009}{Sarro and Stokesbury 2009}; \protect\hyperlink{ref-hennenShellHeightToWeightRelationships2012}{Hennen and Hart 2012}) and in Canada's Maritimes Region an allometric relationship is used to determine the meat weight of a 100 mm shell height scallop -- hereafter referred to as Scallop Condition (SC). This index is used to track inter-annual change in meat condition and yearly fluctuations in SC have been observed to be as great as 30\% (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-sameotoScallopFishingArea2015}{Sameoto et al. 2015}; \protect\hyperlink{ref-nasmithScallopProductionAreas2016}{Nasmith et al. 2016}). Better understanding and prediction of inter-annual changes in SC will facilitate the sustainable management of scallop fisheries because SC is required to estimate biomass, growth rates, and future biomass projections which are used inform catch limits (\protect\hyperlink{ref-jonsenGeorgesBankScallop2009}{Jonsen et al. 2009}; \protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). The current study focuses on the Canadian portion of Georges Bank which supports one of Canada's most valuable commercial fisheries with approximately 75\% of Canadian scallop landings coming from this bank (\protect\hyperlink{ref-stewartEnvironmentalRequirementsSea1994}{Stewart and Arnold 1994}).
+There is an urgent need to sustainably manage fish stocks due to pressures from over-fishing, pollution, habitat destruction, and climate change (\protect\hyperlink{ref-faoStateWorldFisheries2018}{FAO 2018}). While it is well known that oceanographic conditions influence natural fluctuations in fish stocks, disentangling environmental variability from fishing effects remains challenging, often due to non-stationarity, non-linearity, and a lack of scientific resources to characterize the complex dynamics (\protect\hyperlink{ref-myersWhenEnvironmentRecruitment1998}{Myers 1998}; \protect\hyperlink{ref-skern-mauritzenEcosystemProcessesAre2016}{Skern‐Mauritzen et al. 2016}). For this reason stock assessment methods historically account for only the effects of population demographics and fishing while ignoring environmental effects outright (\protect\hyperlink{ref-skern-mauritzenEcosystemProcessesAre2016}{Skern‐Mauritzen et al. 2016}). The integration of environmental data directly into traditional stock assessment models remains the exception (\protect\hyperlink{ref-cadrinStockAssessmentMethods2015}{Cadrin and Dickey-Collas 2015}).
 
-Management decisions for the Canadian Georges Bank sea scallop fishery are based on annual scientific surveys, with estimates from these surveys used in a Bayesian state space assessment model (\protect\hyperlink{ref-smithImpactSurveyDesign2014}{Smith and Hubley 2014}) to provide 1-year projections of biomass (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). The fishery runs from January to December with decisions on an interim TAC made in December of the previous year and a final TAC is set after the science assessment is complete in the spring of the current year. The biomass projections for the current fishing year requires a prediction of SC; the current methodology assumes SC for the current year is unchanged from the the previous year (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). Implicitly this assumes that the best predictor of future SC is the past year SC (i.e.~it is an autoregressive process with a 1 year lag; AR(1)); this approach cannot account for environmental effects that may alter the condition of the scallop meat after the survey. Alternatively, a methodology that incorporates environmental effects could result in improved predictions of SC and in turn lead to more accurate biomass projections and science advice.
+Part of the challenge is to overcome the difficulties associated with the short-term, \emph{tactical} nature of the stock assessment process which typically requires predictions between 1-5 years in the future (they are the weather-people of Fisheries Science). Incorporation of environmental data within a tactical process requires the development of an environmental relationship that has a predictable impact on the assessment (e.g.~CITE). In contrast, many fisheries scientists developing environmental relationships tend to focus on a long-term \emph{strategic} perspective that attempts to understand the dynamics of populations, communities, and ecosystems at decadal or longer time frames (e.g.~CITE). Identifying and utilizing environmental relationships from a strategic perspective has proven easier to achieve than from a tactical perspective (CITE). In large part this is due to the differing objectives of the two perspectives, strategic objectives tend to be broader in nature (e.g.~impacts of directed temperature change on ecosystem dynamics), whereas tactical objectives are more narrow, sensitive, and specific (e.g.~setting a quota for a fishery using a biomass prediction for next year). While it is widely recognized that improved understanding of the influence of environmental variability on fish population dynamics could improve science advice within an ecosystem context and help operationalize an ecosystem approach to fisheries management (EAFM; CITE STUFF), this must be done with the tactical objectives in mind.
 
-The primary purpose of this study was to determine whether integrating relationships between environmental covariates and scallop condition can be integrated into the existing stock assessment process to improve biomass estimates for sea scallop on the Canadian portion of GB. Our objectives were a) explore the correlative relationship between Geroges Bank, b) undertake a retrospective analysis to compare the predictions from these models to the predictions using the current biological-only model, c) quantify the difference in the biomass predictions from each of these models to the realized biomass, and (d) discuss the implications of these results on the science advice provided to fisheries management.
+From a fisheries management perspective environmental considerations are increasingly required as part of the provision of tactical science advice. This is largely in response to demands on fisheries management to mitigate, adapt, and respond to the impacts of climate change (\protect\hyperlink{ref-wilsonAdaptiveComanagementAchieve2018}{Wilson et al. 2018}; \protect\hyperlink{ref-dfoActAmendFisheries2019}{DFO 2019}). Fisheries management decisions often include setting removals limits in terms of biomass. However, these decisions are complicated by fluctuations in stock size due to variability in productivity parameters such as recruitment, growth, condition, and survival, all of which are influenced by the environment.
+
+These environment-productivity relationships have been of interest to fisheries scientists throughout the history of the field (\protect\hyperlink{ref-rickerStockRecruitment1954}{Ricker 1954}; Other old stuff? \protect\hyperlink{ref-bevertonDynamicsExploitedFish1957}{Beverton and Holt 1957}). The relationship between the environment and recruitment was one of the first, and is one of the more common, environmental relationships that has been explored {[}CITE{]}. However the development of long-term predictable relationships between recruitment and environmental conditions has been challenging and has limited the incorporation of these relationships into tactical assessment processes (\protect\hyperlink{ref-myersWhenEnvironmentRecruitment1998}{Myers 1998}). The influence of environmental factors on natural mortality has also been the focus of a great deal of research {[}CITE SOME STUFF{]}. The incorporation of these natural mortality-environmental relationships has been achieved by allowing natural mortality to vary over time within an assessment model (\protect\hyperlink{ref-swainExtremeIncreasesNatural2015}{Swain and Benoît 2015}). In part, this method has been successfully incorporated into tactical decision making because the environmental driver was both well measured and the fluctuations from year to year were relatively predictable (\protect\hyperlink{ref-swainExtremeIncreasesNatural2015}{Swain and Benoît 2015}). Additionally, the flexibility of the modelling framework allows the productivity parameter to track the known environmental change without an explicit link between the two (\protect\hyperlink{ref-swainExtremeIncreasesNatural2015}{Swain and Benoît 2015}).
+
+Finally, there is a long history of research exploring the relationship between environmental factors and individual growth and condition (\protect\hyperlink{ref-macdonaldInfluenceTemperatureFood1985a}{MacDonald and Thompson 1985a}; \protect\hyperlink{ref-ratzVariationFishCondition2003a}{Ratz and Lloret 2003}; \protect\hyperlink{ref-daufresneGlobalWarmingBenefits2009}{Daufresne et al. 2009}; \protect\hyperlink{ref-baudronWarmingTemperaturesSmaller2014}{Baudron et al. 2014}; \protect\hyperlink{ref-ahtiSizeDoesMatter2020}{Ahti et al. 2020}). At a broad scale it has been suggested that fish tend to grow to larger sizes at high latitudes (Bergmanns rule; bergmannUeberVerhaltnissederWarmeokonomie1847; rayApplicationBergmannAllen1960{]}, although there is also evidence that fishing and local environmental factors lead to these patterns breaking down (\protect\hyperlink{ref-belkBergmannRuleEctotherms2002}{Belk and Houston 2002}; \protect\hyperlink{ref-fisherBreakingBergmannRule2010}{Fisher et al. 2010}). Some of the local environmental factors that influence individual growth within a stock include temperature (\protect\hyperlink{ref-neuheimerGrowingDegreedayFish2007}{Neuheimer and Taggart 2007}), food availability (\protect\hyperlink{ref-niciezaGrowthCompensationJuvenile1997}{Nicieza and Metcalfe 1997}), and pH (\protect\hyperlink{ref-cattanoLivingHighCO22018}{Cattano et al. 2018}). Similarly, fish condition (average individual weight at a given size, e.g.~Fulton's K, \protect\hyperlink{ref-nashOriginFultonCondition2006}{Nash et al. 2006}) has been related to numerous environmental variables including the timing of the onset and duration of the spring bloom (\protect\hyperlink{ref-reedResponseScotianShelf2019}{Reed et al. 2019}), temperature (\protect\hyperlink{ref-brossetInfluenceEnvironmentalVariability2015}{Brosset et al. 2015}), and food limitations (\protect\hyperlink{ref-malzahnNutrientLimitationPrimary2007}{Malzahn et al. 2007}; \protect\hyperlink{ref-geissingerFoodInitialSize2021}{Geissinger et al. 2021}). Despite these well known environmental effects, the impact of the environment on individual growth and condition is typically excluded from quantitative models developed for tactical decision making processes, likely due the lack of predictability of these relationships in future years.
+
+On the Canadian portion of Georges Bank (GB) satellite remote sensing data has been found to predict the condition of Sea Scallop (\emph{Placotpecten magellanicus}) up to 18 months into the future (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{Liu et al. 2021}). Scallop condition (SC; the meat weight of a scallop with a shell height of 100 mm) was found to be highly correlated to the additive effect of Sea Surface Temperature (SST) in the winter of the previous year (January-March) and the winter of the current year (January-February). In the stock assessment of this scallop stock, the SC prediction for a given year is used to convert population abundance estimates to population biomass and is required to project the biomass of the stock into future years. Thus, the environment-condition relationship identified in Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}) can be \emph{tactically} incorporated into the assessment for this stock (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). The current assessment uses the SC from the previous year as the predicted SC for the model projections of future year's (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). This approach cannot account for environmental effects that may alter SC after the previous years survey estimate of SC is obtained. While this SC-SST model provides a novel means of predicting inter-annual changes in SC, it has yet to be compared to the current method used to predict SC nor has the quantitative impact of incorporating this predictive model into the tactical assessment framework been assessed.
+
+The primary purpose of this study was to determine whether utilizing the predictive SC-SST model developed by Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}) within the existing stock assessment modelling framework reduces the uncertainty of the tactical science advice for sea scallop on the Canadian portion of GB. Our objectives were to a) compare the predictive ability of the SC-SST models to the existing method used to predict SC for the stock assessment, b) quantify the difference between the biomass predictions and the realized biomass, and (c) discuss suggested best practices when undertaking research to incorporate environmental information into existing tactical science advice frameworks.
 
 \hypertarget{ref-methods}{%
 \section{Methods}\label{ref-methods}}
@@ -139,60 +147,95 @@ The primary purpose of this study was to determine whether integrating relations
 
 Georges Bank (GB) is a large elevated area of seafloor located in the Gulf of Maine between Massachusetts and Nova Scotia (Figure 1). It is one of the most physically energetic and biologically productive oceanic regions and has supported commercial fisheries for centuries (\protect\hyperlink{ref-townsendNitrogenLimitationSecondary1997}{Townsend and Pettigrew 1997}). The primary production cycle on GB is highly seasonal, and typically exhibits a pronounced late winter-early spring bloom (\protect\hyperlink{ref-townsendOceanographyNorthwestAtlantic2006}{Townsend et al. 2006}). GB is dominated by tidal mixing currents throughout most of its area, especially in the central shallow region on the top of the bank (inside the 60 m isobath), where the waters remain vertically homogeneous under the influence of tidal mixing throughout the year (\protect\hyperlink{ref-townsendNitrogenLimitationSecondary1997}{Townsend and Pettigrew 1997}; \protect\hyperlink{ref-townsendOceanographyNorthwestAtlantic2006}{Townsend et al. 2006}).
 
-\hypertarget{scallop-survey}{%
-\subsection{Scallop Survey}\label{scallop-survey}}
+\hypertarget{data-sources}{%
+\subsection{Data Sources}\label{data-sources}}
 
-Fisheries and Oceans Canada (DFO) has been conducting annual scallop surveys on the Canadian portion of Georges Bank since 1981. The annual dredge survey is conducted on GB every August; the survey uses a 2.44 m New Bedford style scallop dredge with a 38 mm polypropylene liner. The survey collects detailed meat weight and shell height data for an average of 2011 scallop each year (range from 539-6548 samples; note that the sampling intensity increased in 2010). Scallop condition (SC) is calculated using the weights of the sampled meat and the associated shell heights; SC is then used to develop a biomass index. Complete details of sampling design and modelling methodology can be found in Hubley et al. (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{2014}).
+Fisheries and Oceans Canada (DFO) conducts annual scallop surveys on the Canadian portion of Georges Bank. The annual dredge survey has been conducted on the Canadian portion of Georges Bank in May since 1986; with the exception of 1989 and 2015 in which the survey did not occur. The annual survey is conducted twice a year and at a time of growth (May) and during reproduction (August). Following the results of Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}) the May data were selected to develop our model to predict SC since it corresponds to the maximum scallop meat weights on Georges Bank (\protect\hyperlink{ref-sarroSpatialTemporalVariation2009}{Sarro and Stokesbury 2009}; \protect\hyperlink{ref-thompsonIdentifyingSpawningEvents2014}{Thompson et al. 2014}). The May survey collects detailed meat weight and shell height data for an average of 523 scallop each year (range from 240-1235 samples; note that the sampling intensity increased in 2010). SC is calculated using the weights of the sampled meat and their associated shell heights. It is an index and is calculated as the meat weight of a 100 mm scallop (for simplicity we will report SC in grams). SC is used to develop a biomass index. The complete details of sampling design and modelling methodology can be found in Hubley et al. (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{2014}). In 2015 there was no survey in May, so this year was excluded from the condition modelling, while for the Retrospective Analysis the condition estimate for 2015 was taken from the survey conducted in August of that year.
 
-\hypertarget{satellite-observed-and-ocean-model-data}{%
-\subsection{Satellite Observed and Ocean Model Data}\label{satellite-observed-and-ocean-model-data}}
+Semi-Monthly SST estimates were obtained from the DFO Operational Remote Sensing group (\url{https://www.bio.gc.ca/science/newtech-technouvelles/sensing-teledetection/index-en.php}). The satellite remote sensed data was subset to the Canadian portion of GB with depths shallower than 120 m; this B domain includes all of the primary scallop habitat on the Canadian portion of GB (Figure 1). The 120 m bathymetric contour was extracted from the ETOPO5 database (\protect\hyperlink{ref-noaaDataAnnouncement88MGG021988}{NOAA 1988 p. https://www.ngdc.noaa.gov/mgg/global/etopo5.HTML}). The total area within the GB domain was approximately 6,500 km\textsuperscript{2}. The semi-monthly data were used to estimate the monthly median SST and these were used for subsequent analyses.
 
-The satellite remote sensed and model data was subset to the Canadian portion of Georges Bank with depths shallower than 120 m; this Georges Bank domain includes all of the primary scallop habitat on the Canadian portion of Georges Bank (Figure 1). The 120 m bathymetric contour was extracted from the ETOPO5 database (\protect\hyperlink{ref-noaaDataAnnouncement88MGG021988}{NOAA 1988 p. https://www.ngdc.noaa.gov/mgg/global/etopo5.HTML}). The total area within the Georges Bank domain was approximately 6,500 km\textsuperscript{2}.
+\hypertarget{stock-assessment-model}{%
+\subsection{Stock Assessment Model}\label{stock-assessment-model}}
 
-\hypertarget{sea-surface-temperature}{%
-\subsubsection{Sea surface temperature}\label{sea-surface-temperature}}
+The scallop stock on GB is assessed using a Bayesian State-space Delay difference stock assessment model (for complete details see \protect\hyperlink{ref-jonsenGeorgesBankScallop2009}{Jonsen et al. 2009}; \protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}).
 
-Monthly sea-surface temperature (SST) estimates from the Moderate Resolution Imaging Spectroradiometer on the Aqua Earth-observing satellite (Aqua MODIS) were downloaded from the NASA ocean-color website (\url{https://oceancolor.gsfc.nasa.gov/}), from August 2002 to August 2018 with a 4 km resolution. SST data from the Advanced Very High Resolution Radiometer (AVHRR) pathfinder version 5.2 (PFV5.2) were downloaded from the NASA Jet Propulsion Laboratory archive (\url{http://podaac.jpl.nasa.gov}) for the time period of January 1998 to December 2009 with a 4 km resolution. The overlapping period between AVHRR pathfinder and MODIS SST data, from August 2002 to December 2009 was used to compare both data sets and revealed a difference of less than 0.2\(^{\circ}\)C. Given the consistency in SST estimates between these data sources the AVHRR pathfinder SST from January 1998-December 2008 was combined with the MODIS SST from January 2009-August 2018. The SST data were spatially averaged over the domain to provide one mean value per month, resulting in 248 monthly SST estimates.
+\[  B_{t} = e^{-m_{fr(t)}} g_{fr(t)} (B_{t-1} - C_{t}) + e^{-m_{r(t)}} g_{r(t)} R_{(t-1)}\mu_t  \]
+where \emph{B} represents the biomass estimate for GB, \emph{m} is the natural mortality of both the fully recruited (\(\geq\) 95 mm) and recruit size (85-94.9 mm) scallop, \emph{g} is growth, this is the expected proportional change in meat weight for both fully recruited and recruit sized scallop, \emph{C} is the fishery removals, \emph{R} is the biomass of the recruit sized scallop, and \(\mu\) is the process error.
 
-\hypertarget{ocean-bottom-temperatures}{%
-\subsubsection{Ocean Bottom Temperatures}\label{ocean-bottom-temperatures}}
+For this stock the most recent survey is said to have occurred in year \emph{t}, but a biomass projection, required for primary science advice that helps guide fisheries managers in setting the Total Allowable Catch (TAC), is needed for the upcoming year (\emph{t+1}). Hereafter, the \emph{current year} refers to the year the science advice is provided (\emph{t+1}), while \emph{previous year} refers to the year of the latest survey data (\emph{t}). Using the 2020 assessment as an example, the biomass projections used by Fisheries Managers to help set the TAC for 2020 (year \emph{t+1}) were for the \emph{current year} while the biomass estimate from the most recent survey (2019) was the \emph{previous year} biomass estimate (year \emph{t}).
 
-Average monthly bottom temperatures (BT) were obtained from BNAM. Get details of the BNAM data.
+The biomass projection for the current year (\(B_{t+1}\)) is calculated using Equation 1, but with the time indices for the parameters updated as appropriate. To obtain (\(B_{t+1}\)) several model inputs must be predicted, including both of the growth terms in the model, the details of these calculations are in the Appendix and can be found in Hubley et al. (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{2014}).
 
-\hypertarget{condition-environment-correlation}{%
-\subsection{Condition-Environment Correlation}\label{condition-environment-correlation}}
+\hypertarget{predictive-sc-approaches}{%
+\subsection{Predictive SC Approaches}\label{predictive-sc-approaches}}
 
-The strength of the relationship between SC in August of a given year and SST and BT were assessed using the monthly environmental data. To investigate the influence of past environmental conditions on SC the relationship between SC and each environmental covariate was investigated at time lags of up to 32 months; for example the relationship between SC in 2015 was compared with each monthly SST estimate between January 2013 to July of 2015. Whereas, the cumulative effect of each environmental covariate on SC was assessed as the sum of the monthly estimates; for example, the SC in August of 2015 was compared to the sum of the monthly SST estimates between January 2013 and July 2015.
+The goal here is to compare the strong environmental relationship developed in Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}) with the currently used methodology and with other potential methodologies that could be used to prediction SC in the upcoming year. In addition to the model presented in Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}), we use 3 additional SC-SST models utilizing different combinations of the SST from January to March of the previous year (\emph{SST\_t}), and January to February of the current year (\(SST_{t+1}\)).
 
-The strength of the relationship between the environmental covariate and SC was assessed using the coefficient of determination (\(R^2\)) from a simple linear model and the correlation using the non-parametric Kendall's \(\tau\)-value (\protect\hyperlink{ref-kendallNewMeasureRank1938}{Kendall 1938}). The result of these analyses are large matrices of \(R^2\) and \(\tau\) values for each of the environmental covariates. There was little effect of any environmental covariate at lags greater than 20 months (i.e.~SC in the current year is not correlated with any of the environmental covariates at lags longer than January of the previous year); therefore, only the results from January of the previous year to July of the current year are discussed. Additionally, the interpretation of the Kendall's \(\tau\) and \(R^2\) results were similar so only the \(R^2\) results are discussed further.
+The first SC-SST model (\emph{SST Full}) is based on the model from Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}), the \(SST_{sum(t)}\) term is the sum of \(SST_{t+1}\) and \emph{SST\_t} and \(\epsilon\) is a normally distributed error term.
 
-\hypertarget{condition-modelling}{%
-\subsection{Condition Modelling}\label{condition-modelling}}
+\[ SC_{t+1} = SST_{sum(t)}  + \epsilon \]
 
-The results of the correlation analysis and documented increase in scallop condition in the spring in this region (\protect\hyperlink{ref-thompsonIdentifyingSpawningEvents2014}{Thompson et al. 2014}) led to the decision to use cumulative SST from January to April of the previous year (\(SST_{last}\)). The Bottom Temperature from BNAM was TAKEN FOR WHICH MONTHS
+The second SC-SST model (\emph{SST Interaction}) included an interaction between \(SST_{t+1}\) and \(SST_{t}\)
 
-\begin{equation}  SC_{i} = SST_{last} + SST_{cur} + \epsilon_i    \end{equation}
+\[ SC_{t+1} = SST_{t} \times SST_{t+1} + \epsilon \]
 
-The \(Base\) model includes MLD which comes from an oceanographic model. Thee data are generally not available when the predictions of SC are required for stock assessment purposes, therefore, a \(SST\) model (Equation 2), which uses only remotely sensed data that are available in near real time, was evaluated.
+The third SC-SST model explored (\emph{SST Previous}) used the previous year SST (\emph{SST\_t}) to predict current year SC (\(SC_{t+1}\)).
 
-\begin{equation}  SC_{i} = SST_{last} + SST_{cur} + \epsilon_i    \end{equation}
+\[   SC_{t+1} = SST_{t} + \epsilon  \]
 
-The currently adopted assessment methodology uses condition from the previous year to predict condition in the following year (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014}; \protect\hyperlink{ref-dfoStockStatusUpdate2018}{DFO 2018}). This approach was formalized as a first order auto-regressive model (\(AR(1)\) model; Equation 3) in order to compare the current methodology with the other models.
+The final SC-SST model explored (\emph{SST Current}) used the current year SST \(SST_{t+1}\)) to predict current year SC (\(SC_{t+1}\)).
 
-\begin{equation} SC_{i} = SC_{last} + \epsilon_i    \end{equation}
+\[   SC_{t+1} = SST_{t+1} + \epsilon  \]
 
-The final model was a simple \(NULL\) model which includes only an intercept term representing the mean SC (\(SC_{mean}\)) for the time series (1999-2015; Equation 4); this model was used as a baseline to compare against the more complex models.
+Next we compare the presently implemented correlative approach with alternative correlative approaches. The currently implemented approach uses the SC in the previous year (\(SC_t\)) as the prediction for SC in the current year (\(SC_{t+1}\)). To assess this approach, the correlation between \(SC_{t+1}\) and \(SC_t\) was calculated, this correlation was then compared to the correlation between \(SC_{t+1}\) and the median SC in the last 2, 5, or 10 years inclusively. This analysis determined how incorporating additional years of \emph{SC} influenced the prediction of \(SC_{t+1}\).
 
-\begin{equation} SC_{i} =  SC_{mean} + \epsilon_i    \end{equation}
+Differences between the SC-SST models along with a Null model (intercept only) were quantified using AICc (\protect\hyperlink{ref-burnhamAICModelSelection2011}{Burnham et al. 2011}). Based on the above analyses, the models retained to predict \(SC_{t+1}\) in the retrospective analysis were the \emph{SST Full} model, the \emph{SST Previous} model (we did not retain the \emph{SST interaction} model as the \(\Delta AIC\) was \textless{} 2 units better than these more parsimonious models). In addition, the currently used correlative approach was also retained for the retrospective analysis (using \(SC_t\) as the prediction of \(SC_{t+1}\)) as it had the largest correlation coefficient.
 
-\hypertarget{condition-model-predictive-error}{%
-\subsection{Condition Model Predictive Error}\label{condition-model-predictive-error}}
+\hypertarget{retrospective-analyses}{%
+\subsection{Retrospective Analyses}\label{retrospective-analyses}}
 
-Cross validation was performed to assess the predictive ability of each model (i.e.~the model's ability to predict new observations). For each simulation 4 years of data were excluded and the models were fit using the remaining data. These models were then used to predict the condition for the 4 randomly selected years which were excluded from the model; for the \(AR(1)\) model the condition from the year before the excluded year was used to predict the condition. For each simulation the difference between the model predicted and the actual observed condition for the 4 years was calculated using the mean absolute predictive error (\(MAPE\); Equation 5). This procedure was repeated 2 times and provided a distribution of \(MAPE\) estimates for each of the models.
+Retrospective analyses were undertaken using the assessment model (Equation 1) to compare the biomass projections for the current year, using the aforementioned methods of predicting SC, to the realized biomass for the GB scallop stock. This analysis used the model output in the previous year (year \emph{t}) to project the biomass in the current year (\emph{t+1}) using the predicted SC from each of the selected SC prediction methods. For example, to predict \(B_{2001}\) the Equation 1 inputs are the model output from year 2000, with the growth estimates using the \(SC_{t+1}\) prediction from each of the selected prediction methods. This was repeated for each year from 2000-2019. The differences between the biomass projections for each of the three methods were quantified using both the absolute and proportional difference from the realized biomass.
 
-\begin{equation} MAPE = \frac{100}{n}\sum_{i=1}^{n} \frac{\mid Obs_i - Pred_i \mid }{Obs_i} \end{equation}
+\hypertarget{ref-results}{%
+\section{RESULTS}\label{ref-results}}
 
-In addition to this simulation, the three additional years of data (2016-2018) which were available for SST and SC were used to compare the \(SST\), \(AR(1)\), and \(NULL\) models. These three models (using the model results obtained from fitting to the data from 1999-2015) were used to generate predictions of scallop condition from 2016-2018. The predictions for each of the models was compared with the observed SC during these three years using \(MAPE\) to quantify the ability of each model to predict future scallop condition.
+SC in May on GB ranged from 10.2 to 20.2 grams (Figure \ref{fig:sc-sst-ts-plt}). The annual SC time series indicates that SC was generally below average in the 1980s and 1990s and has been above average since 2012 (Figure \ref{fig:sc-sst-ts-plt}). The cumulative monthly SST in January-March was above average since 2012, except for 2019 (Figure \ref{fig:sc-sst-ts-plt}).
+
+The relationship between SC and SST indicated that SST in the previous year (\(SST_{t}\)) was the primary driver of the relationship observed in Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}), with the current year SST (\(SST_{t+1}\)) contributing little to the prediction (Table \ref{tab:table-aic}). The previous year SST explained approximately 49\% of the variability in SC, while the current year SST explained just 12\% (Figure \ref{fig:sc-sst-mod-plt}). A 1°C increase in SST in the previous year resulted in a 0.54(se =0.13) gram increase in SC, while a 1°C increase in SST in the current year resulted in an 0.39(se =0.24) increase in SST. The lowest AIC found was for the model which included the interaction between the previous and current year SST (\emph{SST interaction}), but the difference between this model and more parsimonious models was minimal (Table \ref{tab:table-aic}). Thus the more parsimonious model (\emph{SST Previous}), along with the \emph{SST Full} model developed in Liu et al. (\protect\hyperlink{ref-liuUsingSatelliteRemote2021}{2021}), were retained for the retrospective analysis.
+
+The correlation analysis indicated that correlation in SC was highest when using only the previous year SC (\(\rho\) = 0.53). The strength of the correlation declined as additional years were added, although the correlation using either the 2 or 5 year SC medians were also significantly different than 0 (Table \ref{tab:table-cor} and Figure \ref{fig:sc-cor-mod-plt}). Given the strongest correlation was found using the previous year SC this model was retained for the retrospective analysis, this is referred to as the \emph{Correlation method} hereafter.
+
+\hypertarget{retrospective-analysis}{%
+\subsection{Retrospective Analysis}\label{retrospective-analysis}}
+
+The retrospective analysis compared the biomass projections from two models using SST to predict current year SC, and one model that uses the previous year's SC to predict SC in the current year. The results of these three predictive models were compared to the realized biomass for the stock between 2000-2019 (Figure \ref{fig:bm-ts-plt}). The biomass projections from these three models all tended to over predict the biomass in the following year. This overestimation was driven by the biomass projections in the period between 2009 and 2014 (Figure \ref{fig:bm-ts-plt}). The difference between the projected biomass and the realized biomass was not significantly different for the three SC prediction methods, although the presently used \emph{Correlation method} did have the least bias of the three methods tested (Figure \ref{fig:bm-effect-plt}). Using the \emph{Correlation method} the biomass projections were, on average, 2239 (95\% CI: 922.1-3556) tonnes above the realized biomass. The biomass projections for the two SST methods were effectively indistinguishable from each other; the biomass projection from the \emph{SST Full} model was, on average, 2714 (95\% CI: 1398-4031) tonnes higher than realized (Figure \ref{fig:bm-effect-plt}). In terms of percentages, the biomass projections tended to overestimate the biomass by more than 10\%, with the \emph{Correlation method} again having the least bias using this metric (11.2 (95\% CI: 5.5-16.9)). The two SST methods were again indistinguishable from each other; the biomass projection from the \emph{SST Full} model was 13.5 (95\% CI: 7.8-19.2)\% higher than realized (Figure \ref{fig:bm-effect-plt}).
+
+When the period between 2009 and 2014 were removed from the analysis, there was minimal bias in biomass projections for all three of the SC prediction methods (Figure \ref{fig:bm-effect-drop09-14-plt}); the biomass projections were, on average, within 300 tonnes (within 2\%) of the realized biomass in these years. In this subset of years there is no clearly preferred model; neither the bias nor precision of the biomass projections significantly differ between the three SC prediction methods.
+
+\hypertarget{discussion}{%
+\section{Discussion}\label{discussion}}
+
+Scallop condition has varied by approximately 9.9 grams over the study period. The inter-annual variability in SC alone has been as large as 4.3 grams, and a maximum inter-annual percentage change in SC was 29\%. The incorporation of environmental data (SST) from the winter and spring period results in more accurate predictions of SC compared to the existing method. Despite this, the incorporation of this environmental relationship into the existing stock assessment framework does not improve the biomass projections for the upcoming year and thus does not quantitatively improve the tactical science advice. The results do, however, improve our understanding of the population dynamics of this stock, which can inform strategic fishery management approaches. These results highlight the challenges of developing quantitative environmental relationships to provide tactically relevant environmentally-conditioned advice, and also reveal some principles that can guide the development of environmentally-conditioned tactical advice.
+
+\hypertarget{the-ria-principles-relevant-impactful-and-available-for-tactical-advice}{%
+\subsection{\texorpdfstring{The \emph{RIA} principles (\emph{Relevant}, \emph{Impactful}, and \emph{Available}) for Tactical Advice}{The RIA principles (Relevant, Impactful, and Available) for Tactical Advice}}\label{the-ria-principles-relevant-impactful-and-available-for-tactical-advice}}
+
+At the outset of any project attempting to develop environmentally-conditioned science advice for tactical real time management, everyone involved in the development of science advice should be consulted to determine whether the environmental relationship under study is \textbf{\emph{relevant}} to the provision of tactical science advice (e.g. \protect\hyperlink{ref-bentleyRefiningFisheriesAdvice2021}{Bentley et al. 2021}). There are numerous methods by which environmental data could be incorporated into science advice, understanding how a particular environmental variable relates to the science advice will help to ensure the questions addressed by the research team are \textbf{\emph{relevant}} for tactical decision making (\protect\hyperlink{ref-bentleyRefiningFisheriesAdvice2021}{Bentley et al. 2021}).
+
+There are numerous examples where relationships between environmental conditions and some metric of productivity (recruitment, growth, natural mortality) for a stock were identified but were not incorporated into the tactical decision making for that stock {[}CITE MORE; Myers (\protect\hyperlink{ref-myersWhenEnvironmentRecruitment1998}{1998}){]}. In many cases these relationships were developed in isolation without consideration of the potential implementation within the assessment framework used for tactical decision making (CITATIONS). From a strategic perspective, there is certainly utility in understanding relationships between the environment and the dynamics of a stock, but if the end goal of a project is to use the results for tactical management of the stock, the research plans, questions, and objectives should align with this goal from the outset. For example, identifying a relationship between larval survival and temperature is of strategic interest, but if a reliable index of juvenile recruitment is already available and used in the provision of science advice then the relationship between larval survival and temperature is likely not \textbf{\emph{relevant}} from a tactical perspective.
+
+Understanding the interaction between the assessment methodology and the environment-productivity relationship should be a priority during the early phase of the project. Underpinning a great deal of EAFM theory is the implicit assumption that quantitatively accounting for environmental variables within an assessment will improve tactical science advice (CITATIONS). Here we have shown that even with a strong relationship between an environmental variable and a productivity parameter, which is an integral component of an assessment model, this is not necessarily the case. If the goal of the project is to quantitatively improve the provision of tactical science advice, we recommend that simulation studies are undertaken to quantify the potential \textbf{\emph{impact}} of the environmental variable (CITATIONS). In our case, a post-hoc simulation experiment was undertaken and indicated that a 1 gram change in SC resulted in a change in the model biomass predictions of approximately 1630 tonnes. Given the difference in the SC estimates between the methods explored was less than 0.2 grams on average there was little scope for improving the tactical science advice. We recommend that simulation experiments like this are undertaken early in any project to quantify the impact on tactical advice as this will enable the research effort to focus on strategic goals or to be redirected to explore other environmental relationships that could directly improve the tactical science advice.
+
+While the integration of environmental information into existing stock assessment frameworks can lead to achieving short-term EAFM goals, in the long-term, the development of Next-Generation stock assessment frameworks will likely have more dramatic impacts on integrating EAFM into tactical science advice (\protect\hyperlink{ref-puntEssentialFeaturesNextgeneration2020}{Punt et al. 2020}). Examples of recent research themes to develop these frameworks include models that integrate a) environmental considerations explicitly or implicitly into an assessment (\protect\hyperlink{ref-cadrinDefiningSpatialStructure2020}{Cadrin 2020}; \protect\hyperlink{ref-puntEssentialFeaturesNextgeneration2020}{Punt et al. 2020}), b) ecosystem models with single species stock assessment to inform science advice (\protect\hyperlink{ref-bentleyRefiningFisheriesAdvice2021}{Bentley et al. 2021}), and c) ecosystem and socio-economic factors directly into the science advisory process (e.g., \protect\hyperlink{ref-dornAssessmentWalleyePollock2020}{Dorn et al. 2020}). The development of Next-Generation assessment methods that can integrate ecosystem considerations directly into a stock assessment framework has received increased attention in recent years and promises a means of ensuring that \emph{relevant} environmental factors \textbf{\emph{impact}} the science advice (\protect\hyperlink{ref-dornAssessmentWalleyePollock2020}{Dorn et al. 2020}; \protect\hyperlink{ref-bentleyRefiningFisheriesAdvice2021}{Bentley et al. 2021}; \protect\hyperlink{ref-mcdonaldExplicitIncorporationSpatial2021}{McDonald et al. 2021}). tactical in-year science advice that is informed by environmental considerations should be a core goal during the development of any novel Next-Generation stock assessment framework.
+
+The final consideration in this process is to ensure the \textbf{\emph{availability}} of the necessary environmental data. tactical science advice is typically required on a regular pre-determined schedule, so the \textbf{\emph{availability}} of the environmental data can also present a challenge. When \textbf{\emph{relevant}} environmental relationships are identified that can \textbf{\emph{impact}} tactical science advice but are not reliably \textbf{\emph{available}} on the time-scale (or in the format) required then there is little utility in development of these relationships. For example, there were numerous other potential environmental indicators (e.g.~oceanographic model indicators) that could have been used to predict SC for sea scallop on GB, but these data were not available `in time' for the provision of the tactical science advice. One of these variables was oceanographic bottom temperature, this was found to be correlated with SC (unpublished), but because the data were not available in real time they could not be incorporated into the science advice process and this relationship was not explored further. Knowledge of the constraints on the timing of tactical science advice will enable proactive discussions regarding the utility of undertaking certain analyses and determine if data \textbf{\emph{availability}} is a constraint.
+
+A related risk that should be considered during the genesis of a project is the reliability of the data pipeline itself. When the data informing an environmental relationships are not owned by the scientists developing the tactical science advice, there is a risk that external decisions could impact the \emph{availability} of the data, and in turn the science advice. In these cases, the incorporation of the environmental relationship into the science advice would need to be resilient to the loss of these environmental data. Thus, establishing a means of ensuring long-term and reliable \textbf{\emph{availability}} of the data should be undertaken.
+
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
+
+The integration of oceanographic and environmental data in stock assessment advice is critical to implementing an ecosystem approach to fisheries management (EAFM) and is required to inform climate-ready fisheries management strategies (\protect\hyperlink{ref-wilsonAdaptiveComanagementAchieve2018}{Wilson et al. 2018}). Projects attempting to utilize environmental information to better understand the dynamics of harvested stocks should identify their short-term tactical and long-term strategic objectives. The results of this study show how the combination of environmental covariates with traditional fisheries survey data can improve our strategic understanding of the influence of the environment on an aspect of scallop productivity. Unfortunately, these results also highlight the challenges of integrating these relationships into existing stock assessment frameworks that provide tactical science advice. When attempting to incorporate ecosystem factors into tactical science advisory processes, it is necessary to ensure that the research, a) can address a component of productivity that is \textbf{\emph{relevant}} to the tactical science advice, b) links to the factor(s) that \textbf{\emph{impact}} the productivity of the system, and c) ensures the necessary data would be \textbf{\emph{available}} when needed to provide tactical science advice. Developing environmental relationships that are \emph{relevant}, \emph{impactful}, and \emph{available} (\emph{RIA} principles) should underpin any efforts to develop tactical science advice in an EAFM context. Moreover, a number of emerging stock assessment frameworks are being developed that should improve our ability to create tactical environmentally informed science advice.
 
 \newpage
 
@@ -202,50 +245,83 @@ In addition to this simulation, the three additional years of data (2016-2018) w
 
 \hypertarget{refs}{}
 \begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-ahtiSizeDoesMatter2020}{}}%
+Ahti, P.A., Kuparinen, A., and Uusi-Heikkila, S. 2020. Size does matter --- the eco-evolutionary effects of changing body size in fish. Environ. Rev. \textbf{28}(3): 311--324. {NRC Research Press}. doi:\href{https://doi.org/10.1139/er-2019-0076}{10.1139/er-2019-0076}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-baudronWarmingTemperaturesSmaller2014}{}}%
+Baudron, A.R., Needle, C.L., Rijnsdorp, A.D., and Tara Marshall, C. 2014. Warming temperatures and smaller body sizes: Synchronous changes in growth of {North Sea} fishes. Global Change Biology \textbf{20}(4): 1023--1031. doi:\href{https://doi.org/10.1111/gcb.12514}{10.1111/gcb.12514}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-belkBergmannRuleEctotherms2002}{}}%
+Belk, M.C., and Houston, D.D. 2002. Bergmann's {Rule} in {Ectotherms}: {A Test Using Freshwater Fishes}. The American Naturalist \textbf{160}(6): 803--808. {{[}The University of Chicago Press, The American Society of Naturalists{]}}. doi:\href{https://doi.org/10.1086/343880}{10.1086/343880}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-bentleyRefiningFisheriesAdvice2021}{}}%
+Bentley, J.W., Lundy, M.G., Howell, D., Beggs, S.E., Bundy, A., de Castro, F., Fox, C.J., Heymans, J.J., Lynam, C.P., Pedreschi, D., Schuchert, P., Serpetti, N., Woodlock, J., and Reid, D.G. 2021. Refining {Fisheries Advice With Stock-Specific Ecosystem Information}. Frontiers in Marine Science \textbf{8}. Available from \url{https://www.frontiersin.org/article/10.3389/fmars.2021.602072} {[}accessed 18 May 2022{]}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-bevertonDynamicsExploitedFish1957}{}}%
+Beverton, R., and Holt, S. 1957. On the dynamics of exploited {Fish Populations}. {UK Ministry of Agriculture, Fisheries and Food}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-brossetInfluenceEnvironmentalVariability2015}{}}%
+Brosset, P., Menard, F., Fromentin, J., Bonhommeau, S., Ulses, C., Bourdeix, J., Bigot, J., Beveren, E.V., Roos, D., and Saraux, C. 2015. Influence of environmental variability and age on the body condition of small pelagic fish in the {Gulf} of {Lions}. doi:\href{https://doi.org/10.3354/MEPS11275}{10.3354/MEPS11275}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-burnhamAICModelSelection2011}{}}%
+Burnham, K.P., Anderson, D.R., and Huyvaert, K.P. 2011. {AIC} model selection and multimodel inference in behavioral ecology: Some background, observations, and comparisons. Behavioral Ecology and Sociobiology \textbf{65}(1): 23--35. doi:\href{https://doi.org/10.1007/s00265-010-1029-6}{10.1007/s00265-010-1029-6}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-cadrinDefiningSpatialStructure2020}{}}%
+Cadrin, S.X. 2020. Defining spatial structure for fishery stock assessment. Fisheries Research \textbf{221}: 105397. doi:\href{https://doi.org/10.1016/j.fishres.2019.105397}{10.1016/j.fishres.2019.105397}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-cadrinStockAssessmentMethods2015}{}}%
 Cadrin, S.X., and Dickey-Collas, M. 2015. Stock assessment methods for sustainable fisheries. ICES J Mar Sci \textbf{72}(1): 1--6. doi:\href{https://doi.org/10.1093/icesjms/fsu228}{10.1093/icesjms/fsu228}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-cranfordParticleClearanceAbsorption1990}{}}%
-Cranford, P.J., and Grant, J. 1990. Particle clearance and absorption of phytoplankton and detritus by the sea scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{(}}}{\emph{\emph{Gmelin}}}{\emph{\emph{)}}}. Journal of Experimental Marine Biology and Ecology \textbf{137}(2): 105--121. doi:\href{https://doi.org/10.1016/0022-0981(90)90064-J}{10.1016/0022-0981(90)90064-J}.
+\leavevmode\vadjust pre{\hypertarget{ref-cattanoLivingHighCO22018}{}}%
+Cattano, C., Claudet, J., Domenici, P., and Milazzo, M. 2018. Living in a high {CO2} world: A global meta-analysis shows multiple trait-mediated fish responses to ocean acidification. Ecological Monographs \textbf{88}(3): 320--335. {{[}Wiley, Ecological Society of America{]}}. Available from \url{https://www.jstor.org/stable/26598654}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-daufresneGlobalWarmingBenefits2009}{}}%
+Daufresne, M., Lengfellner, K., and Sommer, U. 2009. Global warming benefits the small in aquatic ecosystems. Proc Natl Acad Sci U S A \textbf{106}(31): 12788--12793. doi:\href{https://doi.org/10.1073/pnas.0902080106}{10.1073/pnas.0902080106}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-dfoStockStatusUpdate2018}{}}%
-DFO. 2018. Stock {Status Update} of {Georges Bank} a {Scallops} ({\emph{Placopecten}}{ \emph{Magellanicus}}) in {Scallop Fishing Area} 27. DFO Can. Sci. Advis. Sec. Sci. Resp. \textbf{2018/037}.
+DFO. 2018. Stock status update of {Georges Bank} 'a' scallops ({\emph{Placopecten}} {\emph{magellanicus}}) in {Scallop Fishing Area} 27. DFO Can. Sci. Advis. Sec. Sci. Resp. Available from \url{http://waves-vagues.dfo-mpo.gc.ca/Library/40716077.pdf}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-dfoActAmendFisheries2019}{}}%
 DFO. 2019. An {Act} to amend the {Fisheries Act} and other {Acts} in consequence. \emph{In} SC 2019 c 14.
 
+\leavevmode\vadjust pre{\hypertarget{ref-dornAssessmentWalleyePollock2020}{}}%
+Dorn, M.W., Deary, A.L., Fissel, B.E., Jones, D.T., Levine, M., McCarthy, A.B., Palsson, W.A., Rogers, L.A., Shotwell, S.K., Spalinger, K.A., and Williams, K. 2020. Assessment of the walleye pollock stock in the {Gulf} of {Alaska}. {In Stock Assessment} and {Fishery Evaluation Report} for {Groundfish Resources} of the {Gulf} of {Alaska}. Available from \url{https://apps-afsc.fisheries.noaa.gov/refm/docs/2020/GOApollock.pdf}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-faoStateWorldFisheries2018}{}}%
 FAO. 2018. The {State} of the {World Fisheries} and {Aquaculture}. {Food and Agriculture Organization of the United Nations}, {Rome, Italy}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-hennenShellHeightToWeightRelationships2012}{}}%
-Hennen, D.R., and Hart, D.R. 2012. Shell {Height-To-Weight Relationships} for {Atlantic Sea Scallops} ({\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{) in}} }{\emph{\emph{Offshore U}}}{\emph{\emph{.}}}{\emph{\emph{S}}}{\emph{\emph{.}} }{\emph{\emph{Waters}}}. Journal of Shellfish Research \textbf{31}(4): 1133--1144. doi:\href{https://doi.org/10.2983/035.031.0424}{10.2983/035.031.0424}.
+\leavevmode\vadjust pre{\hypertarget{ref-fisherBreakingBergmannRule2010}{}}%
+Fisher, J., Frank, K., and Leggett, W.C. 2010. Breaking {Bergmann}'s rule: Truncation of {Northwest Atlantic} marine fish body sizes. Ecology. doi:\href{https://doi.org/10.1890/09-1914.1}{10.1890/09-1914.1}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-geissingerFoodInitialSize2021}{}}%
+Geissinger, E.A., Gregory, R.S., Laurel, B.J., and Snelgrove, P.V.R. 2021. Food and initial size influence overwinter survival and condition of a juvenile marine fish (age-0 {Atlantic} cod). Can. J. Fish. Aquat. Sci. \textbf{78}(4): 472--482. {NRC Research Press}. doi:\href{https://doi.org/10.1139/cjfas-2020-0142}{10.1139/cjfas-2020-0142}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-hilbornQuantitativeFisheriesStock1992}{}}%
+Hilborn, R., and Walters, C.J. 1992. Quantitative fisheries stock assessment: Choice, dynamics and uncertainty. {Chapman and Hall}, {New York}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-hubleyGeorgesBankBrowns2014}{}}%
-Hubley, P.B., Reeves, A., Smith, S.J., and Nasmith, L. 2014. Georges {Bank} 'a' and {Browns Bank} '{North}' {Scallop} ({\emph{Placopecten}}{ \emph{Magellanicus}}) {Stock Assessment}. DFO Can. Sci. Advis. Sec. Res. Doc. \textbf{2013/079}: vi + 58 p.
+Hubley, P.B., Reeves, A., Smith, S.J., and Nasmith, L. 2014. Georges {Bank} 'a' and {Browns Bank North} scallop ({\emph{Placopecten}} {\emph{magellanicus}}) stock assessment. DFO Can. Sci. Advis. Sec. Res. Doc. \textbf{2013/079}: vi + 58 p. Available from \url{https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2013/2013_079-eng.html}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-jonsenGeorgesBankScallop2009}{}}%
-Jonsen, I.D., Glass, A., Hubley, B., and Sameoto, J. 2009. Georges {Bank} 'a' {Scallop} ({\emph{Placopecten}}{ \emph{Magellanicus}}) {Framework Assessment}: {Data Inputs} and {Population Models}. DFO Can. Sci. Advis. Sec. Res. Doc. \textbf{2009/034}: iv + 76 p.
+Jonsen, I.D., Glass, A., Hubley, B., and Sameoto, J. 2009. Georges {Bank} 'a' scallop ({\emph{Placopecten}} {\emph{magellanicus}}) framework assessment: Data inputs and population models. DFO Can. Sci. Advis. Sec. Res. Doc. \textbf{2009/034}: iv + 76 p. Available from \url{https://www.dfo-mpo.gc.ca/csas-sccs/publications/resdocs-docrech/2009/2009_034-eng.htm}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-kendallNewMeasureRank1938}{}}%
-Kendall, M.G. 1938. A {New Measure} of {Rank Correlation}. Biometrika \textbf{30}(1/2): 81--93. doi:\href{https://doi.org/10.2307/2332226}{10.2307/2332226}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-laiLinearMixedeffectsModels2004}{}}%
-Lai, H.-L., and Helser, T. 2004. Linear mixed-effects models for weight--length relationships. Fisheries Research \textbf{70}(2): 377--387. doi:\href{https://doi.org/10.1016/j.fishres.2004.08.014}{10.1016/j.fishres.2004.08.014}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-macdonaldPhysiologyEnergyAcquisition2016}{}}%
-MacDonald, B.A., Bricelj, V.M., and Shumway, S.E. 2016. Physiology: {Energy Acquisition} and {Utilisation}. \emph{In} Developments in {Aquaculture} and {Fisheries Science}. {Scallops}: Biology, ecology and aquaculture. \emph{Edited by} S.E. Shumway and G.J. Parsons. {Elsevier}. pp. 301--353. doi:\href{https://doi.org/10.1016/B978-0-444-62710-0.00007-9}{10.1016/B978-0-444-62710-0.00007-9}.
+\leavevmode\vadjust pre{\hypertarget{ref-liuUsingSatelliteRemote2021}{}}%
+Liu, X., Devred, E., Johnson, C.L., Keith, D., and Sameoto, J.A. 2021. Using satellite remote sensing to improve the prediction of scallop condition in their natural environment: {Case} study for {Georges Bank}, {Canada}. Remote Sensing of Environment \textbf{254}: 112251. doi:\href{https://doi.org/10.1016/j.rse.2020.112251}{10.1016/j.rse.2020.112251}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-macdonaldInfluenceTemperatureFood1985}{}}%
-MacDonald, B.A., and Thompson, R.J. 1985a. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{.}} }{\emph{\emph{II}}}{\emph{\emph{.}} }{\emph{\emph{Reproductive}}}{ \emph{\emph{Output and Total Production}}}. Marine Ecology Progress Series \textbf{25}(3): 295--303. Available from \url{https://www.jstor.org/stable/24817481}.
+MacDonald, B.A., and Thompson, R.J. 1985b. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{.}} }{\emph{\emph{II}}}{\emph{\emph{.}} }{\emph{\emph{Reproductive}}}{ \emph{\emph{Output and Total Production}}}. Marine Ecology Progress Series \textbf{25}(3): 295--303. Available from \url{https://www.jstor.org/stable/24817481}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-macdonaldInfluenceTemperatureFood1985a}{}}%
-MacDonald, B.A., and Thompson, R.J. 1985b. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{.}} }{\emph{\emph{I}}}{\emph{\emph{.}} }{\emph{\emph{Growth}}}{ \emph{\emph{Rates of Shell and Somatic Tissue}}}. Marine Ecology Progress Series \textbf{25}(3): 279--294.
+MacDonald, B.A., and Thompson, R.J. 1985a. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{.}} }{\emph{\emph{I}}}{\emph{\emph{.}} }{\emph{\emph{Growth}}}{ \emph{\emph{Rates of Shell and Somatic Tissue}}}. Marine Ecology Progress Series \textbf{25}(3): 279--294.
 
 \leavevmode\vadjust pre{\hypertarget{ref-macdonaldInfluenceTemperatureFood1986}{}}%
 MacDonald, B.A., and Thompson, R.J. 1986. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{}} }{\emph{\emph{III}}}{\emph{\emph{.}} }{\emph{\emph{Physiological}}}{ \emph{\emph{Ecology, the Gametogenic Cycle and Scope for Growth}}}. Marine Biology \textbf{93}(1): 37--48. doi:\href{https://doi.org/10.1007/BF00428653}{10.1007/BF00428653}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-macdonaldInfluenceTemperatureFood1987}{}}%
-MacDonald, B.A., Thompson, R.J., and Bayne, B.L. 1987. Influence of temperature and food availability on the ecological energetics of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{.}}} Oecologia \textbf{72}(4): 550--556. doi:\href{https://doi.org/10.1007/BF00378981}{10.1007/BF00378981}.
+\leavevmode\vadjust pre{\hypertarget{ref-malzahnNutrientLimitationPrimary2007}{}}%
+Malzahn, A.M., Aberle, N., Clemmesen, C., and Boersma, M. 2007. Nutrient limitation of primary producers affects planktivorous fish condition. Limnology and Oceanography \textbf{52}: 2062--2071. {ASLO (Association for the Sciences of Limnology and Oceanography)}. doi:\href{https://doi.org/10.4319/lo.2007.52.5.2062}{10.4319/lo.2007.52.5.2062}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-mcdonaldExplicitIncorporationSpatial2021}{}}%
+McDonald, R.R., Keith, D.M., Sameoto, J.A., Hutchings, J.A., and Flemming, J.M. 2021. Explicit incorporation of spatial variability in a biomass dynamics assessment model. ICES Journal of Marine Science. doi:\href{https://doi.org/10.1093/icesjms/fsab192}{10.1093/icesjms/fsab192}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-myersWhenEnvironmentRecruitment1998}{}}%
 Myers, R.A. 1998. When {Do Environment}--recruitment {Correlations Work}? Reviews in Fish Biology and Fisheries \textbf{8}(3): 285--305. doi:\href{https://doi.org/10.1023/A:1008828730759}{10.1023/A:1008828730759}.
@@ -253,29 +329,38 @@ Myers, R.A. 1998. When {Do Environment}--recruitment {Correlations Work}? Review
 \leavevmode\vadjust pre{\hypertarget{ref-naiduReproductionBreedingCycle1970}{}}%
 Naidu, K.S. 1970. Reproduction and breeding cycle of the giant scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{(}}}{\emph{\emph{Gmelin}}}{\emph{\emph{) in}} }{\emph{\emph{Port}}}{ \emph{\emph{Au}} }{\emph{\emph{Port Bay}}}{\emph{\emph{,}} }{\emph{\emph{Newfoundland}}}. Can. J. Zool. \textbf{48}(5): 1003--1012. doi:\href{https://doi.org/10.1139/z70-176}{10.1139/z70-176}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-nasmithScallopProductionAreas2016}{}}%
-Nasmith, L., Sameoto, J.A., and Glass, A. 2016. Scallop {Production Areas} in the {Bay} of {Fundy}: {Stock Status} for 2015 and {Forecast} for 2016. {DFO Can. Sci. Advis. Sec. Res. Doc. 2016/021. vi + 140 p.} Available from \url{https://waves-vagues.dfo-mpo.gc.ca/Library/363979.pdf} {[}accessed 4 June 2019{]}.
+\leavevmode\vadjust pre{\hypertarget{ref-nashOriginFultonCondition2006}{}}%
+Nash, R.D.M., Valencia, A.H., and Geffen, A.J. 2006. The {Origin} of {Fulton}'s {Condition Factor} - {Setting} the {Record Striaght}. Fisheries \textbf{31}(5): 236--238.
+
+\leavevmode\vadjust pre{\hypertarget{ref-neuheimerGrowingDegreedayFish2007}{}}%
+Neuheimer, A.B., and Taggart, C.T. 2007. The growing degree-day and fish size-at-age: The overlooked metric. Can. J. Fish. Aquat. Sci. \textbf{64}(2): 375--385. {NRC Research Press}. doi:\href{https://doi.org/10.1139/f07-003}{10.1139/f07-003}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-niciezaGrowthCompensationJuvenile1997}{}}%
+Nicieza, A.G., and Metcalfe, N.B. 1997. Growth {Compensation} in {Juvenile Atlantic Salmon}: {Responses} to {Depressed Temperature} and {Food Availability}. Ecology \textbf{78}(8): 2385--2400. doi:\href{https://doi.org/10.1890/0012-9658(1997)078\%5B2385:GCIJAS\%5D2.0.CO;2}{10.1890/0012-9658(1997)078{[}2385:GCIJAS{]}2.0.CO;2}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-noaaDataAnnouncement88MGG021988}{}}%
 NOAA. 1988. Data {Announcement} 88-{MGG-02}, {Digital} relief of the {Surface} of the {Earth}. {NOAA, National Geophysical Data Center}, {Boulder, Colorado}.
 
+\leavevmode\vadjust pre{\hypertarget{ref-puntEssentialFeaturesNextgeneration2020}{}}%
+Punt, A.E., Dunn, A., Elvarsson, B.Þ., Hampton, J., Hoyle, S.D., Maunder, M.N., Methot, R.D., and Nielsen, A. 2020. Essential features of the next-generation integrated fisheries stock assessment package: {A} perspective. Fisheries Research \textbf{229}: 105617. doi:\href{https://doi.org/10.1016/j.fishres.2020.105617}{10.1016/j.fishres.2020.105617}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-ratzVariationFishCondition2003a}{}}%
+Ratz, H.-J., and Lloret, J. 2003. Variation in fish condition between {Atlantic} cod ({Gadus} morhua) stocks, the effect on their productivity and management implications. Fisheries Research \textbf{60}(2): 369--380. doi:\href{https://doi.org/10.1016/S0165-7836(02)00132-7}{10.1016/S0165-7836(02)00132-7}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-reedResponseScotianShelf2019}{}}%
+Reed, D., Plourde, S., Cook, A., Pepin, P., Casault, B., Lehoux, C., and Johnson, C. 2019. Response of {Scotian Shelf} silver hake ({Merluccius} bilinearis) to environmental variability. Fisheries Oceanography \textbf{28}(3): 256--272. doi:\href{https://doi.org/10.1111/fog.12406}{10.1111/fog.12406}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-rickerStockRecruitment1954}{}}%
+Ricker, W.E. 1954. Stock and {Recruitment}. Journal of the Fisheries Board of Canada \textbf{11}(5): 559--623.
+
 \leavevmode\vadjust pre{\hypertarget{ref-robinsonSeasonalChangesSoftbody1981}{}}%
 Robinson, W.E., Wehling, W.E., Morse, M.P., and McLeod, G.C. 1981. Seasonal changes in soft-body component indices and energy reserves in the {Atlantic} deep-sea scallop, {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{}}}. Fishery bulletin \textbf{79}(3): 449--458. Available from \url{http://agris.fao.org/agris-search/search.do?recordID=US8214557} {[}accessed 4 July 2019{]}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-sameotoScallopFishingArea2015}{}}%
-Sameoto, J.A., Smith, S.J., Nasmith, L.E., Glass, A., and Denton, C. 2015. Scallop {Fishing Area} 29: {Stock Status} and {Update} for 2015. DFO Can. Sci. Advis. Sec. Res. Doc. 2015/067.
 
 \leavevmode\vadjust pre{\hypertarget{ref-sarroSpatialTemporalVariation2009}{}}%
 Sarro, C.L., and Stokesbury, K.D.E. 2009. Spatial and {Temporal Variation} in the {Shell Height}/{Meat Weight Relationship} of the {Sea Scallop} {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{in the}} }{\emph{\emph{Georges Bank Fishery}}}. shre \textbf{28}(3): 497--503. doi:\href{https://doi.org/10.2983/035.028.0311}{10.2983/035.028.0311}.
 
-\leavevmode\vadjust pre{\hypertarget{ref-schickAllometricRelationshipsGrowth1992a}{}}%
-Schick, D.F., Shumway, S.E., and Hunter, M. 1992. Allometric relationships and growth in the sea scallop {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{:}} }{\emph{\emph{The}}}{ \emph{\emph{Effects of Season and Depth}}}. \emph{In} Proc. {Ninth Int}. {Malac}. {Congress}. pp. 341--352.
-
-\leavevmode\vadjust pre{\hypertarget{ref-shumwayFoodResourcesRelated1987}{}}%
-Shumway, S., D. F., S., and R, S. 1987. Food resources related to habitat in the scallop, {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{(}}}{\emph{\emph{Gmelin}}}{ \emph{\emph{1791):}} }{\emph{\emph{A}}}{ \emph{\emph{Qualitative Study}}}. Journal of Shellfish Research \textbf{6}: 89--95.
-
-\leavevmode\vadjust pre{\hypertarget{ref-shumwaySeasonalChangesOxygen1988}{}}%
-Shumway, S.E., Barter, J., and Stahlnecker, J. 1988. Seasonal changes in oxygen consumption of the giant scallop, {\emph{Placopecten}}{ \emph{Magellanicus}}{ \emph{\emph{(}}}{\emph{\emph{Gmelin}}}{\emph{\emph{)}}}. J Shellfish Res \textbf{7}(7): 77--82.
+\leavevmode\vadjust pre{\hypertarget{ref-schickAllometricRelationshipsGrowth1992}{}}%
+Schick, D.F., Shumway, S.E., and Hunter, M. 1992. Allometric {Relationships} and {Growth} in the {Sea Scallop}, {\emph{Placopecten}}{ \emph{Magellanicus}}{\emph{\emph{:}} }{\emph{\emph{The Effects}}}{ \emph{\emph{of}} }{\emph{\emph{Season}}}{ \emph{\emph{and}} }{\emph{\emph{Depth}}}. Proc. Ninth Int. Malac. Congress: 341--352.
 
 \leavevmode\vadjust pre{\hypertarget{ref-skern-mauritzenEcosystemProcessesAre2016}{}}%
 Skern‐Mauritzen, M., Ottersen, G., Handegard, N.O., Huse, G., Dingsør, G.E., Stenseth, N.C., and Kjesbu, O.S. 2016. Ecosystem processes are rarely included in tactical fisheries management. Fish and Fisheries \textbf{17}(1): 165--175. doi:\href{https://doi.org/10.1111/faf.12111}{10.1111/faf.12111}.
@@ -298,8 +383,11 @@ Townsend, D.W., and Pettigrew, N.R. 1997. Nitrogen limitation of secondary produ
 \leavevmode\vadjust pre{\hypertarget{ref-townsendOceanographyNorthwestAtlantic2006}{}}%
 Townsend, D.W., Thomas, A.C., Mayer, L.M., Thomas, M.A., and Quinlan, J.A. 2006. Oceanography of the northwest {Atlantic} continental shelf (1, {W}). The sea: the global coastal ocean: interdisciplinary regional studies and syntheses \textbf{14}: 119--168.
 
-\leavevmode\vadjust pre{\hypertarget{ref-vahlEnergyTransformationsIceland1981}{}}%
-Vahl, O. 1981. Energy transformations by the iceland scallop, {Chlamys} islandica ({O}.{F}. {Müller}), from 70°{N}. {II}. {The} population energy budget. Journal of Experimental Marine Biology and Ecology \textbf{53}(2): 297--303. doi:\href{https://doi.org/10.1016/0022-0981(81)90027-7}{10.1016/0022-0981(81)90027-7}.
+\leavevmode\vadjust pre{\hypertarget{ref-vonbertalanffyQuantitativeLawsMetabolism1957}{}}%
+von Bertalanffy, L. 1957. Quantitative {Laws} in {Metabolism} and {Growth}. The Quarterly Review of Biology \textbf{32}(3): 217--231.
+
+\leavevmode\vadjust pre{\hypertarget{ref-waltersResearchEnvironmentalFactors1988}{}}%
+Walters, C.J., and Collie, J.S. 1988. Is {Research} on {Environmental Factors Useful} to {Fisheries Management}? Can. J. Fish. Aquat. Sci. \textbf{45}(10): 1848--1854. doi:\href{https://doi.org/10.1139/f88-217}{10.1139/f88-217}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-wilsonAdaptiveComanagementAchieve2018}{}}%
 Wilson, J.R., Lomonico, S., Bradley, D., Sievanen, L., Dempsey, T., Bell, M., McAfee, S., Costello, C., Szuwalski, C., McGonigal, H., Fitzgerald, S., and Gleason, M. 2018. Adaptive comanagement to achieve climate-ready fisheries. Conservation Letters \textbf{11}(6): e12452. doi:\href{https://doi.org/10.1111/conl.12452}{10.1111/conl.12452}.
@@ -307,5 +395,153 @@ Wilson, J.R., Lomonico, S., Bradley, D., Sievanen, L., Dempsey, T., Bell, M., Mc
 \end{CSLReferences}
 
 \newpage
+
+\clearpage
+
+\hypertarget{ref-tabs}{%
+\section{TABLES}\label{ref-tabs}}
+
+\clearpage
+
+\begin{table}
+
+\caption{\label{tab:table-aic}AIC Table for SC-SST models}
+\centering
+\begin{tabular}[t]{lrrr}
+\toprule
+  & AICc & dAICc & df\\
+\midrule
+SST Interaction & 73.71508 & 0.0000000 & 5\\
+SST Previous & 74.07742 & 0.3623322 & 3\\
+SST Full & 75.12532 & 1.4102378 & 3\\
+Null Model & 84.83693 & 11.1218472 & 2\\
+SST Current & 85.02710 & 11.3120135 & 3\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}
+
+\caption{\label{tab:table-cor}Correlation between Current SC and SC at a 1-year lag, and the median of SC of the previous 2, 5, and 10 years.}
+\centering
+\begin{tabular}[t]{lrr}
+\toprule
+Model & Correlation & p\\
+\midrule
+Previous Year SC & 0.53 & 0.003\\
+2 Year Median SC & 0.50 & 0.003\\
+5 Year Median SC & 0.47 & 0.010\\
+10 Year Median SC & 0.34 & 0.100\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\clearpage
+
+\hypertarget{ref-figs}{%
+\section{FIGURES}\label{ref-figs}}
+
+\begin{figure}[htb]
+
+{\centering \includegraphics[width=1\linewidth]{Results/Figures/Overview_plot} 
+
+}
+
+\caption{Location of the Georges Bank study area, the blue polygon is the bathymetry contour used to define Georges Bank (120 m), the black dashed polygon is the area covered by the stock assessment, and the red line indicates international boundaries}\label{fig:Overview}
+\end{figure}
+
+\clearpage
+\begin{figure}[htb]
+
+{\centering \includegraphics[width=0.7\linewidth]{Results/Figures/SST_SC_ts} 
+
+}
+
+\caption{(a) Scallop condition (SC) on Georges Bank estimated from the May survey. (b) Cumulative monthly SST from January to March on the Canadian portion of Georges Bank as estimated from Satellite Remote Sensing.}\label{fig:sc-sst-ts-plt}
+\end{figure}
+
+\clearpage
+\begin{figure}[htb]
+
+{\centering \includegraphics[width=1\linewidth]{Results/Figures/SST_model_fits} 
+
+}
+
+\caption{Relationship between SC and (a) the sum of the cumulative monthly SST in the previous year between January and March, and the cumulative monthly SST in the current year in January and February, (b) the cumulative monthly SST in the previous year between January and March. The blue line is the slope estimate from the linear model with the grey band indicating the 95\% confidence interval. The labels on the plot indicate the year SC was estimated.}\label{fig:sc-sst-mod-plt}
+\end{figure}
+
+\clearpage
+\begin{figure}[htb]
+
+{\centering \includegraphics[width=0.7\linewidth]{Results/Figures/Correlation_fits} 
+
+}
+
+\caption{Relationship between SC and (a) SC in the previous year, (b) median SC in the previous 2 years, (c) median SC in the previous 5 years, and (d) median SC in the previous 10 years. The labels on the plot indicate the year SC was estimated, the black line is the 1:1 line.}\label{fig:sc-cor-mod-plt}
+\end{figure}
+
+\clearpage
+\begin{figure}[htb]
+
+{\centering \includegraphics[width=0.6\linewidth]{Results/Figures/timeseries_bm_comparision} 
+
+}
+
+\caption{Results of the retrospective analyses from 2000-2019 comparing the realized biomass (dark blue line) with the biomass projections using the three SC prediction metods. (a) Biomass projections and realized biomass (in kilotonnes), (b) the difference (in kilotonnes) between the realized biomass and the biomass projections using each of the biomass SC prediction methods, and (c) the proportional difference between the realized biomass and the biomass projections using each of the biomass SC prediction methods.  The Full SST method is the orange line, the Previous Year SST method is the darkgreen line, and the Correlation method is the purple line.}\label{fig:bm-ts-plt}
+\end{figure}
+
+\clearpage
+\begin{figure}[htb]
+
+{\centering \includegraphics[width=0.7\linewidth]{Results/Figures/Overall_effect} 
+
+}
+
+\caption{Results of the retrospective analyses from 2000-2019 comparing the realized biomass (dark blue line) with the biomass projections using the three SC prediction metods. (a) Biomass projections and realized biomass (in kilotonnes), (b) the difference (in kilotonnes) between the realized biomass and the biomass projections using each of the biomass SC prediction methods, and (c) the proportional difference between the realized biomass and the biomass projections using each of the biomass SC prediction methods.  The Full SST method is the orange line, the Previous Year SST method is the dark green line, and the Correlation method is the purple line.}\label{fig:bm-effect-plt}
+\end{figure}
+
+\clearpage
+\begin{figure}[htb]
+
+{\centering \includegraphics[width=0.6\linewidth]{Results/Figures/Overall_effect_without_2009-2014} 
+
+}
+
+\caption{Results of the retrospective analyses from 2000-2019 comparing the realized biomass (dark blue line) with the biomass projections using the three SC prediction metods. (a) Biomass projections and realized biomass (in kilotonnes), (b) the difference (in kilotonnes) between the realized biomass and the biomass projections using each of the biomass SC prediction methods, and (c) the proportional difference between the realized biomass and the biomass projections using each of the biomass SC prediction methods.  The Full SST method is the orange line, the Previous Year SST method is the dark green line, and the Correlation method is the purple line.}\label{fig:bm-effect-drop09-14-plt}
+\end{figure}
+
+\clearpage
+
+\newpage
+
+\hypertarget{ref-app}{%
+\section{APPENDIX}\label{ref-app}}
+
+\hypertarget{growth-calculation}{%
+\subsection{Growth Calculation}\label{growth-calculation}}
+
+The first step to calculate growth for fully recruited scallop (\(g_{fr}\)) in the current year is to obtain the average meat weight of fully recruited scallop in the previous year \(w_{t}\);
+
+\[ w_{t} = SC_{t} h^3_{t} \]
+
+This calculation uses the average shell height (\(h_t\)) of the fully recruited scallop and \(SC_t\), both are estimated from the survey in the previous year (\emph{t}). The predicted average height of the scallop in the current year is calculated using the von Bertalanffy parameters for this stock (\protect\hyperlink{ref-vonbertalanffyQuantitativeLawsMetabolism1957}{von Bertalanffy 1957}; \protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{Hubley et al. 2014});
+
+\[ h_{t+1} = L_\infty(1-e^{-K}) + e^{-K}h_t  \]
+
+The predicted meat weight for the current year is calculated next.
+
+\[ w_{t+1} = SC_{t+1} h^3_{t+1} \]
+
+The estimate of SC in the current year is assumed to be the same as the SC in the previous year.
+
+\[SC_{t+1} = SC_t\]
+
+Finally, the growth (\(g_{fr(t+1)}\)) for the current year is predicted using the ratio of the predicted meat weight in the current year to the estimated meat weight in the previous year.
+
+\[ g_{fr(t+1)} = \frac{w_{t+1}}{w_{t}} \]
+
+An analogous calculation is used to predict the growth of recruit sized scallop in the model. The full details of these calculations can be found in Hubley et al. (\protect\hyperlink{ref-hubleyGeorgesBankBrowns2014}{2014}).
 
 \end{document}

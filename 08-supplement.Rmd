@@ -1,20 +1,32 @@
-<!-- The following code should appear at the beginning of the first appendix.
-After that, all subsequent sections will be turned into appendices. -->
 \newpage
+
+
 <!-- Adding in a {-#supplement} turns off chapter/section numbering for that specific section, handy if needed, for example '# Supplement  {-#supplement} '` :-) --->
-# SUPPLEMENT 1 {#ref-sup}
+# APPENDIX {#ref-app}
 
-\beginsupplement
 
-<!-- Make sure you have a couple lines of blank space after the figure calls or the captions don't print because that's what Rmarkdown does... --->
-\newpage
-\blandscape
-```{r PCA, echo=FALSE,out.width="75%",dpi=200,fig.cap = "tester"}
-# Note that out.width and out.height and dpi don't do anything for word document output in the chunck control above, they wil impact html and pdf output
-mesh.plt <- "D:/github/Paper_2_SDMs/Results/Figures/mesh.png"
-knitr::include_graphics(mesh.plt)
-```
+## Growth Calculation
 
-\elandscape
+The first step to calculate growth for fully recruited scallop ($g_{fr}$) in the current year is to obtain the average meat weight of fully recruited scallop in the previous year $w_{t}$; 
 
-\newpage
+$$ w_{t} = SC_{t} h^3_{t} $$
+
+This calculation uses the average shell height ($h_t$) of the fully recruited scallop and $SC_t$, both are estimated from the survey in the previous year (*t*). The predicted average height of the scallop in the current year is calculated using the von Bertalanffy parameters for this stock [@vonbertalanffyQuantitativeLawsMetabolism1957; @hubleyGeorgesBankBrowns2014];
+
+$$ h_{t+1} = L_\infty(1-e^{-K}) + e^{-K}h_t  $$
+
+The predicted meat weight for the current year is calculated next.
+
+$$ w_{t+1} = SC_{t+1} h^3_{t+1} $$
+
+The estimate of SC in the current year is assumed to be the same as the SC in the previous year. 
+
+$$SC_{t+1} = SC_t$$
+
+Finally, the growth ($g_{fr(t+1)}$) for the current year is predicted using the ratio of the predicted meat weight in the current year to the  estimated meat weight in the previous year.
+
+
+$$ g_{fr(t+1)} = \frac{w_{t+1}}{w_{t}} $$
+
+An analogous calculation is used to predict the growth of recruit sized scallop in the model. The full details of these calculations can be found in @hubleyGeorgesBankBrowns2014. 
+

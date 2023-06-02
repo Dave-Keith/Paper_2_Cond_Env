@@ -161,6 +161,9 @@ summary(may.mod.mn)
 may.mod.med <- lm(may~SST.sum.median,data=dat %>% dplyr::filter(year < 2018))
 summary(may.mod.med)
 
+# Now we can predict the condition for the summer of the most recent year, in this case 2022...
+predict(may.mod.med,newdata = data.frame(SST.sum.median=  dat$SST.sum.median[dat$year == 2022]))
+
 # Now plot this shit...
 
 ggplot(dat %>% dplyr::filter(year < 2018),aes(y=may,x=SST.sum.median)) + 

@@ -18,29 +18,22 @@ output:
   language: english
   classoption: twocolumn
 # End of options to set
-title: "The Scallop who wished for a King: How utilzing an environmental relationship can improve prediction of condition yet result in less accurate science advice."
+title: "An environmental paradox: How a strong environmental relationship increased the uncertainty of science advice."
 author: |
   David M. Keith^1^,
   Jessica A. Sameoto^1^,
-  Xiaohan Liu^2^, 
+  Xiaohan Liu^2^,\
   Emmanuel Devred^1^,
-  Freya A. Keyser, and 
+  Freya Keyser, and 
   Catherine Johnson^1^
 address: |
   ^1^Bedford Institute of Oceanography\
      Fisheries and Oceans Canada, 1 Challenger Dr.\
      Dartmouth Nova Scotia, B2Y 4A2, Canada\
   ^2^UK\
-month: November # fill in
-year: 2020
-report_number: nnn
-region: Maritimes Region
-author_list: "Keith, D.M., Sameoto, J.A., Keyser, F., Liu, X., Devred, E., Johnson, C."
 abstract: |
-  Oceanographic conditions are known to influence natural fluctuations in fish stocks, however disentangling environmental variability from fishing effects remains challenging despite significant efforts to improve science advice through an ecosystem approach to fisheries management (EAFM). For the world’s largest wild scallop fisheries, the sea scallop (*Placopecten magellanicus*) found off the northeastern United States and eastern Canada annual variations in growth underlie major fluctuations in catch rate and yield.  Inter-annual variability in the relative size of the harvested meat is measured using an allometric relationship between scallop meat-weight and shell height, known as scallop condition (SC), which is used to estimate the population biomass. When estimating the biomass for the current fishing year SC is an unknown parameter which is predicted based on a biological-only model. The purpose of this study was to investigate the development of predictive models of scallop growth that incorporated environmental covariates.  The environmental covarites used were Sea Surface Temperature (SST), Bottom Temperature (BT), Chlorophyll-a (CHL), and Mixed Layer Depth (MLD). The preferred predictive models incorporated either SST or BT and generally lead to more accurate predictions of SC than the current biologicaly only model. A retrospective analysis was then undertaken in which the current year biomass estimates from the stock assessment model were compared using the currently implemented bioloigical-only model and the best performing environmental models. The results of this retrospective analysis indicated that there is a small positive bias of approximately 2% in the model biomass predictions.  The biological-only model tends to predict that SC will be lower than the predictive environmental models, thus the use of the environmental models results in a slight, statistically insignificant, increase in the bias of the model biomass predictions.  The underestiamte of SC in the biological model helps to offset the tendency for the assessment model to overestimate biomass in the current fishing year. These results highlight the challenges of attempting to incorporate environmental information into existing stock assessment frameworks.  The development of next generation integrated stock assessment frameworks that incorporate environmental considerations directly into the model structure may provide a more flexible means of developing science advice that can operationlize EAFM considerations.
+  Oceanographic conditions are known to influence natural fluctuations in fish productivity. Despite significant efforts to improve tactical science advice through an ecosystem approach to fisheries management (EAFM), disentangling environmental variability from fishing effects remains challenging . For the world’s largest wild scallop fishery, the sea scallop (*Placopecten magellanicus*) fishery off the northeastern United States and eastern Canada, inter-annual variations in growth underlie major fluctuations in catch rate and yield.  The relative size of the harvested meat is measured using scallop condition (SC), which is predicted using an allometric relationship between scallop meat-weight and shell height. In the sea scallop stock assessment model, the SC prediction for a given year is used to convert population abundance estimates to population biomass. The purpose of this study was to evaluate the effect of incorporating Sea Surface Temperature (SST) into predictive models of SC on tactical science advice. The preferred predictive models generally lead to more accurate predictions of SC than the current biology-only model. A retrospective analysis was then undertaken to compare the annual biomass estimates from the stock assessment model using the biology-only model to the corresponding estimates from the best performing environmental models. The results of this retrospective analysis indicated that there was a small positive bias of approximately 2% in the model biomass predictions using each of the predictive SC models. The biology-only model tended to predict a lower SC than the predictive environmental models, thus the use of the environmental models resulted in a small (statistically insignificant) increase in the bias of the model biomass predictions. These results highlight the challenges of attempting to incorporate environmental relationships into tactical science advice using traditional stock assessment frameworks. The relevance of the environmental variables, potential for impact, and the environmental data availability should be considered when attempting to develop EAFM tools. The development of next-generation integrated stock assessment frameworks that incorporate environmental considerations directly into the model structure may provide a more flexible and robust means of developing tactical science advice that can operationalize EAFM considerations.
   
-header: "Draft working paper --- Do not cite or circulate" # or "" to omit
-
 knit: bookdown::render_book
 link-citations: true
 bibliography: Y:/Zotero/MAR_SABHU.bib
@@ -79,6 +72,8 @@ require(tidyverse)
 require(dplyr)
 require(tidyr)
 library(ggthemes)
+library(sf)
+library(grid)
 
 knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
 # Set the Workding directory.
@@ -98,7 +93,6 @@ for(fun in funs)
   source(paste0(getwd(),"/",basename(fun)))
   file.remove(paste0(getwd(),"/",basename(fun)))
 }
-source(paste0(direct.proj, "Scripts/correlation_table_function_revised.r"))
 
 # A couple custom functions I may or may not use
 factor.2.number <- function(x) {as.numeric(levels(x))[x]} # My friend factor.2.number
@@ -169,6 +163,30 @@ sst.raw.in <- read.csv(paste0(direct.proj,"Data/dfo_sst_ts.csv"))
 
 # Bring in the GB and GBa polygons
 
+# Now grab the coordinates for the survey boundaries for GBa and gbb, inside of the survey_boundaries zip.
+temp <- tempfile()
+# Download this to there
+download.file("https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/survey_boundaries/survey_boundaries.zip", temp)
+# Figure out what this file was saved as
+temp2 <- tempfile()
+# Unzip it
+unzip(zipfile=temp, exdir=temp2)
+# And we get GBa and GBb from there
+gba.shape <- st_read(dsn = paste0(temp2,"/GBa.shp"))
+
+# Now grab the coordinates for the survey boundaries for GBa and gbb, inside of the survey_boundaries zip.
+temp <- tempfile()
+# Download this to there
+download.file("https://raw.githubusercontent.com/Dave-Keith/Paper_2_Cond_Env/master/Data/boundary/boundary.zip", temp)
+# Figure out what this file was saved as
+temp2 <- tempfile()
+# Unzip it
+unzip(zipfile=temp, exdir=temp2)
+# And we get GBa and GBb from there
+gb.iso <- st_read(dsn = paste0(temp2,"/GB_PolyForRemoteSensing.shp"))
+
+# Trim the gba.shape to be withing the gb.iso and get rid of that silliness with eez...
+gba.shape <- st_intersection(gba.shape,gb.iso)
 
 ##### Done with data loading... Set some variables for the rest of the show..
 
@@ -207,23 +225,6 @@ for(i in 1:12)
 month.dat <- aggregate(covar~ Month,data = sst.raw.dat,FUN=mean)
 month.dat$sd <- aggregate(covar~ Month,data = sst.raw.dat,FUN=sd)[,2]
 month.dat$variable <- "sst"
-
-
-
-# Here we get the data we want for the correlation figures, 
-dat.list <- list(sst = sst.raw.dat)
-cond.list <- list(may = dat.may)
-res <- NULL
-for(i in 1:length(dat.list))
-{
-  for(j in 1:length(cond.list))
-  {
-    res[[paste(names(dat.list)[i],names(cond.list)[j],sep="_")]] <- 
-      cor_dat(dat = dat.list[[i]], response = cond.list[[j]])
-  }  # end for(j in 1:length(cond.list))
-} # end for(i in 1:length(dat.list))
-
-
 
 ```
 
