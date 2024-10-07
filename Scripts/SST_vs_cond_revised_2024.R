@@ -231,12 +231,12 @@ predict(may.mod.new,newdata = data.frame(SST.last = 20.92,SST.cur =  15.80))
 predict(may.mod.new,newdata = data.frame(SST.last = 22.29,SST.cur =  11.39))
 
 # Now plot this shit...
-ggplot(dat.combo %>% dplyr::filter(year < 2023),aes(y=may,x=SST.sum)) + 
-                                          geom_point() + geom_smooth(method='lm',color='red',linetype='dashed') + 
+p <- ggplot(dat.combo %>% dplyr::filter(year < 2023),aes(y=may,x=SST.sum)) + 
+                                          geom_text(aes(label=substr(year,3,4)),color='red') + geom_smooth(method='lm',color='red',linetype='dashed') + 
                                           geom_text(data=dat.new %>% dplyr::filter(year >= 2023),aes(y=may,x=SST.sum,label = substr(year,3,4)),color='blue') +
                                           geom_vline(xintercept = dat.new$SST.sum[dat.new$year == 2024],size=1.5,alpha=0.2) +
                                           theme_bw()+ xlab("SST Last (°C) + SST Current (°C)") + ylab("Condition (May)")
-
+save_plot(filename = "D:/github/Paper_2_Cond_Env/Results/Figures/Condition_SST_2024_reanlysis.png",p,base_height = 8,base_width = 11)
 
 #####################################################################################################
 #End script
