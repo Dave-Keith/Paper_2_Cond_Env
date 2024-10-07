@@ -23,8 +23,10 @@ library(visreg)
 #Import Files from shared drive
 #####################################################################################################
 
-GB_scallops_sst_file <- "D:/Github/Paper_2_Cond_Env/Data/Georges_Bank_scallop_sst_May_3_2022.stat"
-GB_scallops_new_sst_file <- "D:/Github/Paper_2_Cond_Env/Data/GBscallopWeekly_Oct_2023.dat"
+GB_scallops_sst_file <- "D:/Github/Paper_2_Cond_Env/Data/archive/Georges_Bank_scallop_sst_May_3_2022.stat"
+# The 2023 version
+#GB_scallops_new_sst_file <- "D:/Github/Paper_2_Cond_Env/Data/GBscallopWeekly_Oct_2023.dat"
+GB_scallops_new_sst_file <- "D:/Github/Paper_2_Cond_Env/Data/GBscallopWeekly_Oct_2024.csv"
 
 #setwd("Y:/Projects/Condition_Environment/Data/")
 setwd("Y:/Projects/Condition_Environment/")
@@ -52,13 +54,13 @@ sst_old$month <- substr(sst_old$date.id, 5, 7)
 sst_old$monthID <- substr(sst_old$date.id, 1, 7)
 sst_old$identifier <- substr(sst_old$date.id, 8,8)
 
-sst_new <- read.table(GB_scallops_new_sst_file, sep = "" , header = TRUE, na.strings ="")
-names(sst_new) <- c("year",'nothing','start_date','end_date','sst',"sd_sst","pixels")
+sst_new <- read.table(GB_scallops_new_sst_file, sep = "," , header = TRUE, na.strings ="")
+names(sst_new) <- c("year",'week','start_date','end_date','sst',"sd_sst",'pgrid',"pixels")
 sst_new$sst[sst_new$sst == 9999] <- NA
 sst_new$sd_sst [sst_new$sd_sst  == 9999] <- NA
 sst_new$weight <- 100*(sst_new$pixels/max(sst_new$pixels))
-sst_new$start_date <- as_date(sst_new$start_date)
-sst_new$end_date <- as_date(sst_new$end_date)
+sst_new$start_date <- as_date(sst_new$start_date, format = '%m/%d/%Y')
+sst_new$end_date <- as_date(sst_new$end_date, format = '%m/%d/%Y')
 sst_new$mid_date <- sst_new$end_date-3
 sst_new$month <- tolower(lubridate::month(sst_new$mid_date,label=T,abbr=T))
 sst_new$monthID <- paste0(sst_new$year,sst_new$month)
@@ -172,7 +174,7 @@ final.dat.new$month <- month(final.dat.new$date)
 
 head(final.dat)
 final.dat$date
-write.csv(final.dat, file = "D:/Github/Paper_2_Cond_Env/Data/dfo_sst_ts.csv")
+write.csv(final.dat, file = "D:/Github/Paper_2_Cond_Env/Data/dfo_sst_ts_2024.csv")
 
 # For SST the paper says we use Jan to March from last year and Jan-Feb from this year.
 # But my someday paper says Jan to April from last year and Jan to March from this year
@@ -205,19 +207,25 @@ dat.new$SST.sum <- dat.new$SST_cur + dat.new$SST_last
 # Merge in the condition data
 dat <- left_join(dat,dat.cf,by='year')
 dat.new <- left_join(dat.new,dat.cf)
-write.csv(dat, file = "D:/Github/Paper_2_Cond_Env/Data/dfo_may_aug_sst_and_condition_time_series.csv")
+#write.csv(dat, file = "D:/Github/Paper_2_Cond_Env/Data/dfo_may_aug_sst_and_condition_time_series.csv")
 
-# now a simple model, see how these work out!  
-aug.mod.mn <- lm(aug~SST.sum.mean,data=dat %>% dplyr::filter(year < 2018))
-summary(aug.mod.mn)
-aug.mod.med <- lm(aug~ SST.sum.median,data=dat %>% dplyr::filter(year < 2018))
-summary(aug.mod.med)
+### REVISIT THESE MODELS, IT SURE LOOKS LIKE SST LAST IS NOT IMPORTANT ANYMORE AND IT"S ALL SST current that matters.
 
-# Let's compare models for new years
-aug.mod.new <- lm(aug ~ SST_last+SST_cur,data= dat.new)
+# So if we go to 2024... only SST current matters...
+aug.mod.2024 <- lm(aug~SST_last+SST_cur,data=dat.new %>% dplyr::filter(year < 2025))
+summary(aug.mod.2024)
+# If we go to 2022...only SST last year matters... beautiful...
+aug.mod.2022 <- lm(aug~SST_last+SST_cur,data=dat.new %>% dplyr::filter(year < 2023))
+summary(aug.mod.2022)
+# And there's no relationship anymore :-D.
+aug.mod.2017 <- lm(aug~SST_last+SST_cur,data=dat.new %>% dplyr::filter(year < 2018))
+summary(aug.mod.2017)
+
+# Let's compare models for new years, but just to 2022 before things went weird!
+aug.mod.new <- lm(aug ~ SST_last+SST_cur,data= dat.new |> collapse::fsubest(year < 2023))
 summary(aug.mod.new)
 # May model
-may.mod.new <- lm(may ~ SST_last+SST_cur,data= dat.new)
+may.mod.new <- lm(may ~ SST_last+SST_cur,data= dat.new |> collapse::fsubest(year < 2023))
 summary(may.mod.new)
 # Now subset the old data to the years we have new data for...
 aug.mod.mn.comp <- lm(aug~SST.sum.mean,data=dat %>% dplyr::filter(year >2007))
@@ -245,15 +253,23 @@ predict(may.mod.2,newdata = data.frame(SST.last.median = 20.68,SST.cur.median = 
 predict(aug.mod.new,newdata = data.frame(SST_last = 20.68,SST_cur =  15.51))
 predict(may.mod.new,newdata = data.frame(SST_last = 20.68,SST_cur =  15.51))
 
+# The 2022 prediction... 19.8.. measured was around 16.9, so not great
+predict(aug.mod.new,newdata = data.frame(SST_last = 14.76,SST_cur =  19.93))
+# The 2023 prediction... 18.4 way low  was around 20.8
+predict(aug.mod.new,newdata = data.frame(SST_last = 20.92,SST_cur =  15.80))
+# The 2024 prediction... 16.2.... way too too high as it was 13.2
+predict(aug.mod.new,newdata = data.frame(SST_last = 22.29,SST_cur =  11.39))
+
+
 # Now plot this shit...
 
 
 
-ggplot(dat %>% dplyr::filter(year < 2018),aes(y=may,x=SST.sum.median)) + 
+ggplot(dat %>% dplyr::filter(year < 2021),aes(y=may,x=SST.cur.median)) + 
                                           geom_point() + geom_smooth(method='lm',color='red',linetype='dashed') + 
-                                          geom_text(data=dat %>% dplyr::filter(year >= 2018),aes(y=may,x=SST.sum.median,label = substr(year,3,4)),color='blue') +
-                                          geom_vline(xintercept = dat$SST.sum.median[dat$year == 2022],size=1.5,alpha=0.2) +
-                                          theme_bw()+ xlab("SST Last + SST Current (?C)") + ylab("Condition (May)")
+                                          geom_text(data=dat.new %>% dplyr::filter(year >= 2018),aes(y=may,x=SST_cur,label = substr(year,3,4)),color='blue') +
+                                          geom_vline(xintercept = dat.new$SST_cur[dat.new$year == 2024],size=1.5,alpha=0.2) +
+                                          theme_bw()+ xlab("SST Current (°C)") + ylab("Condition (Aug)")
 
 
 #####################################################################################################
