@@ -26,7 +26,7 @@ library(visreg)
 GB_scallops_1985_2013_sst <- "D:/Github/Paper_2_Cond_Env/Data/GBscallopWeekly.IML.csv"
 # The 2023 version
 #GB_scallops_new_sst_file <- "D:/Github/Paper_2_Cond_Env/Data/GBscallopWeekly_Oct_2023.dat"
-GB_scallops_new_sst_file <- "D:/Github/Paper_2_Cond_Env/Data/GBscallopWeekly_Oct_2024.csv"
+GB_scallops_new_sst_file <- "D:/Github/Paper_2_Cond_Env/Data/GBscallopWeekly_Apr_2025.csv"
 
 #setwd("Y:/Projects/Condition_Environment/Data/")
 setwd("Y:/Projects/Condition_Environment/")
@@ -58,13 +58,13 @@ sst_1985$mid_date <- sst_1985$end_date-3
 sst_1985$month <- tolower(lubridate::month(sst_1985$mid_date,label=T,abbr=T))
 sst_1985$monthID <- paste0(sst_1985$year,sst_1985$month)
 
-sst_new <- read.table(GB_scallops_new_sst_file, sep = "," , header = TRUE, na.strings ="")
+sst_new <- read.table(GB_scallops_new_sst_file, sep = ";" , header = TRUE, na.strings ="")
 names(sst_new) <- c("year",'week','start_date','end_date','sst',"sd_sst",'pgrid',"pixels")
 sst_new$sst[sst_new$sst == -99] <- NA
 sst_new$sd_sst [sst_new$sd_sst  == -99] <- NA
 sst_new$weight <- 100*(sst_new$pixels/max(sst_new$pixels))
-sst_new$start_date <- as_date(sst_new$start_date, format = '%m/%d/%Y')
-sst_new$end_date <- as_date(sst_new$end_date, format = '%m/%d/%Y')
+sst_new$start_date <- as_date(sst_new$start_date, format = '%Y-%m-%d')
+sst_new$end_date <- as_date(sst_new$end_date, format = '%Y-%m-%d')
 sst_new$mid_date <- sst_new$end_date-3
 sst_new$month <- tolower(lubridate::month(sst_new$mid_date,label=T,abbr=T))
 sst_new$monthID <- paste0(sst_new$year,sst_new$month)
@@ -209,7 +209,9 @@ summary(aug.mod.new)
 aug.mod.2022 <- lm(aug~SST.last+SST.cur,data=dat.combo %>% dplyr::filter(year < 2023))
 summary(aug.mod.2022)
 # If we look at May both pop out as would be expected from the above figure
-may.mod.new <- lm(may~SST.last+SST.cur,data=dat.combo %>% dplyr::filter(year < 2025))
+# NOTE That the SST.last + SST.cur model has a bit higher R^2, but this 
+# model is more in line with the figure being plotted below, so using this (the estimate from this model is a bit lower)
+may.mod.new <- lm(may~SST.sum,data=dat.combo %>% dplyr::filter(year < 2025))
 summary(may.mod.new)
 # If we go to 2022...SST current is marignal when dropping 23/24, R2 is marginally better...
 may.mod.2022 <- lm(may~SST.last+SST.cur,data=dat.combo %>% dplyr::filter(year < 2023))
@@ -229,14 +231,19 @@ predict(may.mod.new,newdata = data.frame(SST.last = 19.93,SST.cur =  14.76))
 predict(may.mod.new,newdata = data.frame(SST.last = 20.92,SST.cur =  15.80))
 # The 2024 prediction... 17.1 way too too high as it was 13.9, tho better than the model to 2022, so that 2024 data point is pulling this one down.
 predict(may.mod.new,newdata = data.frame(SST.last = 22.29,SST.cur =  11.39))
+# The 2025 prediction... 17.1 way too too high as it was 13.9, tho better than the model to 2022, so that 2024 data point is pulling this one down.
+may.2025.pred <- predict(may.mod.new,newdata = data.frame(SST.sum = 25.99))
+
+
 
 # Now plot this shit...
-p <- ggplot(dat.combo %>% dplyr::filter(year < 2023),aes(y=may,x=SST.sum)) + 
+p <- ggplot(dat.combo,aes(y=may,x=SST.sum)) + 
                                           geom_text(aes(label=substr(year,3,4)),color='red') + geom_smooth(method='lm',color='red',linetype='dashed') + 
                                           geom_text(data=dat.new %>% dplyr::filter(year >= 2023),aes(y=may,x=SST.sum,label = substr(year,3,4)),color='blue') +
-                                          geom_vline(xintercept = dat.new$SST.sum[dat.new$year == 2024],size=1.5,alpha=0.2) +
+                                          #geom_text(aes(y=may.2025.pred,x=25.99),label = 25,color='black') +
+                                          geom_vline(xintercept = dat.new$SST.sum[dat.new$year == 2025],size=1.5,alpha=0.2) +
                                           theme_bw()+ xlab("SST Last (°C) + SST Current (°C)") + ylab("Condition (May)")
-save_plot(filename = "D:/github/Paper_2_Cond_Env/Results/Figures/Condition_SST_2024_reanlysis.png",p,base_height = 8,base_width = 11)
+save_plot(filename = "D:/github/Paper_2_Cond_Env/Figures/Condition_SST_May_2025_prediction.png",p,base_height = 8,base_width = 11)
 
 #####################################################################################################
 #End script
